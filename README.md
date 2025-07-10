@@ -1,277 +1,230 @@
-# Raycast Windows Extension Template
+# 🍅 Raycast Pomodoro Timer
 
-A clean, minimal template for creating Windows-compatible Raycast extensions. This template provides the essential structure and components needed to build Raycast extensions that work specifically on Windows platforms.
+A comprehensive Pomodoro timer extension for Raycast on Windows with advanced productivity tracking, customizable intervals, and detailed analytics.
 
-**Enhanced with real-world patterns**: This template incorporates best practices and techniques discovered from analyzing successful Windows Raycast extensions in the wild.
+## ✨ Features
+
+### Core Pomodoro Functionality
+- **Timer Management**: Start, pause, resume, stop, and reset timers
+- **Configurable Intervals**: Customize work (default 25min), short break (5min), and long break (15min) durations
+- **Session Tracking**: Automatic session counting with long break intervals
+- **Audio Notifications**: Sound alerts when sessions complete (configurable)
+- **Visual Progress**: Real-time progress indicators and time remaining display
+
+### Advanced Features
+- **Timer History**: Complete session history with detailed statistics
+- **Task Association**: Link Pomodoro sessions to specific tasks and projects
+- **Productivity Analytics**: Detailed insights including completion rates, streaks, and productivity patterns
+- **Custom Presets**: Pre-configured timer settings for different work styles
+- **Data Export**: Export session data in JSON and CSV formats
+- **Auto-start Options**: Automatically start breaks or work sessions
+
+### Windows Integration
+- **System Notifications**: Native Windows toast notifications
+- **Keyboard Shortcuts**: Quick actions with customizable hotkeys
+- **System Tray Integration**: Background operation with tray icon (planned)
+- **Focus Assist**: Integration with Windows Focus Assist mode (planned)
 
 ## 🚀 Quick Start
 
-1. **Clone or download this template**
-2. **Customize the extension**:
-   - Update `package.json` with your extension details
-   - Modify `src/main-command.tsx` with your functionality
-   - Replace `assets/icon.png` with your extension icon
-3. **Install dependencies**:
+1. **Install Dependencies**:
    ```bash
-   npm install
-   # or
-   yarn install
+   pnpm install
    ```
-4. **Start development**:
+
+2. **Start Development**:
    ```bash
-   npm run dev
+   pnpm run dev
    ```
+
+3. **Build Extension**:
+   ```bash
+   pnpm run build
+   ```
+
+## 📋 Commands
+
+The extension provides three main commands:
+
+### 🍅 Pomodoro Timer
+- **Command**: `main-command`
+- **Description**: Main timer interface with full controls
+- **Features**: Start sessions, view progress, manage tasks
+- **Shortcuts**: 
+  - `Cmd+Enter`: Start work session with task
+  - `Cmd+Shift+Enter`: Quick start work session
+  - `Cmd+P`: Pause/Resume timer
+  - `Cmd+S`: Stop timer
+
+### 📊 Timer History
+- **Command**: `timer-history`
+- **Description**: View session history and detailed statistics
+- **Features**: Session details, productivity insights, data export
+- **Shortcuts**:
+  - `Cmd+S`: View statistics
+
+### ⚡ Quick Start Timer
+- **Command**: `quick-start`
+- **Description**: Instantly start a work session
+- **Features**: No-UI quick start for immediate productivity
+
+## ⚙️ Configuration
+
+### Timer Settings
+- **Work Duration**: 1-180 minutes (default: 25)
+- **Short Break**: 1-60 minutes (default: 5)
+- **Long Break**: 1-120 minutes (default: 15)
+- **Long Break Interval**: 1-10 sessions (default: 4)
+
+### Notification Settings
+- **Audio Notifications**: Enable/disable completion sounds
+- **Auto-start Breaks**: Automatically begin break timers
+- **Auto-start Work**: Automatically begin work sessions after breaks
+
+## 📊 Statistics & Analytics
+
+### Overview Metrics
+- Total and completed sessions
+- Productivity score and completion rate
+- Current and longest streaks
+- Time breakdowns (work vs. break time)
+
+### Advanced Analytics
+- Most productive hours and days
+- Average session lengths
+- Task and project productivity
+- Weekly and monthly trends
+
+### Productivity Insights
+- Personalized recommendations based on usage patterns
+- Streak achievements and motivation
+- Focus pattern analysis
+- Completion rate optimization tips
+
+## 🎯 Task Management
+
+### Task Association
+- Link sessions to specific tasks
+- Organize tasks by projects
+- Track Pomodoro estimates vs. actual completion
+- Task progress visualization
+
+### Project Tracking
+- Group related tasks into projects
+- Project-level productivity metrics
+- Color-coded organization
+- Progress tracking across projects
 
 ## 📁 Project Structure
 
 ```
-raycast-windows-extension-template/
-├── assets/
-│   └── icon.png              # Extension icon (64x64px recommended)
-├── src/
-│   └── main-command.tsx      # Main command component
-├── package.json              # Extension manifest and dependencies
-├── tsconfig.json            # TypeScript configuration
-├── raycast-env.d.ts         # Auto-generated type definitions
-└── README.md                # This file
+src/
+├── components/           # Reusable UI components
+│   └── preset-selector.tsx
+├── hooks/               # Custom React hooks
+│   └── useTimer.ts
+├── services/            # Business logic services
+│   ├── data-service.ts
+│   ├── notification-service.ts
+│   ├── preferences-service.ts
+│   ├── task-service.ts
+│   └── windows-integration.ts
+├── store/               # State management
+│   └── timer-store.ts
+├── types/               # TypeScript definitions
+│   └── timer.ts
+├── utils/               # Utility functions
+│   ├── helpers.ts
+│   └── windows-helpers.ts
+├── main-command.tsx     # Main timer interface
+├── timer-history.tsx    # History and statistics
+└── quick-start.tsx      # Quick start command
 ```
 
-## 🔧 Key Components
+## 🛠️ Development
 
-### package.json
-The extension manifest that defines:
-- **Extension metadata** (name, title, description, author)
-- **Windows platform targeting** (`"platforms": ["windows"]`)
-- **Commands** that appear in Raycast
-- **Preferences** for user configuration
-- **Dependencies** and build scripts
+### Available Scripts
+- `pnpm run dev` - Start development server
+- `pnpm run build` - Build for production
+- `pnpm run lint` - Run ESLint
+- `pnpm run fix-lint` - Fix linting issues
 
-### src/main-command.tsx
-A React component demonstrating:
-- **List interface** with search functionality
-- **Action panels** with multiple actions
-- **Toast notifications** for user feedback
-- **Preferences integration**
-- **Data loading** with caching
-- **Error handling** patterns
+### Key Technologies
+- **React**: UI components and state management
+- **TypeScript**: Type-safe development
+- **Zustand**: Lightweight state management with persistence
+- **date-fns**: Date manipulation and formatting
+- **Raycast API**: Native Raycast integration
 
-### TypeScript Configuration
-- **Windows-compatible** TypeScript settings
-- **React JSX** support
-- **Strict type checking** enabled
-- **ES2021** target for modern JavaScript features
+## 🎨 Customization
 
-## 🛠️ Customization Guide
+### Timer Presets
+- **Classic Pomodoro**: 25/5/15 minute intervals
+- **Extended Focus**: 45/10/30 minute intervals for deep work
+- **Short Bursts**: 15/3/10 minute intervals for high-energy tasks
+- **Study Session**: 30/5/20 minute intervals optimized for learning
+- **Creative Flow**: 90/15/45 minute intervals for creative work
 
-### 1. Update Extension Metadata
+### Productivity Tips Integration
+- Contextual tips based on session patterns
+- Recommendations for optimal session lengths
+- Streak building strategies
+- Focus improvement suggestions
 
-Edit `package.json`:
+## 📈 Data Management
 
-```json
-{
-  "name": "your-extension-name",
-  "title": "Your Extension Title",
-  "description": "What your extension does",
-  "author": "your-name",
-  "categories": ["Developer Tools"], // Choose appropriate category
-}
-```
+### Local Storage
+- Session history persistence
+- Configuration settings
+- Task and project data
+- Statistics and analytics
 
-### 2. Configure Commands
+### Export Options
+- **JSON Export**: Complete data backup
+- **CSV Export**: Spreadsheet-compatible format
+- **Statistics Summary**: Key metrics overview
 
-Add or modify commands in `package.json`:
+## 🔧 Windows-Specific Features
 
-```json
-{
-  "commands": [
-    {
-      "name": "your-command",
-      "title": "Your Command Title", 
-      "description": "Command description",
-      "mode": "view" // or "no-view" for background commands
-    }
-  ]
-}
-```
+### System Integration
+- Native Windows notifications
+- Taskbar progress indicators (planned)
+- Focus Assist integration (planned)
+- System tray functionality (planned)
 
-### 3. Add Preferences
+### Performance Optimizations
+- Efficient timer management
+- Minimal resource usage
+- Background operation support
+- Fast startup and response times
 
-Configure user preferences in `package.json`:
+## 📝 License
 
-```json
-{
-  "preferences": [
-    {
-      "name": "settingName",
-      "title": "Setting Display Name",
-      "description": "Setting description",
-      "type": "textfield", // textfield, checkbox, dropdown, etc.
-      "default": "default value",
-      "required": false
-    }
-  ]
-}
-```
-
-### 4. Implement Your Logic
-
-Replace the example code in `src/main-command.tsx` with your functionality:
-
-```typescript
-// Access preferences
-const preferences = getPreferenceValues<Preferences>()
-
-// Load your data
-async function loadYourData() {
-  // Your data loading logic here
-  return yourData
-}
-
-// Handle actions
-async function handleYourAction(item: YourItemType) {
-  // Your action logic here
-}
-```
-
-## 🪟 Windows-Specific Considerations
-
-### File Paths
-- Use forward slashes `/` or `path.join()` for cross-platform compatibility
-- Be aware of Windows path length limitations
-- Handle Windows-specific environment variables (`process.env.USERNAME`, `process.env.USERPROFILE`)
-
-### Process Execution
-- Use `child_process.exec()` or `child_process.spawn()` for running Windows commands
-- Consider PowerShell vs Command Prompt differences
-- Handle Windows-specific executable extensions (`.exe`, `.bat`, `.cmd`)
-
-### External CLI Tool Integration
-- Many Windows tools provide CLI interfaces (Everything, PowerToys, etc.)
-- Use UTF-8 encoding for international character support
-- Handle tool availability gracefully
-
-### Registry Access
-- Use appropriate libraries for Windows Registry access if needed
-- Handle permissions carefully
-
-### Example Windows Integration:
-```typescript
-import { exec } from "child_process"
-import { promisify } from "util"
-
-const execAsync = promisify(exec)
-
-// Execute Windows command with UTF-8 encoding
-async function runWindowsCommand(command: string) {
-  try {
-    // Set UTF-8 encoding for international characters
-    const fullCommand = `chcp 65001 > nul && ${command}`
-    const { stdout } = await execAsync(fullCommand)
-    return stdout.trim()
-  } catch (error) {
-    if (error instanceof Error && "code" in error && (error as any).code === "ENOENT") {
-      throw new Error("Command not found. Please ensure the tool is installed and in PATH.")
-    }
-    throw new Error(`Command failed: ${error}`)
-  }
-}
-
-// Parse CSV output from Windows commands
-function parseWindowsCSV(csvOutput: string) {
-  return csvOutput
-    .trim()
-    .split(/\r?\n/)
-    .map(line => line.replace(/"/g, "").split(","))
-    .filter(parts => parts.length > 0 && parts[0])
-}
-```
-
-## 📦 Available Scripts
-
-- `npm run dev` - Start development mode
-- `npm run build` - Build the extension
-- `npm run lint` - Run ESLint
-- `npm run fix-lint` - Fix ESLint issues
-- `npm run publish` - Publish to Raycast Store (when Windows support is available)
-
-## 🔗 Dependencies
-
-### Core Dependencies
-- `@raycast/api` - Raycast API for building extensions
-- `@raycast/utils` - Utility functions and hooks
-
-### Development Dependencies
-- `typescript` - TypeScript compiler
-- `eslint` - Code linting
-- `prettier` - Code formatting
-- `@types/*` - Type definitions
-
-## 📚 Documentation
-
-### 🎯 Quick Start
-- **[Template Guide](docs/template-guide/)** - Template-specific documentation and examples
-- **[Complete Documentation Index](docs/index.md)** - Comprehensive reference for Raycast extensions
-
-### 📖 Additional Documentation
-- **[Research Summary](RESEARCH_SUMMARY.md)** - Comprehensive analysis of 500+ Raycast extensions
-- **[Documentation Organization](DOCUMENTATION_ORGANIZATION.md)** - How the documentation is structured
-
-## 📚 Resources
-
-- [Raycast Extensions Documentation](https://developers.raycast.com/)
-- [Raycast API Reference](https://developers.raycast.com/api-reference)
-- [TypeScript Documentation](https://www.typescriptlang.org/docs/)
-- [React Documentation](https://react.dev/)
+MIT License - see [LICENSE](LICENSE) file for details.
 
 ## 🤝 Contributing
 
-1. Fork this template
-2. Create your feature branch
-3. Make your changes
-4. Test thoroughly on Windows
-5. Submit a pull request
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-## 📄 License
+## 💡 Tips for Maximum Productivity
 
-MIT License - feel free to use this template for your own extensions.
+1. **Start Small**: Begin with shorter sessions if you're new to Pomodoro
+2. **Use Tasks**: Associate sessions with specific tasks for better tracking
+3. **Take Breaks**: Don't skip breaks - they're essential for sustained focus
+4. **Review Stats**: Check your analytics weekly to identify patterns
+5. **Customize Settings**: Adjust intervals based on your work style
+6. **Build Streaks**: Consistent daily sessions build powerful habits
 
-## 🙏 Credits & Inspiration
+## 🆘 Support
 
-This template was created by analyzing and extracting patterns from real-world Windows Raycast extensions:
+- **Documentation**: Check the inline help and tooltips
+- **Issues**: Report bugs or request features on GitHub
+- **Community**: Share tips and experiences with other users
 
-### Foundation
-- **[Windows Terminal Profiles Extension](https://github.com/PuttTim/windows-terminal)** by PuttTim
-  - Provided the foundational structure and Windows platform configuration
-  - Demonstrated essential Raycast extension patterns for Windows
-  - Showed proper preferences integration and toast notifications
+---
 
-### Advanced Patterns
-- **[Everything Search Extension](https://github.com/dougfernando/everything-raycast-extension)** by dougfernando
-  - External CLI tool integration with Everything search
-  - Advanced file operations and preview functionality
-  - Custom explorer command parsing with placeholder substitution
-  - Dynamic detail views and file type detection
-  - UTF-8 encoding handling for international characters
-
-- **[Kill Processes Extension](https://github.com/dougfernando/kill-processes-ext)** by dougfernando
-  - Windows process management and CSV parsing
-  - Bulk operations with error recovery
-  - Real-time data updates and auto-refresh patterns
-  - Robust error handling that continues operation even when some items fail
-
-### Key Learnings Incorporated
-- **External CLI Integration**: Patterns for integrating with Windows command-line tools
-- **CSV Data Parsing**: Techniques for parsing Windows command output
-- **Dynamic UI Patterns**: Conditional action ordering and detail views
-- **Error Recovery**: Robust error handling that gracefully handles partial failures
-- **Memory Efficiency**: Data loading patterns that prevent memory issues
-- **User Customization**: Advanced preference handling with command parsing
-
-Special thanks to these developers for creating open-source Windows Raycast extensions that demonstrate real-world patterns and best practices.
-
-## ⚠️ Notes
-
-- Windows-only extensions are not yet supported in the official Raycast Store
-- You can install and test extensions locally using `npm run dev`
-- This template incorporates patterns from multiple successful Windows extensions
-- Ensure your extension works properly on Windows before publishing
+**Happy Focusing! 🎯**
