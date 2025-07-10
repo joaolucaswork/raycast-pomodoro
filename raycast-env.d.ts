@@ -34,6 +34,8 @@ declare namespace Preferences {
   export type TimerHistory = ExtensionPreferences & {}
   /** Preferences accessible in the `quick-start` command */
   export type QuickStart = ExtensionPreferences & {}
+  /** Preferences accessible in the `menu-bar-timer` command */
+  export type MenuBarTimer = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
@@ -43,5 +45,7 @@ declare namespace Arguments {
   export type TimerHistory = {}
   /** Arguments passed to the `quick-start` command */
   export type QuickStart = {}
+  /** Arguments passed to the `menu-bar-timer` command */
+  export type MenuBarTimer = {}
 }
 

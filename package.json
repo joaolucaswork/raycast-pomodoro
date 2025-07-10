@@ -1,14 +1,33 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
-  "name": "raycast-windows-extension-template",
-  "title": "Windows Extension Template",
-  "description": "A comprehensive template for building Windows-compatible Raycast extensions",
+  "name": "raycast-pomodoro",
+  "version": "1.0.0",
+  "title": "Pomodoro Timer",
+  "description": "A comprehensive Pomodoro timer extension for Raycast with persistent background operation, menu bar integration, and advanced productivity tracking",
   "icon": "icon.png",
-  "author": "template-author",
+  "author": "joaolucaswork",
   "categories": [
-    "Developer Tools"
+    "Productivity"
   ],
   "license": "MIT",
+  "homepage": "https://github.com/joaolucaswork/raycast-pomodoro",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joaolucaswork/raycast-pomodoro.git"
+  },
+  "bugs": {
+    "url": "https://github.com/joaolucaswork/raycast-pomodoro/issues"
+  },
+  "keywords": [
+    "pomodoro",
+    "timer",
+    "productivity",
+    "focus",
+    "time-management",
+    "background-timer",
+    "menu-bar",
+    "persistent"
+  ],
   "platforms": [
     "Windows"
   ],
@@ -30,6 +49,13 @@
       "title": "Quick Start Timer",
       "description": "Quickly start a Pomodoro session",
       "mode": "no-view"
+    },
+    {
+      "name": "menu-bar-timer",
+      "title": "Menu Bar Timer",
+      "description": "Persistent Pomodoro timer in the menu bar",
+      "mode": "menu-bar",
+      "interval": "1s"
     }
   ],
   "preferences": [

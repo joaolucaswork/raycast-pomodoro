@@ -10,6 +10,7 @@ import {
 } from "../types/timer";
 import { generateId } from "../utils/helpers";
 import { isToday, isThisWeek, isThisMonth } from "date-fns";
+import { zustandStorage } from "../utils/zustand-storage";
 
 const DEFAULT_CONFIG: TimerConfig = {
   workDuration: 25,
@@ -175,11 +176,13 @@ export const useTimerStore = create<PomodoroStore>()(
     }),
     {
       name: "pomodoro-timer-storage",
+      storage: zustandStorage,
       partialize: (state) => ({
-        config: state.config,
-        history: state.history,
-        sessionCount: state.sessionCount,
-        stats: state.stats,
+        ...state,
+        // Don't persist runtime state
+        currentSession: null,
+        state: TimerState.IDLE,
+        timeRemaining: 0,
       }),
     }
   )

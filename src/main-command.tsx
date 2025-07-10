@@ -9,6 +9,7 @@ import {
 import React, { useState } from "react"
 import { useTimer } from "./hooks/useTimer"
 import { useTimerStore } from "./store/timer-store"
+import { backgroundTimerService } from "./services/background-timer-service"
 import {
   formatTime,
   getSessionTypeLabel,
@@ -53,19 +54,34 @@ export default function PomodoroTimer() {
 
   const { stats, updateConfig } = useTimerStore()
 
+  // Memoize config to prevent unnecessary updates
+  const configFromPreferences = React.useMemo((): TimerConfig => ({
+    workDuration: parseInt(preferences.workDuration) || 25,
+    shortBreakDuration: parseInt(preferences.shortBreakDuration) || 5,
+    longBreakDuration: parseInt(preferences.longBreakDuration) || 15,
+    longBreakInterval: parseInt(preferences.longBreakInterval) || 4,
+    enableNotifications: preferences.enableNotifications ?? true,
+    autoStartBreaks: preferences.autoStartBreaks ?? false,
+    autoStartWork: preferences.autoStartWork ?? false
+  }), [
+    preferences.workDuration,
+    preferences.shortBreakDuration,
+    preferences.longBreakDuration,
+    preferences.longBreakInterval,
+    preferences.enableNotifications,
+    preferences.autoStartBreaks,
+    preferences.autoStartWork
+  ])
+
   // Update config from preferences on load
   React.useEffect(() => {
-    const newConfig: TimerConfig = {
-      workDuration: parseInt(preferences.workDuration) || 25,
-      shortBreakDuration: parseInt(preferences.shortBreakDuration) || 5,
-      longBreakDuration: parseInt(preferences.longBreakDuration) || 15,
-      longBreakInterval: parseInt(preferences.longBreakInterval) || 4,
-      enableNotifications: preferences.enableNotifications ?? true,
-      autoStartBreaks: preferences.autoStartBreaks ?? false,
-      autoStartWork: preferences.autoStartWork ?? false
-    }
-    updateConfig(newConfig)
-  }, [preferences])
+    updateConfig(configFromPreferences)
+  }, [configFromPreferences])
+
+  // Sync timer state on component mount
+  React.useEffect(() => {
+    backgroundTimerService.updateTimerState()
+  }, [])
 
   const handleStartWork = () => {
     if (taskName.trim()) {
@@ -197,7 +213,7 @@ ${isPaused ? '**Timer paused. Resume when you\'re ready.**' : ''}
                   title="Start Work Session"
                   icon={Icon.Play}
                   onAction={() => setShowTaskForm(true)}
-                  shortcut={{ modifiers: ["cmd"], key: "enter" }}
+                  shortcut={{ modifiers: ["cmd"], key: "t" }}
                 />
                 <Action
                   title="Quick Start Work"
@@ -224,7 +240,7 @@ ${isPaused ? '**Timer paused. Resume when you\'re ready.**' : ''}
                   title="Pause Timer"
                   icon={Icon.Pause}
                   onAction={pause}
-                  shortcut={{ modifiers: ["cmd"], key: "p" }}
+                  shortcut={{ modifiers: ["cmd"], key: "space" }}
                 />
                 <Action
                   title="Stop Timer"
