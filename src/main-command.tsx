@@ -1,150 +1,291 @@
-import { Action, ActionPanel, Icon, List, showToast, Toast, getPreferenceValues } from "@raycast/api"
-import { useCachedPromise } from "@raycast/utils"
-import { useState } from "react"
-import { getWindowsPaths } from "./utils/windows-helpers"
+import {
+  Action,
+  ActionPanel,
+  Icon,
+  Detail,
+  getPreferenceValues,
+  Form
+} from "@raycast/api"
+import React, { useState } from "react"
+import { useTimer } from "./hooks/useTimer"
+import { useTimerStore } from "./store/timer-store"
+import {
+  formatTime,
+  getSessionTypeLabel,
+  getSessionTypeIcon,
+  getProgressPercentage,
+  formatSessionSummary
+} from "./utils/helpers"
+import { SessionType, TimerConfig } from "./types/timer"
 
 interface Preferences {
-    exampleSetting: string
-    enableFeature: boolean
+  workDuration: string
+  shortBreakDuration: string
+  longBreakDuration: string
+  longBreakInterval: string
+  enableNotifications: boolean
+  autoStartBreaks: boolean
+  autoStartWork: boolean
 }
 
-interface ListItem {
-    id: string
-    title: string
-    subtitle?: string
-    icon: string
-}
+export default function PomodoroTimer() {
+  const preferences: Preferences = getPreferenceValues()
+  const [taskName, setTaskName] = useState("")
+  const [projectName, setProjectName] = useState("")
+  const [showTaskForm, setShowTaskForm] = useState(false)
 
-const preferences: Preferences = getPreferenceValues()
+  const {
+    timeRemaining,
+    currentSession,
+    sessionCount,
+    startWorkSession,
+    startBreakSession,
+    pause,
+    resume,
+    stop,
+    reset,
+    skip,
+    getNextSessionType,
+    isRunning,
+    isPaused,
+    isIdle
+  } = useTimer()
 
-// Example function that simulates loading data
-async function loadData(): Promise<ListItem[]> {
-    // Simulate API call or data loading
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    const items: ListItem[] = [
-        {
-            id: "1",
-            title: "Example Item 1",
-            subtitle: "This is an example item",
-            icon: "📄"
-        },
-        {
-            id: "2", 
-            title: "Example Item 2",
-            subtitle: "Another example item",
-            icon: "📋"
-        },
-        {
-            id: "3",
-            title: "Windows Specific Item",
-            subtitle: `Setting: ${preferences.exampleSetting}`,
-            icon: "🪟"
-        },
-        {
-            id: "4",
-            title: "Windows Paths",
-            subtitle: `User Profile: ${getWindowsPaths().userProfile}`,
-            icon: "📁"
-        }
-    ]
+  const { stats, updateConfig } = useTimerStore()
 
-    // Filter based on preferences if feature is enabled
-    if (preferences.enableFeature) {
-        items.push({
-            id: "4",
-            title: "Feature Enabled Item",
-            subtitle: "This item only shows when the feature is enabled",
-            icon: "✨"
-        })
+  // Update config from preferences on load
+  React.useEffect(() => {
+    const newConfig: TimerConfig = {
+      workDuration: parseInt(preferences.workDuration) || 25,
+      shortBreakDuration: parseInt(preferences.shortBreakDuration) || 5,
+      longBreakDuration: parseInt(preferences.longBreakDuration) || 15,
+      longBreakInterval: parseInt(preferences.longBreakInterval) || 4,
+      enableNotifications: preferences.enableNotifications ?? true,
+      autoStartBreaks: preferences.autoStartBreaks ?? false,
+      autoStartWork: preferences.autoStartWork ?? false
+    }
+    updateConfig(newConfig)
+  }, [preferences])
+
+  const handleStartWork = () => {
+    if (taskName.trim()) {
+      startWorkSession(taskName.trim(), projectName.trim() || undefined)
+      setTaskName("")
+      setProjectName("")
+      setShowTaskForm(false)
+    } else {
+      startWorkSession()
+    }
+  }
+
+  const handleStartBreak = (isLong: boolean = false) => {
+    startBreakSession(isLong)
+  }
+
+  const getTimerDisplay = () => {
+    if (!currentSession) {
+      return {
+        title: "🍅 Pomodoro Timer",
+        subtitle: "Ready to start your next session",
+        progress: 0
+      }
     }
 
-    await showToast({
-        style: Toast.Style.Success,
-        title: "Data loaded",
-        message: `Found ${items.length} items`,
-    })
+    const progress = getProgressPercentage(timeRemaining, currentSession.duration)
+    const sessionIcon = getSessionTypeIcon(currentSession.type)
+    const sessionLabel = getSessionTypeLabel(currentSession.type)
 
-    return items
-}
-
-async function handleItemAction(item: ListItem) {
-    try {
-        // Example action - you can replace this with your own logic
-        await showToast({
-            style: Toast.Style.Success,
-            title: "Action completed",
-            message: `Performed action on ${item.title}`,
-        })
-    } catch (error) {
-        await showToast({
-            style: Toast.Style.Failure,
-            title: "Action failed",
-            message: error instanceof Error ? error.message : "Unknown error occurred",
-        })
+    return {
+      title: `${sessionIcon} ${sessionLabel}`,
+      subtitle: `${formatTime(timeRemaining)} remaining`,
+      progress
     }
-}
+  }
 
-export default function Command() {
-    const [searchText, setSearchText] = useState("")
-    const { data: items, isLoading, revalidate } = useCachedPromise(loadData)
+  const timerDisplay = getTimerDisplay()
 
-    // Filter items based on search text
-    const filteredItems = items?.filter(item => 
-        item.title.toLowerCase().includes(searchText.toLowerCase()) ||
-        item.subtitle?.toLowerCase().includes(searchText.toLowerCase())
-    ) || []
+  const markdown = `
+# ${timerDisplay.title}
 
+## ${timerDisplay.subtitle}
+
+${currentSession ? `
+### Session Details
+- **Type**: ${getSessionTypeLabel(currentSession.type)}
+- **Duration**: ${formatTime(currentSession.duration)}
+- **Progress**: ${Math.round(timerDisplay.progress)}%
+${currentSession.taskName ? `- **Task**: ${currentSession.taskName}` : ''}
+${currentSession.projectName ? `- **Project**: ${currentSession.projectName}` : ''}
+
+### Progress Bar
+${'█'.repeat(Math.floor(timerDisplay.progress / 5))}${'░'.repeat(20 - Math.floor(timerDisplay.progress / 5))} ${Math.round(timerDisplay.progress)}%
+` : ''}
+
+### Today's Progress
+${formatSessionSummary(
+  stats.todaysSessions,
+  stats.totalWorkTime,
+  stats.todaysSessions
+)}
+
+### Session Statistics
+- **Total Sessions**: ${stats.totalSessions}
+- **Completed**: ${stats.completedSessions}
+- **Work Sessions Today**: ${sessionCount}
+- **Current Streak**: ${stats.streakCount} days
+
+---
+
+${isIdle ? '**Ready to start your next Pomodoro session!**' : ''}
+${isRunning ? '**Stay focused! You\'re doing great!**' : ''}
+${isPaused ? '**Timer paused. Resume when you\'re ready.**' : ''}
+  `
+
+  if (showTaskForm) {
     return (
-        <List 
-            isLoading={isLoading} 
-            searchBarPlaceholder="Search items..."
-            onSearchTextChange={setSearchText}
-            searchText={searchText}
-        >
-            {filteredItems.map((item: ListItem) => (
-                <List.Item
-                    key={item.id}
-                    title={item.title}
-                    subtitle={item.subtitle}
-                    icon={item.icon}
-                    actions={
-                        <ActionPanel>
-                            <Action 
-                                title="Perform Action" 
-                                icon={Icon.Checkmark} 
-                                onAction={() => handleItemAction(item)} 
-                            />
-                            <Action
-                                title="Reload Data"
-                                icon={Icon.ArrowClockwise}
-                                onAction={revalidate}
-                                shortcut={{ modifiers: ["cmd"], key: "r" }}
-                            />
-                            <Action.CopyToClipboard
-                                title="Copy Title"
-                                content={item.title}
-                                shortcut={{ modifiers: ["cmd"], key: "c" }}
-                            />
-                        </ActionPanel>
-                    }
-                />
-            ))}
-            {!isLoading && filteredItems.length === 0 && (
-                <List.EmptyView
-                    title="No items found"
-                    description={searchText ? "No items match your search." : "No items available."}
-                    actions={
-                        <ActionPanel>
-                            <Action 
-                                title="Reload Data" 
-                                icon={Icon.ArrowClockwise} 
-                                onAction={revalidate} 
-                            />
-                        </ActionPanel>
-                    }
-                />
-            )}
-        </List>
+      <Form
+        actions={
+          <ActionPanel>
+            <Action
+              title="Start Work Session"
+              icon={Icon.Play}
+              onAction={handleStartWork}
+            />
+            <Action
+              title="Start Without Task"
+              icon={Icon.Play}
+              onAction={() => {
+                startWorkSession()
+                setShowTaskForm(false)
+              }}
+            />
+            <Action
+              title="Cancel"
+              icon={Icon.XMarkCircle}
+              onAction={() => setShowTaskForm(false)}
+            />
+          </ActionPanel>
+        }
+      >
+        <Form.TextField
+          id="taskName"
+          title="Task Name"
+          placeholder="What are you working on?"
+          value={taskName}
+          onChange={setTaskName}
+        />
+        <Form.TextField
+          id="projectName"
+          title="Project (Optional)"
+          placeholder="Project or category"
+          value={projectName}
+          onChange={setProjectName}
+        />
+      </Form>
     )
+  }
+
+  return (
+    <Detail
+      markdown={markdown}
+      actions={
+        <ActionPanel>
+          <ActionPanel.Section title="Timer Controls">
+            {isIdle && (
+              <>
+                <Action
+                  title="Start Work Session"
+                  icon={Icon.Play}
+                  onAction={() => setShowTaskForm(true)}
+                  shortcut={{ modifiers: ["cmd"], key: "enter" }}
+                />
+                <Action
+                  title="Quick Start Work"
+                  icon={Icon.Play}
+                  onAction={() => startWorkSession()}
+                  shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
+                />
+                <Action
+                  title="Start Short Break"
+                  icon={Icon.Pause}
+                  onAction={() => handleStartBreak(false)}
+                />
+                <Action
+                  title="Start Long Break"
+                  icon={Icon.Pause}
+                  onAction={() => handleStartBreak(true)}
+                />
+              </>
+            )}
+
+            {isRunning && (
+              <>
+                <Action
+                  title="Pause Timer"
+                  icon={Icon.Pause}
+                  onAction={pause}
+                  shortcut={{ modifiers: ["cmd"], key: "p" }}
+                />
+                <Action
+                  title="Stop Timer"
+                  icon={Icon.Stop}
+                  onAction={stop}
+                  shortcut={{ modifiers: ["cmd"], key: "s" }}
+                />
+                <Action
+                  title="Skip Session"
+                  icon={Icon.Forward}
+                  onAction={skip}
+                  shortcut={{ modifiers: ["cmd"], key: "n" }}
+                />
+              </>
+            )}
+
+            {isPaused && (
+              <>
+                <Action
+                  title="Resume Timer"
+                  icon={Icon.Play}
+                  onAction={resume}
+                  shortcut={{ modifiers: ["cmd"], key: "r" }}
+                />
+                <Action
+                  title="Stop Timer"
+                  icon={Icon.Stop}
+                  onAction={stop}
+                  shortcut={{ modifiers: ["cmd"], key: "s" }}
+                />
+                <Action
+                  title="Reset Timer"
+                  icon={Icon.ArrowClockwise}
+                  onAction={reset}
+                />
+              </>
+            )}
+          </ActionPanel.Section>
+
+          <ActionPanel.Section title="Quick Actions">
+            {currentSession?.type === SessionType.WORK && (
+              <Action
+                title="Start Next Break"
+                icon={Icon.Pause}
+                onAction={() => {
+                  const nextBreakType = getNextSessionType()
+                  handleStartBreak(nextBreakType === SessionType.LONG_BREAK)
+                }}
+              />
+            )}
+
+            {currentSession?.type !== SessionType.WORK && (
+              <Action
+                title="Start Work Session"
+                icon={Icon.Hammer}
+                onAction={() => startWorkSession()}
+              />
+            )}
+          </ActionPanel.Section>
+        </ActionPanel>
+      }
+    />
+  )
 }
