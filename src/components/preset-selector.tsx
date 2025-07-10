@@ -1,59 +1,67 @@
-import { 
-  Action, 
-  ActionPanel, 
-  Icon, 
+import {
+  Action,
+  ActionPanel,
+  Icon,
   List,
   showToast,
-  Toast
-} from "@raycast/api"
-import React from "react"
-import { useTimerStore } from "../store/timer-store"
-import { preferencesService, TimerPreset } from "../services/preferences-service"
-import { formatDuration } from "../utils/helpers"
+  Toast,
+} from "@raycast/api";
+import React from "react";
+import { useTimerStore } from "../store/timer-store";
+import {
+  preferencesService,
+  TimerPreset,
+} from "../services/preferences-service";
+import { formatDuration } from "../utils/helpers";
 
 interface PresetSelectorProps {
-  onPresetSelected?: (preset: TimerPreset) => void
-  onBack?: () => void
+  onPresetSelected?: (preset: TimerPreset) => void;
+  onBack?: () => void;
 }
 
-export function PresetSelector({ onPresetSelected, onBack }: PresetSelectorProps) {
-  const { updateConfig, stats } = useTimerStore()
-  const presets = preferencesService.getPresets()
+export function PresetSelector({
+  onPresetSelected,
+  onBack,
+}: PresetSelectorProps) {
+  const { updateConfig, stats } = useTimerStore();
+  const presets = preferencesService.getPresets();
 
   const handlePresetSelect = async (preset: TimerPreset) => {
     try {
-      updateConfig(preset.config)
-      
+      updateConfig(preset.config);
+
       await showToast({
         style: Toast.Style.Success,
         title: "Preset Applied",
-        message: `Switched to ${preset.name} configuration`
-      })
+        message: `Switched to ${preset.name} configuration`,
+      });
 
       if (onPresetSelected) {
-        onPresetSelected(preset)
+        onPresetSelected(preset);
       }
     } catch (error) {
       await showToast({
         style: Toast.Style.Failure,
         title: "Failed to Apply Preset",
-        message: error instanceof Error ? error.message : "Unknown error occurred"
-      })
+        message:
+          error instanceof Error ? error.message : "Unknown error occurred",
+      });
     }
-  }
+  };
 
   const getRecommendedPreset = () => {
-    const avgSessionLength = stats.completedSessions > 0 
-      ? stats.totalWorkTime / stats.completedSessions / 60 
-      : 25
-    
-    return preferencesService.getRecommendedPresetForUser(
-      stats.completedSessions, 
-      avgSessionLength
-    )
-  }
+    const avgSessionLength =
+      stats.completedSessions > 0
+        ? stats.totalWorkTime / stats.completedSessions / 60
+        : 25;
 
-  const recommendedPreset = getRecommendedPreset()
+    return preferencesService.getRecommendedPresetForUser(
+      stats.completedSessions,
+      avgSessionLength
+    );
+  };
+
+  const recommendedPreset = getRecommendedPreset();
 
   return (
     <List
@@ -61,11 +69,7 @@ export function PresetSelector({ onPresetSelected, onBack }: PresetSelectorProps
       actions={
         onBack ? (
           <ActionPanel>
-            <Action
-              title="Back"
-              icon={Icon.ArrowLeft}
-              onAction={onBack}
-            />
+            <Action title="Back" icon={Icon.ArrowLeft} onAction={onBack} />
           </ActionPanel>
         ) : undefined
       }
@@ -74,9 +78,13 @@ export function PresetSelector({ onPresetSelected, onBack }: PresetSelectorProps
         <List.Item
           title={recommendedPreset.name}
           subtitle={recommendedPreset.description}
-          icon="⭐"
+          icon={Icon.Star}
           accessories={[
-            { text: preferencesService.getConfigSummary(recommendedPreset.config) }
+            {
+              text: preferencesService.getConfigSummary(
+                recommendedPreset.config
+              ),
+            },
           ]}
           actions={
             <ActionPanel>
@@ -92,16 +100,14 @@ export function PresetSelector({ onPresetSelected, onBack }: PresetSelectorProps
                   showToast({
                     style: Toast.Style.Success,
                     title: recommendedPreset.name,
-                    message: preferencesService.getConfigSummary(recommendedPreset.config)
-                  })
+                    message: preferencesService.getConfigSummary(
+                      recommendedPreset.config
+                    ),
+                  });
                 }}
               />
               {onBack && (
-                <Action
-                  title="Back"
-                  icon={Icon.ArrowLeft}
-                  onAction={onBack}
-                />
+                <Action title="Back" icon={Icon.ArrowLeft} onAction={onBack} />
               )}
             </ActionPanel>
           }
@@ -116,7 +122,7 @@ export function PresetSelector({ onPresetSelected, onBack }: PresetSelectorProps
             subtitle={preset.description}
             icon={getPresetIcon(preset.id)}
             accessories={[
-              { text: preferencesService.getConfigSummary(preset.config) }
+              { text: preferencesService.getConfigSummary(preset.config) },
             ]}
             actions={
               <ActionPanel>
@@ -143,27 +149,27 @@ export function PresetSelector({ onPresetSelected, onBack }: PresetSelectorProps
         ))}
       </List.Section>
     </List>
-  )
+  );
 }
 
-function getPresetIcon(presetId: string): string {
-  const icons: Record<string, string> = {
-    'classic': '🍅',
-    'extended': '🎯',
-    'short-burst': '⚡',
-    'study-session': '📚',
-    'creative-flow': '🎨'
-  }
-  return icons[presetId] || '⏱️'
+function getPresetIcon(presetId: string): Icon {
+  const icons: Record<string, Icon> = {
+    classic: Icon.Clock,
+    extended: Icon.BullsEye,
+    "short-burst": Icon.Bolt,
+    "study-session": Icon.Book,
+    "creative-flow": Icon.Brush,
+  };
+  return icons[presetId] || Icon.Clock;
 }
 
 async function showPresetDetails(preset: TimerPreset) {
-  const tips = preferencesService.getProductivityTips(preset.config)
-  const tipsText = tips.length > 0 ? `\n\nTips:\n${tips.join('\n')}` : ''
-  
+  const tips = preferencesService.getProductivityTips(preset.config);
+  const tipsText = tips.length > 0 ? `\n\nTips:\n${tips.join("\n")}` : "";
+
   await showToast({
     style: Toast.Style.Success,
     title: preset.name,
-    message: `${preset.description}\n\nConfiguration:\n${preferencesService.getConfigSummary(preset.config)}${tipsText}`
-  })
+    message: `${preset.description}\n\nConfiguration:\n${preferencesService.getConfigSummary(preset.config)}${tipsText}`,
+  });
 }

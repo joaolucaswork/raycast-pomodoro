@@ -1,4 +1,9 @@
-import { TimerState, SessionType, TimerSession } from "../types/timer";
+import {
+  TimerState,
+  SessionType,
+  TimerSession,
+  SessionEndReason,
+} from "../types/timer";
 import { useTimerStore } from "../store/timer-store";
 import { storageAdapter } from "../utils/storage-adapter";
 
@@ -22,9 +27,15 @@ export class BackgroundTimerService {
   /**
    * Starts a timer session with timestamp-based tracking
    */
-  public async startTimer(type: SessionType, taskName?: string, projectName?: string): Promise<void> {
+  public async startTimer(
+    type: SessionType,
+    taskName?: string,
+    projectName?: string,
+    tags?: string[],
+    taskIcon?: import("@raycast/api").Icon
+  ): Promise<void> {
     const { config } = useTimerStore.getState();
-    
+
     let duration: number;
     switch (type) {
       case SessionType.WORK:
@@ -52,6 +63,8 @@ export class BackgroundTimerService {
       completed: false,
       taskName,
       projectName,
+      tags: tags || [],
+      taskIcon,
     };
 
     // Store background timer state
@@ -82,7 +95,10 @@ export class BackgroundTimerService {
     }
 
     const now = Date.now();
-    const timeRemaining = Math.max(0, Math.floor((backgroundState.endTimestamp - now) / 1000));
+    const timeRemaining = Math.max(
+      0,
+      Math.floor((backgroundState.endTimestamp - now) / 1000)
+    );
 
     // Update background state
     const updatedState = {
@@ -136,13 +152,11 @@ export class BackgroundTimerService {
    * Stops the current timer
    */
   public async stopTimer(): Promise<void> {
-    await this.clearBackgroundState();
+    // Call the store's stopTimer method to properly save session to history
+    useTimerStore.getState().stopTimer();
 
-    useTimerStore.setState({
-      currentSession: null,
-      state: TimerState.IDLE,
-      timeRemaining: 0,
-    });
+    // Clear background state
+    await this.clearBackgroundState();
   }
 
   /**
@@ -151,6 +165,7 @@ export class BackgroundTimerService {
    */
   public async updateTimerState(): Promise<void> {
     const backgroundState = await this.loadBackgroundState();
+
     if (!backgroundState) {
       // No active timer
       useTimerStore.setState({
@@ -175,7 +190,10 @@ export class BackgroundTimerService {
     }
 
     if (backgroundState.state === TimerState.RUNNING) {
-      const timeRemaining = Math.max(0, Math.floor((backgroundState.endTimestamp - now) / 1000));
+      const timeRemaining = Math.max(
+        0,
+        Math.floor((backgroundState.endTimestamp - now) / 1000)
+      );
 
       if (timeRemaining <= 0) {
         // Timer completed
@@ -201,15 +219,66 @@ export class BackgroundTimerService {
       ...session,
       endTime: new Date(),
       completed: true,
+      endReason: SessionEndReason.COMPLETED,
     };
 
     const newHistory = [...history, completedSession];
-    const newSessionCount = session.type === SessionType.WORK 
-      ? sessionCount + 1 
-      : sessionCount;
+    const newSessionCount =
+      session.type === SessionType.WORK ? sessionCount + 1 : sessionCount;
 
     // Clear background state
     await this.clearBackgroundState();
+
+    // Calculate updated stats
+    const calculateStats = (history: TimerSession[]) => {
+      const completedSessions = history.filter((s) => s.completed);
+      const workSessions = completedSessions.filter(
+        (s) => s.type === SessionType.WORK
+      );
+      const breakSessions = completedSessions.filter(
+        (s) => s.type !== SessionType.WORK
+      );
+
+      const totalWorkTime = workSessions.reduce(
+        (acc, session) => acc + session.duration,
+        0
+      );
+      const totalBreakTime = breakSessions.reduce(
+        (acc, session) => acc + session.duration,
+        0
+      );
+
+      const todaysSessions = completedSessions.filter((s) => {
+        const sessionDate = new Date(s.startTime);
+        const today = new Date();
+        return sessionDate.toDateString() === today.toDateString();
+      }).length;
+
+      const thisWeek = new Date();
+      thisWeek.setDate(thisWeek.getDate() - thisWeek.getDay());
+      const weekSessions = completedSessions.filter((s) => {
+        const sessionDate = new Date(s.startTime);
+        return sessionDate >= thisWeek;
+      }).length;
+
+      const thisMonth = new Date();
+      thisMonth.setDate(1);
+      const monthSessions = completedSessions.filter((s) => {
+        const sessionDate = new Date(s.startTime);
+        return sessionDate >= thisMonth;
+      }).length;
+
+      return {
+        totalSessions: history.length,
+        completedSessions: completedSessions.length,
+        totalWorkTime,
+        totalBreakTime,
+        streakCount: 0, // Simplified for now
+        todaysSessions,
+        weekSessions,
+        monthSessions,
+      };
+    };
 
     // Update store
     useTimerStore.setState({
@@ -218,6 +287,7 @@ export class BackgroundTimerService {
       timeRemaining: 0,
       history: newHistory,
       sessionCount: newSessionCount,
+      stats: calculateStats(newHistory),
     });
 
     // Auto-transition to idle after a short delay
