@@ -1,9 +1,9 @@
 import { useEffect, useRef } from "react";
-import { showToast, Toast } from "@raycast/api";
 import { useTimerStore } from "../store/timer-store";
 import { TimerState, SessionType } from "../types/timer";
 import { getMotivationalMessage } from "../utils/helpers";
 import { notificationService } from "../services/notification-service";
+import { backgroundTimerService } from "../services/background-timer-service";
 
 export function useTimer() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -21,13 +21,32 @@ export function useTimer() {
     resetTimer,
     skipSession,
     getNextSessionType,
+    updateCurrentSessionName,
+    updateCurrentSessionIcon,
+    addTagToCurrentSession,
+    removeTagFromCurrentSession,
   } = useTimerStore();
 
   // Timer countdown logic
   useEffect(() => {
-    if (state === TimerState.RUNNING && timeRemaining > 0) {
+    if (state === TimerState.RUNNING) {
+      // Clear any existing interval
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+
+      // Start new interval
       intervalRef.current = setInterval(() => {
         useTimerStore.setState((prevState: any) => {
+          // Only decrement if still running and has time remaining
+          if (
+            prevState.state !== TimerState.RUNNING ||
+            prevState.timeRemaining <= 0
+          ) {
+            return prevState;
+          }
+
           const newTimeRemaining = prevState.timeRemaining - 1;
 
           if (newTimeRemaining <= 0) {
@@ -47,6 +66,7 @@ export function useTimer() {
         });
       }, 1000);
     } else {
+      // Clear interval when not running
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -59,7 +79,7 @@ export function useTimer() {
         intervalRef.current = null;
       }
     };
-  }, [state, timeRemaining]);
+  }, [state]); // Only depend on state, not timeRemaining
 
   const handleTimerComplete = async () => {
     if (!currentSession) return;
@@ -134,11 +154,12 @@ export function useTimer() {
 
       setTimeout(() => {
         startTimer(nextSessionType);
-        showToast({
-          style: Toast.Style.Success,
-          title: "Auto-starting next session",
-          message: getMotivationalMessage(nextSessionType, newSessionCount),
-        });
+        // Toast disabled for Windows compatibility
+        // showToast({
+        //   style: Toast.Style.Success,
+        //   title: "Auto-starting next session",
+        //   message: getMotivationalMessage(nextSessionType, newSessionCount),
+        // });
       }, 2000); // 2 second delay before auto-start
     }
   };
@@ -151,60 +172,52 @@ export function useTimer() {
     }
   };
 
-  const startWorkSession = async (taskName?: string, projectName?: string) => {
-    startTimer(SessionType.WORK, taskName, projectName);
+  const startWorkSession = async (
+    taskName?: string,
+    projectName?: string,
+    tags?: string[],
+    taskIcon?: import("@raycast/api").Icon
+  ) => {
+    await backgroundTimerService.startTimer(
+      SessionType.WORK,
+      taskName,
+      projectName,
+      tags,
+      taskIcon
+    );
     await notificationService.notifySessionStart(SessionType.WORK);
   };
 
   const startBreakSession = async (isLong: boolean = false) => {
     const breakType = isLong ? SessionType.LONG_BREAK : SessionType.SHORT_BREAK;
-    startTimer(breakType);
+    await backgroundTimerService.startTimer(breakType);
     await notificationService.notifySessionStart(breakType);
   };
 
-  const handlePause = () => {
-    pauseTimer();
-    showToast({
-      style: Toast.Style.Success,
-      title: "Timer paused",
-      message: "Take your time, resume when ready",
-    });
+  const handlePause = async () => {
+    await backgroundTimerService.pauseTimer();
+    // Remove toast to prevent focus loss
   };
 
-  const handleResume = () => {
-    resumeTimer();
-    showToast({
-      style: Toast.Style.Success,
-      title: "Timer resumed",
-      message: "Back to focus mode!",
-    });
+  const handleResume = async () => {
+    await backgroundTimerService.resumeTimer();
+    // Remove toast to prevent focus loss
   };
 
-  const handleStop = () => {
-    stopTimer();
-    showToast({
-      style: Toast.Style.Success,
-      title: "Timer stopped",
-      message: "Session ended",
-    });
+  const handleStop = async () => {
+    await backgroundTimerService.stopTimer();
+    // Remove toast to prevent focus loss
   };
 
-  const handleReset = () => {
-    resetTimer();
-    showToast({
-      style: Toast.Style.Success,
-      title: "Timer reset",
-      message: "Ready to start fresh",
-    });
+  const handleReset = async () => {
+    await backgroundTimerService.stopTimer();
+    // Remove toast to prevent focus loss
   };
 
-  const handleSkip = () => {
+  const handleSkip = async () => {
+    // Use skipSession to properly mark as skipped in history
     skipSession();
-    showToast({
-      style: Toast.Style.Success,
-      title: "Session skipped",
-      message: "Moving on to the next one",
-    });
+    // Remove toast to prevent focus loss
   };
 
   return {
@@ -223,6 +236,12 @@ export function useTimer() {
     stop: handleStop,
     reset: handleReset,
     skip: handleSkip,
+
+    // Real-time session updates
+    updateCurrentSessionName,
+    updateCurrentSessionIcon,
+    addTagToCurrentSession,
+    removeTagFromCurrentSession,
 
     // Utilities
     getNextSessionType,

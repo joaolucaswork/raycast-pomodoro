@@ -2,306 +2,1400 @@ import {
   Action,
   ActionPanel,
   Icon,
-  Detail,
   getPreferenceValues,
-  Form
-} from "@raycast/api"
-import React, { useState } from "react"
-import { useTimer } from "./hooks/useTimer"
-import { useTimerStore } from "./store/timer-store"
-import { backgroundTimerService } from "./services/background-timer-service"
+  List,
+  Color,
+  confirmAlert,
+  Alert,
+} from "@raycast/api";
+import React, { useState, useEffect, useCallback } from "react";
+import { useTimer } from "./hooks/useTimer";
+import { useTimerStore } from "./store/timer-store";
+import { backgroundTimerService } from "./services/background-timer-service";
+import { applicationTrackingService } from "./services/application-tracking-service";
 import {
   formatTime,
   getSessionTypeLabel,
-  getSessionTypeIcon,
   getProgressPercentage,
-  formatSessionSummary
-} from "./utils/helpers"
-import { SessionType, TimerConfig } from "./types/timer"
+} from "./utils/helpers";
+import { SessionType, TimerConfig } from "./types/timer";
+import { ACTION_ICONS, SHORTCUTS } from "./constants/design-tokens";
 
 interface Preferences {
-  workDuration: string
-  shortBreakDuration: string
-  longBreakDuration: string
-  longBreakInterval: string
-  enableNotifications: boolean
-  autoStartBreaks: boolean
-  autoStartWork: boolean
+  workDuration: string;
+  shortBreakDuration: string;
+  longBreakDuration: string;
+  longBreakInterval: string;
+  enableNotifications: boolean;
+  autoStartBreaks: boolean;
+  autoStartWork: boolean;
+  enableApplicationTracking: boolean;
+  trackingInterval: string;
 }
 
-export default function PomodoroTimer() {
-  const preferences: Preferences = getPreferenceValues()
-  const [taskName, setTaskName] = useState("")
-  const [projectName, setProjectName] = useState("")
-  const [showTaskForm, setShowTaskForm] = useState(false)
+export default function FocusTimer() {
+  const preferences: Preferences = getPreferenceValues();
+  const [searchText, setSearchText] = useState<string>("");
+  const [selectedTaskIcon, setSelectedTaskIcon] = useState<Icon | undefined>(
+    undefined
+  );
+  const [targetRounds, setTargetRounds] = useState("1");
+  const [currentAppName, setCurrentAppName] = useState<string | null>(null);
+  const [isAppTrackingActive, setIsAppTrackingActive] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const {
     timeRemaining,
     currentSession,
-    sessionCount,
     startWorkSession,
-    startBreakSession,
     pause,
     resume,
     stop,
-    reset,
-    skip,
-    getNextSessionType,
     isRunning,
     isPaused,
-    isIdle
-  } = useTimer()
+    isIdle,
+    sessionCount,
+    updateCurrentSessionIcon,
+    addTagToCurrentSession,
+  } = useTimer();
 
-  const { stats, updateConfig } = useTimerStore()
+  const {
+    updateConfig,
+    addCustomTag,
+    customTags,
+    updateTagConfig,
+    deleteCustomTag,
+    getTagConfig,
+    clearAllTags,
+    clearAllHistory,
+  } = useTimerStore();
 
   // Memoize config to prevent unnecessary updates
-  const configFromPreferences = React.useMemo((): TimerConfig => ({
-    workDuration: parseInt(preferences.workDuration) || 25,
-    shortBreakDuration: parseInt(preferences.shortBreakDuration) || 5,
-    longBreakDuration: parseInt(preferences.longBreakDuration) || 15,
-    longBreakInterval: parseInt(preferences.longBreakInterval) || 4,
-    enableNotifications: preferences.enableNotifications ?? true,
-    autoStartBreaks: preferences.autoStartBreaks ?? false,
-    autoStartWork: preferences.autoStartWork ?? false
-  }), [
-    preferences.workDuration,
-    preferences.shortBreakDuration,
-    preferences.longBreakDuration,
-    preferences.longBreakInterval,
-    preferences.enableNotifications,
-    preferences.autoStartBreaks,
-    preferences.autoStartWork
-  ])
+  const configFromPreferences = React.useMemo(
+    (): TimerConfig => ({
+      workDuration: parseInt(preferences.workDuration) || 25,
+      shortBreakDuration: parseInt(preferences.shortBreakDuration) || 5,
+      longBreakDuration: parseInt(preferences.longBreakDuration) || 15,
+      longBreakInterval: parseInt(preferences.longBreakInterval) || 4,
+      enableNotifications: preferences.enableNotifications ?? true,
+      autoStartBreaks: preferences.autoStartBreaks ?? false,
+      autoStartWork: preferences.autoStartWork ?? false,
+      enableApplicationTracking: preferences.enableApplicationTracking ?? true,
+      trackingInterval: parseInt(preferences.trackingInterval) || 5,
+    }),
+    [
+      preferences.workDuration,
+      preferences.shortBreakDuration,
+      preferences.longBreakDuration,
+      preferences.longBreakInterval,
+      preferences.enableNotifications,
+      preferences.autoStartBreaks,
+      preferences.autoStartWork,
+      preferences.enableApplicationTracking,
+      preferences.trackingInterval,
+    ]
+  );
 
   // Update config from preferences on load
   React.useEffect(() => {
-    updateConfig(configFromPreferences)
-  }, [configFromPreferences])
+    updateConfig(configFromPreferences);
+  }, [configFromPreferences]);
 
-  // Sync timer state on component mount
+  // Sync timer state on component mount only
   React.useEffect(() => {
-    backgroundTimerService.updateTimerState()
-  }, [])
+    const initializeTimer = async () => {
+      try {
+        await backgroundTimerService.updateTimerState();
+        setIsInitialized(true);
+      } catch (error) {
+        console.error("Failed to initialize timer state:", error);
+        setIsInitialized(true); // Still mark as initialized to show the UI
+      }
+    };
 
-  const handleStartWork = () => {
-    if (taskName.trim()) {
-      startWorkSession(taskName.trim(), projectName.trim() || undefined)
-      setTaskName("")
-      setProjectName("")
-      setShowTaskForm(false)
-    } else {
-      startWorkSession()
+    initializeTimer();
+  }, []);
+
+  // Update current application display when tracking is active
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+
+    const updateCurrentApp = () => {
+      const isTracking = applicationTrackingService.isCurrentlyTracking();
+      const currentApp = applicationTrackingService.getCurrentApplication();
+
+      setIsAppTrackingActive(isTracking);
+      setCurrentAppName(currentApp?.name || null);
+    };
+
+    // Update immediately
+    updateCurrentApp();
+
+    // Update every 2 seconds when tracking is active
+    if (isRunning && currentSession?.type === SessionType.WORK) {
+      interval = setInterval(updateCurrentApp, 2000);
     }
-  }
 
-  const handleStartBreak = (isLong: boolean = false) => {
-    startBreakSession(isLong)
-  }
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [isRunning, currentSession?.type]);
+
+  // Extract tags from search text (words starting with #)
+  const extractTags = (text: string): string[] => {
+    const tagMatches = text.match(/#\w+/g);
+    return tagMatches ? tagMatches.map((tag) => tag.substring(1)) : [];
+  };
+
+  // Pre-defined custom tags with icons
+  const predefinedTags = ["work", "study", "personal"];
+
+  // Initialize predefined tags with their icons and colors on first load
+  useEffect(() => {
+    const predefinedTagConfigs = [
+      { name: "work", icon: Icon.Hammer, color: Color.Blue },
+      { name: "study", icon: Icon.Book, color: Color.Yellow },
+      { name: "personal", icon: Icon.Heart, color: Color.Green },
+    ];
+
+    predefinedTagConfigs.forEach(({ name, icon, color }) => {
+      // Only add if not already in custom tags
+      if (!customTags.includes(name)) {
+        addCustomTag(name);
+      }
+      // Always ensure the icon and color are configured
+      updateTagConfig(name, { icon, color });
+    });
+  }, []); // Run only once on mount
+
+  // Parse task name and tags from search text (without storing tags)
+  const parseSearchTextOnly = useCallback((text: string) => {
+    const taskParts = text.split("#");
+    const taskName = taskParts[0].trim();
+    const tags = extractTags(text);
+    return { taskName, tags };
+  }, []);
+
+  // Parse task name and tags from search text AND store new tags
+  const parseSearchTextAndStore = useCallback(
+    (text: string) => {
+      const { taskName, tags } = parseSearchTextOnly(text);
+
+      // Automatically add new tags to custom tags store
+      tags.forEach((tag) => {
+        const normalizedTag = tag.toLowerCase().trim();
+        if (
+          !customTags.includes(normalizedTag) &&
+          !predefinedTags.includes(normalizedTag)
+        ) {
+          addCustomTag(normalizedTag);
+        }
+      });
+
+      return { taskName, tags };
+    },
+    [customTags, addCustomTag, parseSearchTextOnly]
+  );
+
+  const handleStartWork = useCallback(async () => {
+    // Parse task name and tags from search text AND store new tags
+    const { taskName, tags } = parseSearchTextAndStore(searchText);
+
+    // Task name is now optional - use default if empty
+    const finalTaskName = taskName || "Focus Session";
+
+    // Basic validation - limit task name length
+    const limitedTaskName =
+      finalTaskName.length > 100
+        ? finalTaskName.substring(0, 100)
+        : finalTaskName;
+
+    // Determine the icon to use: selectedTaskIcon takes priority, then tag icons
+    let iconToUse = selectedTaskIcon;
+    if (!iconToUse && tags.length > 0) {
+      // Check if any tag has a configured icon (prioritize first tag with icon)
+      for (const tag of tags) {
+        const tagConfig = getTagConfig(tag);
+        if (tagConfig && tagConfig.icon) {
+          iconToUse = tagConfig.icon;
+          break;
+        }
+      }
+    }
+
+    startWorkSession(limitedTaskName, undefined, tags, iconToUse);
+
+    // Note: We don't reset form state to maintain user's setup for next round
+  }, [
+    searchText,
+    startWorkSession,
+    parseSearchTextAndStore,
+    selectedTaskIcon,
+    getTagConfig,
+  ]);
+
+  // Get tag color based on tag name (with custom config support)
+  const getTagColor = (tag: string): Color => {
+    // Check if there's a custom configuration for this tag
+    const customConfig = getTagConfig(tag);
+    if (customConfig) {
+      return customConfig.color;
+    }
+
+    // Fall back to default color mapping for predefined tags
+    const colorMap: Record<string, Color> = {
+      work: Color.Blue,
+      study: Color.Yellow,
+      personal: Color.Green,
+    };
+    return colorMap[tag.toLowerCase()] || Color.Blue;
+  };
+
+  // Get tag icon based on tag name (with custom config support)
+  const getTagIcon = (tag: string): Icon => {
+    // Check if there's a custom configuration for this tag
+    const customConfig = getTagConfig(tag);
+    if (customConfig && customConfig.icon) {
+      return customConfig.icon;
+    }
+
+    // Fall back to generic tag icon
+    return Icon.Tag;
+  };
 
   const getTimerDisplay = () => {
     if (!currentSession) {
       return {
-        title: "🍅 Pomodoro Timer",
-        subtitle: "Ready to start your next session",
-        progress: 0
-      }
+        title: "Focus Timer",
+        subtitle: "Ready to start",
+        progress: 0,
+        timeDisplay: "00:00",
+        nextBreakTime: null,
+      };
     }
 
-    const progress = getProgressPercentage(timeRemaining, currentSession.duration)
-    const sessionIcon = getSessionTypeIcon(currentSession.type)
-    const sessionLabel = getSessionTypeLabel(currentSession.type)
+    const progress = getProgressPercentage(
+      timeRemaining,
+      currentSession.duration
+    );
+    const sessionLabel = getSessionTypeLabel(currentSession.type);
+    const timeDisplay = formatTime(timeRemaining);
+
+    // Calculate next break time (actual clock time)
+    const nextBreakTime =
+      currentSession.type === SessionType.WORK
+        ? new Date(Date.now() + timeRemaining * 1000)
+        : null;
 
     return {
-      title: `${sessionIcon} ${sessionLabel}`,
-      subtitle: `${formatTime(timeRemaining)} remaining`,
-      progress
-    }
-  }
+      title: sessionLabel, // Remove icon to prevent "hammer-16" text
+      subtitle: `${timeDisplay} remaining`,
+      progress,
+      timeDisplay,
+      nextBreakTime,
+    };
+  };
 
-  const timerDisplay = getTimerDisplay()
+  const timerDisplay = getTimerDisplay();
 
-  const markdown = `
-# ${timerDisplay.title}
+  // Memoize action handlers to prevent unnecessary re-renders
+  // IMPORTANT: All hooks must be called before any conditional returns
 
-## ${timerDisplay.subtitle}
-
-${currentSession ? `
-### Session Details
-- **Type**: ${getSessionTypeLabel(currentSession.type)}
-- **Duration**: ${formatTime(currentSession.duration)}
-- **Progress**: ${Math.round(timerDisplay.progress)}%
-${currentSession.taskName ? `- **Task**: ${currentSession.taskName}` : ''}
-${currentSession.projectName ? `- **Project**: ${currentSession.projectName}` : ''}
-
-### Progress Bar
-${'█'.repeat(Math.floor(timerDisplay.progress / 5))}${'░'.repeat(20 - Math.floor(timerDisplay.progress / 5))} ${Math.round(timerDisplay.progress)}%
-` : ''}
-
-### Today's Progress
-${formatSessionSummary(
-  stats.todaysSessions,
-  stats.totalWorkTime,
-  stats.todaysSessions
-)}
-
-### Session Statistics
-- **Total Sessions**: ${stats.totalSessions}
-- **Completed**: ${stats.completedSessions}
-- **Work Sessions Today**: ${sessionCount}
-- **Current Streak**: ${stats.streakCount} days
-
----
-
-${isIdle ? '**Ready to start your next Pomodoro session!**' : ''}
-${isRunning ? '**Stay focused! You\'re doing great!**' : ''}
-${isPaused ? '**Timer paused. Resume when you\'re ready.**' : ''}
-  `
-
-  if (showTaskForm) {
+  // Show loading state only if we're not initialized AND there's no current session
+  // This prevents the loading screen from showing when there's already a timer running
+  // IMPORTANT: This conditional return comes AFTER all hooks have been called
+  if (!isInitialized && !currentSession) {
     return (
-      <Form
-        actions={
-          <ActionPanel>
-            <Action
-              title="Start Work Session"
-              icon={Icon.Play}
-              onAction={handleStartWork}
-            />
-            <Action
-              title="Start Without Task"
-              icon={Icon.Play}
-              onAction={() => {
-                startWorkSession()
-                setShowTaskForm(false)
-              }}
-            />
-            <Action
-              title="Cancel"
-              icon={Icon.XMarkCircle}
-              onAction={() => setShowTaskForm(false)}
-            />
-          </ActionPanel>
-        }
-      >
-        <Form.TextField
-          id="taskName"
-          title="Task Name"
-          placeholder="What are you working on?"
-          value={taskName}
-          onChange={setTaskName}
+      <List navigationTitle="Focus Timer" isLoading={true}>
+        <List.EmptyView
+          icon={Icon.Clock}
+          title="Initializing Focus Timer"
+          description="Setting up your productivity workspace..."
         />
-        <Form.TextField
-          id="projectName"
-          title="Project (Optional)"
-          placeholder="Project or category"
-          value={projectName}
-          onChange={setProjectName}
-        />
-      </Form>
-    )
+      </List>
+    );
   }
+
+  // Get current task info from search text (without storing tags)
+  const { taskName: currentTaskName, tags: currentTags } =
+    parseSearchTextOnly(searchText);
+
+  // Helper function to create color selection actions for a tag
+  const createTagColorActions = (tagName: string) => [
+    <Action
+      key={`${tagName}-blue`}
+      title="Blue"
+      icon={{
+        source: Icon.Circle,
+        tintColor: Color.Blue,
+      }}
+      onAction={() => {
+        // Auto-add tag if it doesn't exist
+        if (
+          !customTags.includes(tagName.toLowerCase()) &&
+          !predefinedTags.includes(tagName.toLowerCase())
+        ) {
+          addCustomTag(tagName.toLowerCase());
+        }
+        updateTagConfig(tagName.toLowerCase(), { color: Color.Blue });
+      }}
+    />,
+    <Action
+      key={`${tagName}-green`}
+      title="Green"
+      icon={{
+        source: Icon.Circle,
+        tintColor: Color.Green,
+      }}
+      onAction={() => {
+        // Auto-add tag if it doesn't exist
+        if (
+          !customTags.includes(tagName.toLowerCase()) &&
+          !predefinedTags.includes(tagName.toLowerCase())
+        ) {
+          addCustomTag(tagName.toLowerCase());
+        }
+        updateTagConfig(tagName.toLowerCase(), { color: Color.Green });
+      }}
+    />,
+    <Action
+      key={`${tagName}-red`}
+      title="Red"
+      icon={{
+        source: Icon.Circle,
+        tintColor: Color.Red,
+      }}
+      onAction={() => {
+        // Auto-add tag if it doesn't exist
+        if (
+          !customTags.includes(tagName.toLowerCase()) &&
+          !predefinedTags.includes(tagName.toLowerCase())
+        ) {
+          addCustomTag(tagName.toLowerCase());
+        }
+        updateTagConfig(tagName.toLowerCase(), { color: Color.Red });
+      }}
+    />,
+    <Action
+      key={`${tagName}-purple`}
+      title="Purple"
+      icon={{
+        source: Icon.Circle,
+        tintColor: Color.Purple,
+      }}
+      onAction={() => {
+        // Auto-add tag if it doesn't exist
+        if (
+          !customTags.includes(tagName.toLowerCase()) &&
+          !predefinedTags.includes(tagName.toLowerCase())
+        ) {
+          addCustomTag(tagName.toLowerCase());
+        }
+        updateTagConfig(tagName.toLowerCase(), { color: Color.Purple });
+      }}
+    />,
+    <Action
+      key={`${tagName}-orange`}
+      title="Orange"
+      icon={{
+        source: Icon.Circle,
+        tintColor: Color.Orange,
+      }}
+      onAction={() => {
+        // Auto-add tag if it doesn't exist
+        if (
+          !customTags.includes(tagName.toLowerCase()) &&
+          !predefinedTags.includes(tagName.toLowerCase())
+        ) {
+          addCustomTag(tagName.toLowerCase());
+        }
+        updateTagConfig(tagName.toLowerCase(), { color: Color.Orange });
+      }}
+    />,
+    <Action
+      key={`${tagName}-yellow`}
+      title="Yellow"
+      icon={{
+        source: Icon.Circle,
+        tintColor: Color.Yellow,
+      }}
+      onAction={() => {
+        // Auto-add tag if it doesn't exist
+        if (
+          !customTags.includes(tagName.toLowerCase()) &&
+          !predefinedTags.includes(tagName.toLowerCase())
+        ) {
+          addCustomTag(tagName.toLowerCase());
+        }
+        updateTagConfig(tagName.toLowerCase(), { color: Color.Yellow });
+      }}
+    />,
+  ];
 
   return (
-    <Detail
-      markdown={markdown}
-      actions={
-        <ActionPanel>
-          <ActionPanel.Section title="Timer Controls">
-            {isIdle && (
-              <>
-                <Action
-                  title="Start Work Session"
-                  icon={Icon.Play}
-                  onAction={() => setShowTaskForm(true)}
-                  shortcut={{ modifiers: ["cmd"], key: "t" }}
-                />
-                <Action
-                  title="Quick Start Work"
-                  icon={Icon.Play}
-                  onAction={() => startWorkSession()}
-                  shortcut={{ modifiers: ["cmd", "shift"], key: "enter" }}
-                />
-                <Action
-                  title="Start Short Break"
-                  icon={Icon.Pause}
-                  onAction={() => handleStartBreak(false)}
-                />
-                <Action
-                  title="Start Long Break"
-                  icon={Icon.Pause}
-                  onAction={() => handleStartBreak(true)}
-                />
-              </>
-            )}
-
-            {isRunning && (
-              <>
-                <Action
-                  title="Pause Timer"
-                  icon={Icon.Pause}
-                  onAction={pause}
-                  shortcut={{ modifiers: ["cmd"], key: "space" }}
-                />
-                <Action
-                  title="Stop Timer"
-                  icon={Icon.Stop}
-                  onAction={stop}
-                  shortcut={{ modifiers: ["cmd"], key: "s" }}
-                />
-                <Action
-                  title="Skip Session"
-                  icon={Icon.Forward}
-                  onAction={skip}
-                  shortcut={{ modifiers: ["cmd"], key: "n" }}
-                />
-              </>
-            )}
-
-            {isPaused && (
-              <>
-                <Action
-                  title="Resume Timer"
-                  icon={Icon.Play}
-                  onAction={resume}
-                  shortcut={{ modifiers: ["cmd"], key: "r" }}
-                />
-                <Action
-                  title="Stop Timer"
-                  icon={Icon.Stop}
-                  onAction={stop}
-                  shortcut={{ modifiers: ["cmd"], key: "s" }}
-                />
-                <Action
-                  title="Reset Timer"
-                  icon={Icon.ArrowClockwise}
-                  onAction={reset}
-                />
-              </>
-            )}
-          </ActionPanel.Section>
-
-          <ActionPanel.Section title="Quick Actions">
-            {currentSession?.type === SessionType.WORK && (
-              <Action
-                title="Start Next Break"
-                icon={Icon.Pause}
-                onAction={() => {
-                  const nextBreakType = getNextSessionType()
-                  handleStartBreak(nextBreakType === SessionType.LONG_BREAK)
-                }}
-              />
-            )}
-
-            {currentSession?.type !== SessionType.WORK && (
-              <Action
-                title="Start Work Session"
-                icon={Icon.Hammer}
-                onAction={() => startWorkSession()}
-              />
-            )}
-          </ActionPanel.Section>
-        </ActionPanel>
+    <List
+      navigationTitle="Focus Timer"
+      searchBarPlaceholder="Task name or # for assign/create a tag"
+      searchText={searchText}
+      onSearchTextChange={setSearchText}
+      searchBarAccessory={
+        <List.Dropdown
+          tooltip="Target Rounds"
+          value={targetRounds}
+          onChange={setTargetRounds}
+        >
+          <List.Dropdown.Item value="1" title="1 Round" />
+          <List.Dropdown.Item value="2" title="2 Rounds" />
+          <List.Dropdown.Item value="3" title="3 Rounds" />
+          <List.Dropdown.Item value="4" title="4 Rounds" />
+          <List.Dropdown.Item value="5" title="5 Rounds" />
+          <List.Dropdown.Item value="6" title="6 Rounds" />
+          <List.Dropdown.Item value="8" title="8 Rounds" />
+          <List.Dropdown.Item value="10" title="10 Rounds" />
+        </List.Dropdown>
       }
-    />
-  )
+    >
+      {currentSession ? (
+        // Active Timer Display
+        <>
+          <List.Item
+            icon={
+              currentSession.type === SessionType.WORK
+                ? currentSession.taskIcon || Icon.Hammer
+                : Icon.Pause
+            }
+            title={timerDisplay.timeDisplay}
+            subtitle={
+              currentSession.type === SessionType.WORK
+                ? `${currentSession.taskName ? `${currentSession.taskName} - ` : ""}Round ${sessionCount + 1}/${targetRounds}`
+                : `${timerDisplay.title}${currentSession.taskName ? ` • ${currentSession.taskName}` : ""}`
+            }
+            accessories={[
+              ...(currentSession.tags && currentSession.tags.length > 0
+                ? currentSession.tags.map((tag) => ({
+                    tag: { value: tag, color: getTagColor(tag) },
+                  }))
+                : []),
+              {
+                text: `${Math.round(timerDisplay.progress)}%`,
+                icon: Icon.BarChart,
+              },
+            ]}
+            actions={
+              <ActionPanel>
+                <ActionPanel.Section title="Timer Controls">
+                  {isRunning && (
+                    <>
+                      <Action
+                        title="Pause Timer"
+                        icon={ACTION_ICONS.PAUSE}
+                        onAction={pause}
+                        shortcut={SHORTCUTS.PAUSE_RESUME}
+                      />
+                      <Action
+                        title="Complete Round"
+                        icon={ACTION_ICONS.COMPLETE}
+                        onAction={stop}
+                        shortcut={SHORTCUTS.PRIMARY_ACTION}
+                      />
+                    </>
+                  )}
+
+                  {isPaused && (
+                    <Action
+                      title="Resume Timer"
+                      icon={Icon.Play}
+                      onAction={resume}
+                      shortcut={SHORTCUTS.PAUSE_RESUME}
+                    />
+                  )}
+                </ActionPanel.Section>
+
+                {/* Start New Session - Only show when user has typed something */}
+                {searchText.trim().length > 0 && (
+                  <ActionPanel.Section title="Quick Actions">
+                    <Action
+                      title="Start New Session"
+                      icon={Icon.ArrowRight}
+                      onAction={async () => {
+                        if (currentSession) {
+                          // Stop current session first if one is running
+                          stop();
+                          // Small delay to ensure state is updated
+                          await new Promise((resolve) =>
+                            setTimeout(resolve, 100)
+                          );
+                        }
+                        // Start new session with current search content
+                        handleStartWork();
+                      }}
+                      shortcut={{ modifiers: ["cmd"], key: "n" }}
+                    />
+                  </ActionPanel.Section>
+                )}
+              </ActionPanel>
+            }
+          />
+
+          {/* Session Details */}
+          <List.Section title="Session Info">
+            {timerDisplay.nextBreakTime && (
+              <List.Item
+                icon={Icon.Clock}
+                title="Next Break"
+                subtitle={timerDisplay.nextBreakTime.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+                accessories={[{ text: "Scheduled" }]}
+              />
+            )}
+
+            {currentSession.taskName && (
+              <List.Item
+                icon={Icon.Document}
+                title="Current Task"
+                subtitle={currentSession.taskName}
+                accessories={[
+                  ...(currentSession.projectName
+                    ? [{ text: currentSession.projectName }]
+                    : []),
+                ]}
+                actions={
+                  <ActionPanel>
+                    <ActionPanel.Section title="Modify Current Task">
+                      {/* Add Pre-created Tags */}
+                      {customTags.length > 0 && (
+                        <ActionPanel.Submenu
+                          title="Add Tag to Current Task"
+                          icon={Icon.Tag}
+                        >
+                          {customTags
+                            .filter((tag) => {
+                              // Only show tags that aren't already added to current session
+                              const currentTags = currentSession?.tags || [];
+                              return !currentTags.includes(tag.toLowerCase());
+                            })
+                            .map((tag) => (
+                              <Action
+                                key={`add-tag-${tag}`}
+                                title={`Add #${tag}`}
+                                icon={{
+                                  source: getTagIcon(tag),
+                                  tintColor: getTagColor(tag),
+                                }}
+                                onAction={() => {
+                                  addTagToCurrentSession(tag);
+                                }}
+                              />
+                            ))}
+                          {customTags.filter((tag) => {
+                            const currentTags = currentSession?.tags || [];
+                            return !currentTags.includes(tag.toLowerCase());
+                          }).length === 0 && (
+                            <Action
+                              title="All tags already added"
+                              icon={Icon.CheckCircle}
+                              onAction={() => {}}
+                            />
+                          )}
+                        </ActionPanel.Submenu>
+                      )}
+
+                      {/* Change Task Icon */}
+                      <ActionPanel.Submenu
+                        title="Change Task Icon"
+                        icon={Icon.AppWindowSidebarLeft}
+                      >
+                        {/* Work & Productivity */}
+                        <Action
+                          title="Work (Default)"
+                          icon={Icon.Hammer}
+                          onAction={() => updateCurrentSessionIcon(Icon.Hammer)}
+                        />
+                        <Action
+                          title="Business"
+                          icon={Icon.Building}
+                          onAction={() =>
+                            updateCurrentSessionIcon(Icon.Building)
+                          }
+                        />
+                        <Action
+                          title="Meeting"
+                          icon={Icon.Person}
+                          onAction={() => updateCurrentSessionIcon(Icon.Person)}
+                        />
+                        <Action
+                          title="Calendar"
+                          icon={Icon.Calendar}
+                          onAction={() =>
+                            updateCurrentSessionIcon(Icon.Calendar)
+                          }
+                        />
+                        <Action
+                          title="Email"
+                          icon={Icon.Envelope}
+                          onAction={() =>
+                            updateCurrentSessionIcon(Icon.Envelope)
+                          }
+                        />
+                        <Action
+                          title="Phone Call"
+                          icon={Icon.Phone}
+                          onAction={() => updateCurrentSessionIcon(Icon.Phone)}
+                        />
+
+                        {/* Learning & Development */}
+                        <Action
+                          title="Study"
+                          icon={Icon.Book}
+                          onAction={() => updateCurrentSessionIcon(Icon.Book)}
+                        />
+                        <Action
+                          title="Research"
+                          icon={Icon.MagnifyingGlass}
+                          onAction={() =>
+                            updateCurrentSessionIcon(Icon.MagnifyingGlass)
+                          }
+                        />
+                        <Action
+                          title="Writing"
+                          icon={Icon.Pencil}
+                          onAction={() => updateCurrentSessionIcon(Icon.Pencil)}
+                        />
+                        <Action
+                          title="Code"
+                          icon={Icon.Code}
+                          onAction={() => updateCurrentSessionIcon(Icon.Code)}
+                        />
+
+                        {/* Creative & Design */}
+                        <Action
+                          title="Design"
+                          icon={Icon.Brush}
+                          onAction={() => updateCurrentSessionIcon(Icon.Brush)}
+                        />
+                        <Action
+                          title="Photo"
+                          icon={Icon.Camera}
+                          onAction={() => updateCurrentSessionIcon(Icon.Camera)}
+                        />
+                        <Action
+                          title="Video"
+                          icon={Icon.Video}
+                          onAction={() => updateCurrentSessionIcon(Icon.Video)}
+                        />
+                        <Action
+                          title="Music"
+                          icon={Icon.Music}
+                          onAction={() => updateCurrentSessionIcon(Icon.Music)}
+                        />
+
+                        {/* Planning & Organization */}
+                        <Action
+                          title="Planning"
+                          icon={Icon.List}
+                          onAction={() => updateCurrentSessionIcon(Icon.List)}
+                        />
+                        <Action
+                          title="Goal"
+                          icon={Icon.BullsEye}
+                          onAction={() =>
+                            updateCurrentSessionIcon(Icon.BullsEye)
+                          }
+                        />
+                        <Action
+                          title="Document"
+                          icon={Icon.Document}
+                          onAction={() =>
+                            updateCurrentSessionIcon(Icon.Document)
+                          }
+                        />
+                        <Action
+                          title="Folder"
+                          icon={Icon.Folder}
+                          onAction={() => updateCurrentSessionIcon(Icon.Folder)}
+                        />
+
+                        {/* Personal & Health */}
+                        <Action
+                          title="Heart"
+                          icon={Icon.Heart}
+                          onAction={() => updateCurrentSessionIcon(Icon.Heart)}
+                        />
+                        <Action
+                          title="Health"
+                          icon={Icon.Heartbeat}
+                          onAction={() =>
+                            updateCurrentSessionIcon(Icon.Heartbeat)
+                          }
+                        />
+                        <Action
+                          title="Leaf"
+                          icon={Icon.Leaf}
+                          onAction={() => updateCurrentSessionIcon(Icon.Leaf)}
+                        />
+
+                        {/* Clear Selection */}
+                        <Action
+                          title="Clear Icon"
+                          icon={Icon.XMarkCircle}
+                          onAction={() => updateCurrentSessionIcon(Icon.Hammer)}
+                        />
+                      </ActionPanel.Submenu>
+                    </ActionPanel.Section>
+                  </ActionPanel>
+                }
+              />
+            )}
+          </List.Section>
+        </>
+      ) : isIdle ? (
+        // Setup Interface - Only show when timer is idle
+        <>
+          <List.Item
+            icon={selectedTaskIcon || Icon.Play}
+            title={currentTaskName || "Focus Session"}
+            subtitle="Ready to start"
+            accessories={[
+              ...(currentTags.length > 0
+                ? currentTags.map((tag) => ({
+                    tag: { value: tag, color: getTagColor(tag) },
+                  }))
+                : []),
+              {
+                text: `${targetRounds} round${targetRounds !== "1" ? "s" : ""}`,
+                icon: Icon.BullsEye,
+              },
+            ]}
+            actions={
+              <ActionPanel>
+                <ActionPanel.Section>
+                  <Action
+                    title="Start Focus Round"
+                    icon={selectedTaskIcon || ACTION_ICONS.PLAY}
+                    onAction={handleStartWork}
+                    shortcut={SHORTCUTS.PRIMARY_ACTION}
+                  />
+                </ActionPanel.Section>
+
+                <ActionPanel.Section title="Customize">
+                  {/* Dynamic Tag Color Selection - Only show if there are current tags */}
+                  {currentTags.length > 0 && (
+                    <>
+                      {currentTags.map((tag) => (
+                        <ActionPanel.Submenu
+                          key={`color-${tag}`}
+                          title={`Change #${tag} Color`}
+                          icon={Icon.Brush}
+                        >
+                          {createTagColorActions(tag)}
+                        </ActionPanel.Submenu>
+                      ))}
+                    </>
+                  )}
+
+                  <ActionPanel.Submenu
+                    title="Select Task Icon"
+                    icon={Icon.AppWindowSidebarLeft}
+                  >
+                    {/* Work & Productivity */}
+                    <Action
+                      title="Work (Default)"
+                      icon={Icon.Hammer}
+                      onAction={() => setSelectedTaskIcon(Icon.Hammer)}
+                    />
+                    <Action
+                      title="Business"
+                      icon={Icon.Building}
+                      onAction={() => setSelectedTaskIcon(Icon.Building)}
+                    />
+                    <Action
+                      title="Meeting"
+                      icon={Icon.Person}
+                      onAction={() => setSelectedTaskIcon(Icon.Person)}
+                    />
+                    <Action
+                      title="Calendar"
+                      icon={Icon.Calendar}
+                      onAction={() => setSelectedTaskIcon(Icon.Calendar)}
+                    />
+                    <Action
+                      title="Email"
+                      icon={Icon.Envelope}
+                      onAction={() => setSelectedTaskIcon(Icon.Envelope)}
+                    />
+                    <Action
+                      title="Phone Call"
+                      icon={Icon.Phone}
+                      onAction={() => setSelectedTaskIcon(Icon.Phone)}
+                    />
+
+                    {/* Learning & Research */}
+                    <Action
+                      title="Study"
+                      icon={Icon.Book}
+                      onAction={() => setSelectedTaskIcon(Icon.Book)}
+                    />
+                    <Action
+                      title="Research"
+                      icon={Icon.MagnifyingGlass}
+                      onAction={() => setSelectedTaskIcon(Icon.MagnifyingGlass)}
+                    />
+                    <Action
+                      title="Document"
+                      icon={Icon.Document}
+                      onAction={() => setSelectedTaskIcon(Icon.Document)}
+                    />
+                    <Action
+                      title="Presentation"
+                      icon={Icon.Monitor}
+                      onAction={() => setSelectedTaskIcon(Icon.Monitor)}
+                    />
+
+                    {/* Creative & Technical */}
+                    <Action
+                      title="Code"
+                      icon={Icon.Code}
+                      onAction={() => setSelectedTaskIcon(Icon.Code)}
+                    />
+                    <Action
+                      title="Design"
+                      icon={Icon.Brush}
+                      onAction={() => setSelectedTaskIcon(Icon.Brush)}
+                    />
+                    <Action
+                      title="Writing"
+                      icon={Icon.Pencil}
+                      onAction={() => setSelectedTaskIcon(Icon.Pencil)}
+                    />
+                    <Action
+                      title="Video"
+                      icon={Icon.Video}
+                      onAction={() => setSelectedTaskIcon(Icon.Video)}
+                    />
+                    <Action
+                      title="Music"
+                      icon={Icon.Music}
+                      onAction={() => setSelectedTaskIcon(Icon.Music)}
+                    />
+                    <Action
+                      title="Photo"
+                      icon={Icon.Camera}
+                      onAction={() => setSelectedTaskIcon(Icon.Camera)}
+                    />
+
+                    {/* Planning & Organization */}
+                    <Action
+                      title="Planning"
+                      icon={Icon.List}
+                      onAction={() => setSelectedTaskIcon(Icon.List)}
+                    />
+                    <Action
+                      title="Goal"
+                      icon={Icon.BullsEye}
+                      onAction={() => setSelectedTaskIcon(Icon.BullsEye)}
+                    />
+                    <Action
+                      title="Analytics"
+                      icon={Icon.BarChart}
+                      onAction={() => setSelectedTaskIcon(Icon.BarChart)}
+                    />
+                    <Action
+                      title="Settings"
+                      icon={Icon.Gear}
+                      onAction={() => setSelectedTaskIcon(Icon.Gear)}
+                    />
+
+                    {/* Health & Personal */}
+                    <Action
+                      title="Exercise"
+                      icon={Icon.Heart}
+                      onAction={() => setSelectedTaskIcon(Icon.Heart)}
+                    />
+                    <Action
+                      title="Health"
+                      icon={Icon.Heartbeat}
+                      onAction={() => setSelectedTaskIcon(Icon.Heartbeat)}
+                    />
+                    <Action
+                      title="Food"
+                      icon={Icon.Leaf}
+                      onAction={() => setSelectedTaskIcon(Icon.Leaf)}
+                    />
+
+                    {/* Clear Selection */}
+                    <Action
+                      title="Clear Icon"
+                      icon={Icon.XMarkCircle}
+                      onAction={() => setSelectedTaskIcon(undefined)}
+                    />
+                  </ActionPanel.Submenu>
+                </ActionPanel.Section>
+
+                <ActionPanel.Section title="Management">
+                  <Action
+                    title="Clear All Custom Tags"
+                    icon={Icon.Trash}
+                    style={Action.Style.Destructive}
+                    onAction={async () => {
+                      const confirmed = await confirmAlert({
+                        title: "Clear All Custom Tags",
+                        message:
+                          "Are you sure you want to delete all custom tags? This action cannot be undone.",
+                        primaryAction: {
+                          title: "Delete All Tags",
+                          style: Alert.ActionStyle.Destructive,
+                        },
+                      });
+                      if (confirmed) {
+                        clearAllTags();
+                      }
+                    }}
+                    shortcut={{ modifiers: ["cmd", "shift"], key: "delete" }}
+                  />
+                  <Action
+                    title="Clear All History"
+                    icon={Icon.Trash}
+                    style={Action.Style.Destructive}
+                    onAction={async () => {
+                      const confirmed = await confirmAlert({
+                        title: "Clear All History",
+                        message:
+                          "Are you sure you want to delete all session history? This action cannot be undone.",
+                        primaryAction: {
+                          title: "Delete All History",
+                          style: Alert.ActionStyle.Destructive,
+                        },
+                      });
+                      if (confirmed) {
+                        clearAllHistory();
+                      }
+                    }}
+                    shortcut={{ modifiers: ["cmd"], key: "delete" }}
+                  />
+                </ActionPanel.Section>
+              </ActionPanel>
+            }
+          />
+
+          {/* Tag Suggestions - Separate built-in and custom tags */}
+          {currentTags.length === 0 && (
+            <>
+              {/* Custom Tags Section - Higher Priority */}
+              {customTags.filter((tag) => !predefinedTags.includes(tag))
+                .length > 0 && (
+                <List.Section title="Custom Tags">
+                  {customTags
+                    .filter((tag) => !predefinedTags.includes(tag))
+                    .map((tag) => (
+                      <List.Item
+                        key={`custom-${tag}`}
+                        icon={getTagIcon(tag)}
+                        title={`Add #${tag}`}
+                        subtitle="Custom tag"
+                        accessories={[
+                          { tag: { value: tag, color: getTagColor(tag) } },
+                        ]}
+                        actions={
+                          <ActionPanel>
+                            <ActionPanel.Section title="Tag Actions">
+                              <Action
+                                title={`Add #${tag} Tag`}
+                                icon={Icon.Plus}
+                                onAction={() => {
+                                  setSearchText((prevText) => {
+                                    const currentText = prevText.trim();
+                                    return currentText
+                                      ? `${currentText} #${tag}`
+                                      : `#${tag}`;
+                                  });
+                                }}
+                              />
+                            </ActionPanel.Section>
+
+                            <ActionPanel.Section title="Change Color">
+                              <Action
+                                title="Blue"
+                                icon={{
+                                  source: Icon.Circle,
+                                  tintColor: Color.Blue,
+                                }}
+                                onAction={() =>
+                                  updateTagConfig(tag, { color: Color.Blue })
+                                }
+                              />
+                              <Action
+                                title="Green"
+                                icon={{
+                                  source: Icon.Circle,
+                                  tintColor: Color.Green,
+                                }}
+                                onAction={() =>
+                                  updateTagConfig(tag, { color: Color.Green })
+                                }
+                              />
+                              <Action
+                                title="Red"
+                                icon={{
+                                  source: Icon.Circle,
+                                  tintColor: Color.Red,
+                                }}
+                                onAction={() =>
+                                  updateTagConfig(tag, { color: Color.Red })
+                                }
+                              />
+                              <Action
+                                title="Purple"
+                                icon={{
+                                  source: Icon.Circle,
+                                  tintColor: Color.Purple,
+                                }}
+                                onAction={() =>
+                                  updateTagConfig(tag, { color: Color.Purple })
+                                }
+                              />
+                              <Action
+                                title="Orange"
+                                icon={{
+                                  source: Icon.Circle,
+                                  tintColor: Color.Orange,
+                                }}
+                                onAction={() =>
+                                  updateTagConfig(tag, { color: Color.Orange })
+                                }
+                              />
+                              <Action
+                                title="Yellow"
+                                icon={{
+                                  source: Icon.Circle,
+                                  tintColor: Color.Yellow,
+                                }}
+                                onAction={() =>
+                                  updateTagConfig(tag, { color: Color.Yellow })
+                                }
+                              />
+                            </ActionPanel.Section>
+
+                            <ActionPanel.Section title="Change Icon">
+                              {/* Work & Productivity */}
+                              <Action
+                                title="Hammer"
+                                icon={Icon.Hammer}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Hammer })
+                                }
+                              />
+                              <Action
+                                title="Building"
+                                icon={Icon.Building}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Building })
+                                }
+                              />
+                              <Action
+                                title="Calendar"
+                                icon={Icon.Calendar}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Calendar })
+                                }
+                              />
+                              <Action
+                                title="Envelope"
+                                icon={Icon.Envelope}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Envelope })
+                                }
+                              />
+                              <Action
+                                title="Phone"
+                                icon={Icon.Phone}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Phone })
+                                }
+                              />
+
+                              {/* Learning & Research */}
+                              <Action
+                                title="Book"
+                                icon={Icon.Book}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Book })
+                                }
+                              />
+                              <Action
+                                title="Search"
+                                icon={Icon.MagnifyingGlass}
+                                onAction={() =>
+                                  updateTagConfig(tag, {
+                                    icon: Icon.MagnifyingGlass,
+                                  })
+                                }
+                              />
+                              <Action
+                                title="Document"
+                                icon={Icon.Document}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Document })
+                                }
+                              />
+                              <Action
+                                title="Monitor"
+                                icon={Icon.Monitor}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Monitor })
+                                }
+                              />
+
+                              {/* Creative & Technical */}
+                              <Action
+                                title="Code"
+                                icon={Icon.Code}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Code })
+                                }
+                              />
+                              <Action
+                                title="Brush"
+                                icon={Icon.Brush}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Brush })
+                                }
+                              />
+                              <Action
+                                title="Pencil"
+                                icon={Icon.Pencil}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Pencil })
+                                }
+                              />
+                              <Action
+                                title="Video"
+                                icon={Icon.Video}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Video })
+                                }
+                              />
+                              <Action
+                                title="Camera"
+                                icon={Icon.Camera}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Camera })
+                                }
+                              />
+
+                              {/* Planning & Organization */}
+                              <Action
+                                title="List"
+                                icon={Icon.List}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.List })
+                                }
+                              />
+                              <Action
+                                title="Target"
+                                icon={Icon.BullsEye}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.BullsEye })
+                                }
+                              />
+                              <Action
+                                title="Chart"
+                                icon={Icon.BarChart}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.BarChart })
+                                }
+                              />
+                              <Action
+                                title="Settings"
+                                icon={Icon.Gear}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Gear })
+                                }
+                              />
+
+                              {/* Personal & Health */}
+                              <Action
+                                title="Heart"
+                                icon={Icon.Heart}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Heart })
+                                }
+                              />
+                              <Action
+                                title="Health"
+                                icon={Icon.Heartbeat}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Heartbeat })
+                                }
+                              />
+                              <Action
+                                title="Leaf"
+                                icon={Icon.Leaf}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: Icon.Leaf })
+                                }
+                              />
+
+                              {/* Clear Custom Icon */}
+                              <Action
+                                title="Clear Custom Icon"
+                                icon={Icon.XMarkCircle}
+                                onAction={() =>
+                                  updateTagConfig(tag, { icon: undefined })
+                                }
+                              />
+                            </ActionPanel.Section>
+
+                            <ActionPanel.Section title="Manage Tag">
+                              <Action
+                                title="Delete Tag"
+                                icon={Icon.Trash}
+                                style={Action.Style.Destructive}
+                                onAction={() => deleteCustomTag(tag)}
+                              />
+                            </ActionPanel.Section>
+                          </ActionPanel>
+                        }
+                      />
+                    ))}
+                </List.Section>
+              )}
+
+              {/* Built-in Tags Section - Subtle/Muted */}
+              {customTags.filter((tag) => predefinedTags.includes(tag)).length >
+                0 && (
+                <List.Section title="Built-in Tags">
+                  {customTags
+                    .filter((tag) => predefinedTags.includes(tag))
+                    .map((tag) => (
+                      <List.Item
+                        key={`builtin-${tag}`}
+                        icon={{
+                          source: getTagIcon(tag),
+                          tintColor: Color.SecondaryText,
+                        }}
+                        title={`Add #${tag}`}
+                        subtitle="Built-in tag"
+                        accessories={[
+                          { tag: { value: tag, color: Color.SecondaryText } },
+                        ]}
+                        actions={
+                          <ActionPanel>
+                            <ActionPanel.Section title="Tag Actions">
+                              <Action
+                                title={`Add #${tag} Tag`}
+                                icon={Icon.Plus}
+                                onAction={() => {
+                                  setSearchText((prevText) => {
+                                    const currentText = prevText.trim();
+                                    return currentText
+                                      ? `${currentText} #${tag}`
+                                      : `#${tag}`;
+                                  });
+                                }}
+                              />
+                            </ActionPanel.Section>
+
+                            <ActionPanel.Section title="Change Color">
+                              <Action
+                                title="Blue"
+                                icon={{
+                                  source: Icon.Circle,
+                                  tintColor: Color.Blue,
+                                }}
+                                onAction={() =>
+                                  updateTagConfig(tag, { color: Color.Blue })
+                                }
+                              />
+                              <Action
+                                title="Green"
+                                icon={{
+                                  source: Icon.Circle,
+                                  tintColor: Color.Green,
+                                }}
+                                onAction={() =>
+                                  updateTagConfig(tag, { color: Color.Green })
+                                }
+                              />
+                              <Action
+                                title="Red"
+                                icon={{
+                                  source: Icon.Circle,
+                                  tintColor: Color.Red,
+                                }}
+                                onAction={() =>
+                                  updateTagConfig(tag, { color: Color.Red })
+                                }
+                              />
+                              <Action
+                                title="Purple"
+                                icon={{
+                                  source: Icon.Circle,
+                                  tintColor: Color.Purple,
+                                }}
+                                onAction={() =>
+                                  updateTagConfig(tag, { color: Color.Purple })
+                                }
+                              />
+                              <Action
+                                title="Orange"
+                                icon={{
+                                  source: Icon.Circle,
+                                  tintColor: Color.Orange,
+                                }}
+                                onAction={() =>
+                                  updateTagConfig(tag, { color: Color.Orange })
+                                }
+                              />
+                              <Action
+                                title="Yellow"
+                                icon={{
+                                  source: Icon.Circle,
+                                  tintColor: Color.Yellow,
+                                }}
+                                onAction={() =>
+                                  updateTagConfig(tag, { color: Color.Yellow })
+                                }
+                              />
+                            </ActionPanel.Section>
+
+                            {/* Built-in tags cannot be deleted */}
+                          </ActionPanel>
+                        }
+                      />
+                    ))}
+                </List.Section>
+              )}
+            </>
+          )}
+        </>
+      ) : null}
+
+      {/* Empty View when idle and no search text */}
+      {isIdle && !searchText && (
+        <List.EmptyView
+          icon={Icon.Clock}
+          title="Focus Timer"
+          description="Enter a task name in the search bar above to get started, or press Cmd+Return to start a focus session"
+        />
+      )}
+
+      {/* Application Tracking */}
+      {isAppTrackingActive &&
+        currentAppName &&
+        currentSession?.type === SessionType.WORK && (
+          <List.Section title="Activity">
+            <List.Item
+              icon={Icon.Desktop}
+              title="Current Application"
+              subtitle={currentAppName}
+              accessories={[{ icon: Icon.Dot, tooltip: "Live tracking" }]}
+            />
+          </List.Section>
+        )}
+    </List>
+  );
 }

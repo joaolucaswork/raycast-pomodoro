@@ -21,7 +21,11 @@ type ExtensionPreferences = {
   /** Auto-start Breaks - Automatically start break timers after work sessions */
   "autoStartBreaks": boolean,
   /** Auto-start Work - Automatically start work timers after breaks */
-  "autoStartWork": boolean
+  "autoStartWork": boolean,
+  /** Enable Application Tracking - Track which applications you use during work sessions */
+  "enableApplicationTracking": boolean,
+  /** Tracking Interval (seconds) - How often to check the active application (lower values are more accurate but use more resources) */
+  "trackingInterval": string
 }
 
 /** Preferences accessible in all the extension's commands */
@@ -32,8 +36,6 @@ declare namespace Preferences {
   export type MainCommand = ExtensionPreferences & {}
   /** Preferences accessible in the `timer-history` command */
   export type TimerHistory = ExtensionPreferences & {}
-  /** Preferences accessible in the `quick-start` command */
-  export type QuickStart = ExtensionPreferences & {}
   /** Preferences accessible in the `menu-bar-timer` command */
   export type MenuBarTimer = ExtensionPreferences & {}
 }
@@ -43,8 +45,6 @@ declare namespace Arguments {
   export type MainCommand = {}
   /** Arguments passed to the `timer-history` command */
   export type TimerHistory = {}
-  /** Arguments passed to the `quick-start` command */
-  export type QuickStart = {}
   /** Arguments passed to the `menu-bar-timer` command */
   export type MenuBarTimer = {}
 }

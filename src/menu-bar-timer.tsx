@@ -1,9 +1,14 @@
 import { MenuBarExtra, Icon, open, updateCommandMetadata } from "@raycast/api";
 import { useTimerStore } from "./store/timer-store";
 import { TimerState, SessionType } from "./types/timer";
-import { formatTime, getSessionTypeLabel, getSessionTypeIcon } from "./utils/helpers";
+import {
+  formatTime,
+  getSessionTypeLabel,
+  getSessionTypeIcon,
+} from "./utils/helpers";
 import { backgroundTimerService } from "./services/background-timer-service";
-import { useEffect } from "react";
+import { applicationTrackingService } from "./services/application-tracking-service";
+import { useEffect, useState } from "react";
 
 export default function MenuBarTimer() {
   const {
@@ -12,8 +17,12 @@ export default function MenuBarTimer() {
     timeRemaining,
     sessionCount,
     stats,
+    config,
     getNextSessionType,
+    completeSession,
   } = useTimerStore();
+
+  const [currentAppUsage, setCurrentAppUsage] = useState<string | null>(null);
 
   // Initialize and sync timer state on component mount
   useEffect(() => {
@@ -43,58 +52,50 @@ export default function MenuBarTimer() {
     updateCommandMetadata({ subtitle });
   }, [currentSession, state, timeRemaining, stats.todaysSessions]);
 
-  // Handle background timer countdown
+  // Periodic sync to ensure menu bar stays updated
   useEffect(() => {
-    if (state === TimerState.RUNNING && timeRemaining > 0) {
+    if (state === TimerState.RUNNING) {
+      const syncInterval = setInterval(async () => {
+        try {
+          await backgroundTimerService.updateTimerState();
+        } catch (error) {
+          console.error("Failed to sync timer state in menu bar:", error);
+        }
+      }, 5000); // Sync every 5 seconds for menu bar
+
+      return () => clearInterval(syncInterval);
+    }
+  }, [state]);
+
+  // Update application usage display during work sessions
+  useEffect(() => {
+    if (
+      state === TimerState.RUNNING &&
+      currentSession?.type === SessionType.WORK &&
+      config.enableApplicationTracking &&
+      applicationTrackingService.isCurrentlyTracking()
+    ) {
       const interval = setInterval(() => {
-        useTimerStore.setState((prevState: any) => {
-          const newTimeRemaining = prevState.timeRemaining - 1;
+        const usageData = applicationTrackingService.getCurrentUsageData();
+        const mostUsedApp = usageData.length > 0 ? usageData[0] : null;
 
-          if (newTimeRemaining <= 0) {
-            // Timer completed - handle session completion
-            handleSessionComplete();
-            return {
-              ...prevState,
-              timeRemaining: 0,
-              state: TimerState.COMPLETED,
-            };
-          }
-
-          return {
-            ...prevState,
-            timeRemaining: newTimeRemaining,
-          };
-        });
-      }, 1000);
+        if (mostUsedApp && mostUsedApp.timeSpent > 0) {
+          setCurrentAppUsage(
+            `${mostUsedApp.name} (${Math.floor(mostUsedApp.timeSpent / 60)}m)`
+          );
+        } else {
+          setCurrentAppUsage(null);
+        }
+      }, 5000); // Update every 5 seconds
 
       return () => clearInterval(interval);
+    } else {
+      setCurrentAppUsage(null);
     }
-  }, [state, timeRemaining]);
+  }, [state, currentSession, config.enableApplicationTracking]);
 
   const handleSessionComplete = () => {
-    const { currentSession, history, sessionCount } = useTimerStore.getState();
-    
-    if (currentSession) {
-      const completedSession = {
-        ...currentSession,
-        endTime: new Date(),
-        completed: true,
-      };
-
-      const newHistory = [...history, completedSession];
-      const newSessionCount = currentSession.type === SessionType.WORK 
-        ? sessionCount + 1 
-        : sessionCount;
-
-      // Update store with completed session
-      useTimerStore.setState({
-        currentSession: null,
-        state: TimerState.IDLE,
-        timeRemaining: 0,
-        history: newHistory,
-        sessionCount: newSessionCount,
-      });
-    }
+    completeSession();
   };
 
   const handleStartWork = async () => {
@@ -136,18 +137,17 @@ export default function MenuBarTimer() {
   // Get display values
   const getMenuBarTitle = () => {
     if (currentSession && state !== TimerState.IDLE) {
-      const sessionIcon = getSessionTypeIcon(currentSession.type);
       const timeDisplay = formatTime(timeRemaining);
-      return `${sessionIcon} ${timeDisplay}`;
+      return timeDisplay;
     }
-    return "🍅";
+    return "Timer";
   };
 
   const getTooltip = () => {
     if (currentSession && state !== TimerState.IDLE) {
       const sessionLabel = getSessionTypeLabel(currentSession.type);
       const timeDisplay = formatTime(timeRemaining);
-      
+
       if (state === TimerState.RUNNING) {
         return `${sessionLabel} - ${timeDisplay} remaining`;
       } else if (state === TimerState.PAUSED) {
@@ -169,10 +169,22 @@ export default function MenuBarTimer() {
             icon={getSessionTypeIcon(currentSession.type)}
           />
           {currentSession.taskName && (
-            <MenuBarExtra.Item title={`Task: ${currentSession.taskName}`} icon={Icon.Document} />
+            <MenuBarExtra.Item
+              title={`Task: ${currentSession.taskName}`}
+              icon={Icon.Document}
+            />
           )}
           {currentSession.projectName && (
-            <MenuBarExtra.Item title={`Project: ${currentSession.projectName}`} icon={Icon.Folder} />
+            <MenuBarExtra.Item
+              title={`Project: ${currentSession.projectName}`}
+              icon={Icon.Folder}
+            />
+          )}
+          {currentAppUsage && config.enableApplicationTracking && (
+            <MenuBarExtra.Item
+              title={`Most Used: ${currentAppUsage}`}
+              icon={Icon.Desktop}
+            />
           )}
         </MenuBarExtra.Section>
       )}
@@ -240,9 +252,10 @@ export default function MenuBarTimer() {
               title="Start Next Session"
               icon={Icon.Play}
               onAction={async () => {
-                const nextType = currentSession?.type === SessionType.WORK
-                  ? getNextSessionType()
-                  : SessionType.WORK;
+                const nextType =
+                  currentSession?.type === SessionType.WORK
+                    ? getNextSessionType()
+                    : SessionType.WORK;
                 await backgroundTimerService.startTimer(nextType);
               }}
             />

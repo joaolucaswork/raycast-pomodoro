@@ -1,4 +1,6 @@
 import { SessionType } from "../types/timer";
+import { SESSION_ICONS } from "../constants/design-tokens";
+import { Icon } from "@raycast/api";
 
 export function generateId(): string {
   return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
@@ -23,26 +25,26 @@ export function formatDuration(seconds: number): string {
 export function getSessionTypeLabel(type: SessionType): string {
   switch (type) {
     case SessionType.WORK:
-      return "Work Session";
+      return "Focus Round";
     case SessionType.SHORT_BREAK:
       return "Short Break";
     case SessionType.LONG_BREAK:
       return "Long Break";
     default:
-      return "Session";
+      return "Round";
   }
 }
 
-export function getSessionTypeIcon(type: SessionType): string {
+export function getSessionTypeIcon(type: SessionType): Icon {
   switch (type) {
     case SessionType.WORK:
-      return "🍅";
+      return SESSION_ICONS.WORK;
     case SessionType.SHORT_BREAK:
-      return "☕";
+      return SESSION_ICONS.SHORT_BREAK;
     case SessionType.LONG_BREAK:
-      return "🌴";
+      return SESSION_ICONS.LONG_BREAK;
     default:
-      return "⏱️";
+      return SESSION_ICONS.IDLE;
   }
 }
 
@@ -80,25 +82,25 @@ export function getMotivationalMessage(
 ): string {
   const messages = {
     [SessionType.WORK]: [
-      "Time to focus! 🎯",
-      "Let's get productive! 💪",
-      "Focus mode activated! 🚀",
-      "Time to make progress! ⚡",
-      "Deep work time! 🧠",
+      "Time to focus!",
+      "Let's get productive!",
+      "Focus mode activated!",
+      "Time to make progress!",
+      "Deep work time!",
     ],
     [SessionType.SHORT_BREAK]: [
-      "Take a quick breather! 😌",
-      "Stretch and relax! 🤸",
-      "Short break time! ☕",
-      "Recharge your energy! 🔋",
-      "Quick rest break! 💤",
+      "Take a quick breather!",
+      "Stretch and relax!",
+      "Short break time!",
+      "Recharge your energy!",
+      "Quick rest break!",
     ],
     [SessionType.LONG_BREAK]: [
-      "Well deserved long break! 🌴",
-      "Time for a proper rest! 🛋️",
-      "Enjoy your extended break! 🎉",
-      "Relax and unwind! 🧘",
-      "Take a longer breather! 🌸",
+      "Well deserved long break!",
+      "Time for a proper rest!",
+      "Enjoy your extended break!",
+      "Relax and unwind!",
+      "Take a longer breather!",
     ],
   };
 
@@ -123,7 +125,7 @@ export function formatSessionSummary(
   const hours = Math.floor(totalWorkTime / 3600);
   const minutes = Math.floor((totalWorkTime % 3600) / 60);
 
-  let summary = `${workSessions} work sessions completed`;
+  let summary = `${workSessions} focus rounds completed`;
 
   if (hours > 0) {
     summary += ` (${hours}h ${minutes}m)`;

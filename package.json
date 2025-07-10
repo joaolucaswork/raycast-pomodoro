@@ -34,26 +34,20 @@
   "commands": [
     {
       "name": "main-command",
-      "title": "Pomodoro Timer",
-      "description": "Start, stop, and manage your Pomodoro sessions",
+      "title": "Focus Timer",
+      "description": "Start, stop, and manage your focus rounds",
       "mode": "view"
     },
     {
       "name": "timer-history",
       "title": "Timer History",
-      "description": "View your Pomodoro session history and statistics",
+      "description": "View your focus round history and statistics",
       "mode": "view"
-    },
-    {
-      "name": "quick-start",
-      "title": "Quick Start Timer",
-      "description": "Quickly start a Pomodoro session",
-      "mode": "no-view"
     },
     {
       "name": "menu-bar-timer",
       "title": "Menu Bar Timer",
-      "description": "Persistent Pomodoro timer in the menu bar",
+      "description": "Persistent focus timer in the menu bar",
       "mode": "menu-bar",
       "interval": "1s"
     }
@@ -117,6 +111,23 @@
       "required": false,
       "default": false,
       "label": "Auto-start work sessions"
+    },
+    {
+      "name": "enableApplicationTracking",
+      "title": "Enable Application Tracking",
+      "description": "Track which applications you use during work sessions",
+      "type": "checkbox",
+      "required": false,
+      "default": true,
+      "label": "Track application usage during work sessions"
+    },
+    {
+      "name": "trackingInterval",
+      "title": "Tracking Interval (seconds)",
+      "description": "How often to check the active application (lower values are more accurate but use more resources)",
+      "type": "textfield",
+      "default": "5",
+      "required": false
     }
   ],
   "dependencies": {
