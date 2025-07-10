@@ -88,10 +88,12 @@ jspm_packages/
 .fusebox/
 
 # DynamoDB Local files
-.dynamodb/
+.dynamodb/  
 
 # TernJS port file
 .tern-port
 
 # Raycast specific
 # raycast-env.d.ts - Keep this file for template users
+
+base-template-docs/
