@@ -39,9 +39,15 @@
       "mode": "view"
     },
     {
+      "name": "profile-command",
+      "title": "Focus Profile",
+      "description": "View your profile, statistics, achievements, and configure ADHD settings",
+      "mode": "view"
+    },
+    {
       "name": "timer-history",
       "title": "Timer History",
-      "description": "View your focus round history and statistics",
+      "description": "View your focus round history",
       "mode": "view"
     },
     {

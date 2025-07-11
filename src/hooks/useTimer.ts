@@ -1,9 +1,10 @@
 import { useEffect, useRef } from "react";
 import { useTimerStore } from "../store/timer-store";
 import { TimerState, SessionType } from "../types/timer";
-import { getMotivationalMessage } from "../utils/helpers";
+import { getMotivationalMessage, getSessionTypeLabel } from "../utils/helpers";
 import { notificationService } from "../services/notification-service";
 import { backgroundTimerService } from "../services/background-timer-service";
+import { adhdSupportService } from "../services/adhd-support-service";
 
 export function useTimer() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -20,6 +21,7 @@ export function useTimer() {
     stopTimer,
     resetTimer,
     skipSession,
+    completeSession,
     getNextSessionType,
     updateCurrentSessionName,
     updateCurrentSessionIcon,
@@ -139,6 +141,28 @@ export function useTimer() {
       stats: newStats,
     });
 
+    // ADHD-specific features
+    const store = useTimerStore.getState();
+    if (store.config.enableRewardSystem) {
+      // Calculate and award points
+      const points = adhdSupportService.calculateSessionPoints(
+        completedSession.duration,
+        true,
+        completedSession.energyLevel,
+        completedSession.moodState
+      );
+
+      store.awardPoints(
+        points,
+        `Completed ${getSessionTypeLabel(currentSession.type)} session`
+      );
+    }
+
+    // Check for hyperfocus if enabled
+    if (store.config.enableHyperfocusDetection) {
+      store.checkHyperfocus();
+    }
+
     // Show completion notification using notification service
     await notificationService.notifySessionComplete(
       currentSession.type,
@@ -209,6 +233,10 @@ export function useTimer() {
     // Remove toast to prevent focus loss
   };
 
+  const handleComplete = async () => {
+    await backgroundTimerService.completeTimer();
+  };
+
   const handleReset = async () => {
     await backgroundTimerService.stopTimer();
     // Remove toast to prevent focus loss
@@ -234,6 +262,7 @@ export function useTimer() {
     pause: handlePause,
     resume: handleResume,
     stop: handleStop,
+    complete: handleComplete,
     reset: handleReset,
     skip: handleSkip,
 

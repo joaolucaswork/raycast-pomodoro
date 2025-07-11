@@ -1,4 +1,4 @@
-import { Action, ActionPanel, Icon, List, Detail, Color } from "@raycast/api";
+import { Action, ActionPanel, Icon, List, Color } from "@raycast/api";
 import { useState, useMemo } from "react";
 import { useTimerStore } from "./store/timer-store";
 import {
@@ -6,7 +6,6 @@ import {
   formatDuration,
   getSessionTypeLabel,
   getSessionTypeIcon,
-  calculateProductivityScore,
 } from "./utils/helpers";
 import { SessionType, TimerSession } from "./types/timer";
 import {
@@ -16,10 +15,19 @@ import {
   isThisWeek,
   isThisMonth,
 } from "date-fns";
-import { dataService } from "./services/data-service";
 
-import { applicationTrackingService } from "./services/application-tracking-service";
-import { getSessionColor, getSessionStateDot } from "./constants/design-tokens";
+import {
+  getSessionColor,
+  getSessionStateDot,
+  getAppRankingColor,
+  SESSION_ICONS,
+  STATUS_COLORS,
+  ACTION_ICONS,
+  SHORTCUTS,
+  getMoodIcon,
+  getMoodColor,
+  MOOD_ICONS,
+} from "./constants/design-tokens";
 
 type SortOption = "newest" | "oldest" | "longest" | "shortest";
 type FilterType = "all" | "work" | "short_break" | "long_break";
@@ -29,14 +37,25 @@ export default function TimerHistory() {
   const [selectedSession, setSelectedSession] = useState<TimerSession | null>(
     null
   );
-  const [viewMode, setViewMode] = useState<"list" | "stats" | "app-analytics">(
-    "list"
-  );
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [completionFilter, setCompletionFilter] =
     useState<CompletionFilter>("all");
-  const { history, deleteSession, getTagConfig } = useTimerStore();
+  const {
+    history,
+    deleteSession,
+    getTagConfig,
+    getMoodAnalytics,
+    moodEntries,
+  } = useTimerStore();
+
+  // Calculate mood analytics
+  const moodAnalytics = useMemo(() => {
+    if (moodEntries.length === 0) {
+      return null;
+    }
+    return getMoodAnalytics();
+  }, [moodEntries, getMoodAnalytics]);
 
   // Get tag color based on tag name (with custom config support)
   const getTagColor = (tag: string): Color => {
@@ -101,21 +120,35 @@ export default function TimerHistory() {
   // Conditional returns after all hooks
   if (selectedSession) {
     return (
-      <SessionDetailWithSidebar
-        session={selectedSession}
-        allSessions={history}
-        onSessionSelect={setSelectedSession}
-        onBack={() => setSelectedSession(null)}
-      />
+      <List
+        navigationTitle={`${getSessionTypeLabel(selectedSession.type)} Session Details`}
+        searchBarPlaceholder="Search session details..."
+        actions={
+          <ActionPanel>
+            <Action
+              title="Back to History"
+              icon={ACTION_ICONS.BACK}
+              onAction={() => setSelectedSession(null)}
+              shortcut={SHORTCUTS.BACK}
+            />
+            <ActionPanel.Section title="Manage">
+              <Action
+                title="Delete Session"
+                icon={Icon.Trash}
+                style={Action.Style.Destructive}
+                onAction={async () => {
+                  deleteSession(selectedSession.id);
+                  setSelectedSession(null);
+                }}
+                shortcut={{ modifiers: ["cmd"], key: "delete" }}
+              />
+            </ActionPanel.Section>
+          </ActionPanel>
+        }
+      >
+        <SessionDetailView session={selectedSession} />
+      </List>
     );
-  }
-
-  if (viewMode === "stats") {
-    return <StatsView onBack={() => setViewMode("list")} />;
-  }
-
-  if (viewMode === "app-analytics") {
-    return <AppAnalyticsView onBack={() => setViewMode("list")} />;
   }
 
   return (
@@ -136,20 +169,6 @@ export default function TimerHistory() {
       }
       actions={
         <ActionPanel>
-          <ActionPanel.Section>
-            <Action
-              title="Statistics"
-              icon={Icon.BarChart}
-              onAction={() => setViewMode("stats")}
-              shortcut={{ modifiers: ["ctrl", "shift"], key: "s" }}
-            />
-            <Action
-              title="App Analytics"
-              icon={Icon.Desktop}
-              onAction={() => setViewMode("app-analytics")}
-              shortcut={{ modifiers: ["ctrl", "shift"], key: "a" }}
-            />
-          </ActionPanel.Section>
           <ActionPanel.Section title="Filter">
             <ActionPanel.Submenu title="Round Type" icon={Icon.Filter}>
               <Action
@@ -190,24 +209,87 @@ export default function TimerHistory() {
         </ActionPanel>
       }
     >
-      {/* Statistics Section */}
-      <List.Section title="Statistics">
+      {/* Quick Overview */}
+      <List.Section title="Overview">
         <List.Item
-          title="Today's Progress"
+          title="Today's Sessions"
           subtitle={`${
             history.filter((s) => {
               const sessionDate = new Date(s.startTime);
               const today = new Date();
               return sessionDate.toDateString() === today.toDateString();
             }).length
-          } rounds completed • ${useTimerStore.getState().stats.streakCount} day streak`}
-          icon={Icon.Calendar}
+          } rounds completed today`}
+          icon={{
+            source: SESSION_ICONS.WORK,
+            tintColor: STATUS_COLORS.SUCCESS,
+          }}
+          accessories={[
+            {
+              text: `${useTimerStore.getState().stats.streakCount} day streak`,
+              icon: { source: Icon.Trophy, tintColor: STATUS_COLORS.SUCCESS },
+              tooltip: "Current daily streak",
+            },
+          ]}
         />
         <List.Item
-          title="All Time"
-          subtitle={`${useTimerStore.getState().stats.totalSessions} total rounds • ${useTimerStore.getState().stats.completedSessions} completed`}
-          icon={Icon.BarChart}
+          title="Total Sessions"
+          subtitle={`${useTimerStore.getState().stats.completedSessions} completed of ${useTimerStore.getState().stats.totalSessions} total`}
+          icon={{ source: Icon.BarChart, tintColor: STATUS_COLORS.INFO }}
+          accessories={[
+            {
+              text: `${Math.round((useTimerStore.getState().stats.completedSessions / Math.max(useTimerStore.getState().stats.totalSessions, 1)) * 100)}%`,
+              icon: { source: Icon.Circle, tintColor: STATUS_COLORS.INFO },
+              tooltip: "Completion rate",
+            },
+          ]}
         />
+
+        {/* Mood Statistics */}
+        {moodAnalytics && (
+          <>
+            <List.Item
+              title="Most Common Mood"
+              subtitle={`${moodAnalytics.mostCommonMood.charAt(0).toUpperCase() + moodAnalytics.mostCommonMood.slice(1)} (${moodAnalytics.totalEntries} entries)`}
+              icon={{
+                source: getMoodIcon(moodAnalytics.mostCommonMood),
+                tintColor: getMoodColor(moodAnalytics.mostCommonMood),
+              }}
+              accessories={[
+                {
+                  text: `${moodAnalytics.averageIntensity.toFixed(1)}/5`,
+                  icon: {
+                    source: Icon.Circle,
+                    tintColor: STATUS_COLORS.ACCENT,
+                  },
+                  tooltip: "Average intensity",
+                },
+              ]}
+            />
+            {moodAnalytics.bestPerformanceMoods.length > 0 && (
+              <List.Item
+                title="Best Performance Moods"
+                subtitle={moodAnalytics.bestPerformanceMoods
+                  .map((mood) => mood.charAt(0).toUpperCase() + mood.slice(1))
+                  .join(", ")}
+                icon={{
+                  source: MOOD_ICONS.MOTIVATED,
+                  tintColor: STATUS_COLORS.SUCCESS,
+                }}
+                accessories={[
+                  {
+                    text: "Optimal",
+                    icon: {
+                      source: Icon.Star,
+                      tintColor: STATUS_COLORS.SUCCESS,
+                    },
+                    tooltip: "Moods with highest session completion rates",
+                  },
+                ]}
+              />
+            )}
+          </>
+        )}
       </List.Section>
 
       {Object.entries(groupedSessions).map(([dateGroup, sessions]) => (
@@ -247,37 +329,43 @@ export default function TimerHistory() {
                         tag: { value: tag, color: getTagColor(tag) },
                       }))
                     : []),
-                  { text: formatTime(session.duration) },
-                  ...(hasAppData ? [{ icon: Icon.Desktop }] : []),
+                  {
+                    text: formatTime(session.duration),
+                    tooltip: `Session duration: ${formatTime(session.duration)}`,
+                  },
+                  ...(hasAppData
+                    ? [
+                        {
+                          icon: {
+                            source: Icon.Desktop,
+                            tintColor: STATUS_COLORS.INFO,
+                          },
+                          tooltip: "Application usage tracked",
+                        },
+                      ]
+                    : []),
                   {
                     icon: {
                       source: statusDot.icon,
                       tintColor: statusDot.tintColor,
                     },
+                    tooltip: session.completed
+                      ? "Session completed"
+                      : session.endReason === "stopped"
+                        ? "Session stopped early"
+                        : session.endReason === "skipped"
+                          ? "Session skipped"
+                          : "Session incomplete",
                   },
                 ]}
                 actions={
                   <ActionPanel>
                     <Action
                       title="View Details"
-                      icon={Icon.Eye}
+                      icon={ACTION_ICONS.VIEW_DETAILS}
                       onAction={() => setSelectedSession(session)}
-                      shortcut={{ modifiers: ["cmd"], key: "return" }}
+                      shortcut={SHORTCUTS.PRIMARY_ACTION}
                     />
-                    <ActionPanel.Section>
-                      <Action
-                        title="Statistics"
-                        icon={Icon.BarChart}
-                        onAction={() => setViewMode("stats")}
-                        shortcut={{ modifiers: ["ctrl", "shift"], key: "s" }}
-                      />
-                      <Action
-                        title="App Analytics"
-                        icon={Icon.Desktop}
-                        onAction={() => setViewMode("app-analytics")}
-                        shortcut={{ modifiers: ["ctrl", "shift"], key: "a" }}
-                      />
-                    </ActionPanel.Section>
                     <ActionPanel.Section title="Manage">
                       <Action
                         title="Delete Session"
@@ -286,13 +374,8 @@ export default function TimerHistory() {
                         onAction={async () => {
                           deleteSession(session.id);
                           // Toast disabled for Windows compatibility
-                          // await showToast({
-                          //   style: Toast.Style.Success,
-                          //   title: "Session Deleted",
-                          //   message: "Session removed from history",
-                          // });
                         }}
-                        shortcut={{ modifiers: ["cmd"], key: "backspace" }}
+                        shortcut={{ modifiers: ["cmd"], key: "delete" }}
                       />
                     </ActionPanel.Section>
                   </ActionPanel>
@@ -305,123 +388,21 @@ export default function TimerHistory() {
 
       {history.length === 0 && (
         <List.EmptyView
-          title="No rounds"
-          description="Start a focus round to see your history"
-          icon={Icon.Clock}
+          title="No Focus Sessions"
+          description="Start your first focus round to see your session history here"
+          icon={{
+            source: SESSION_ICONS.IDLE,
+            tintColor: STATUS_COLORS.NEUTRAL,
+          }}
         />
       )}
     </List>
   );
 }
 
-function SessionDetailWithSidebar({
-  session,
-  allSessions,
-  onSessionSelect,
-  onBack,
-}: {
-  session: TimerSession;
-  allSessions: TimerSession[];
-  onSessionSelect: (session: TimerSession) => void;
-  onBack: () => void;
-}) {
-  const { deleteSession } = useTimerStore();
-  const groupedSessions = groupSessionsByDate(allSessions);
-
-  return (
-    <List
-      navigationTitle={`${getSessionTypeLabel(session.type)} Session`}
-      isShowingDetail
-      searchBarPlaceholder="Search sessions..."
-    >
-      {Object.entries(groupedSessions).map(([dateGroup, sessions]) => (
-        <List.Section key={dateGroup} title={dateGroup}>
-          {sessions.map((sessionItem) => {
-            const isSelected = sessionItem.id === session.id;
-            const sessionIcon = getSessionTypeIcon(sessionItem.type);
-            const sessionColor = getSessionColor(
-              sessionItem.type,
-              sessionItem.completed
-            );
-            const statusDot = getSessionStateDot(
-              sessionItem.type,
-              sessionItem.completed,
-              false,
-              false,
-              sessionItem.endReason
-            );
-
-            return (
-              <List.Item
-                key={sessionItem.id}
-                title={getSessionTypeLabel(sessionItem.type)}
-                subtitle={getSessionSubtitle(sessionItem)}
-                icon={{ source: sessionIcon, tintColor: sessionColor }}
-                accessories={[
-                  { text: formatTime(sessionItem.duration) },
-                  ...(sessionItem.applicationUsage &&
-                  sessionItem.applicationUsage.length > 0
-                    ? [{ icon: Icon.Desktop }]
-                    : []),
-                  {
-                    icon: {
-                      source: statusDot.icon,
-                      tintColor: statusDot.tintColor,
-                    },
-                  },
-                ]}
-                detail={
-                  isSelected ? (
-                    <SessionDetailView session={session} />
-                  ) : undefined
-                }
-                actions={
-                  <ActionPanel>
-                    <Action
-                      title="View Details"
-                      icon={Icon.Eye}
-                      onAction={() => onSessionSelect(sessionItem)}
-                      shortcut={{ modifiers: ["cmd"], key: "return" }}
-                    />
-                    <Action
-                      title="Back"
-                      icon={Icon.ArrowLeft}
-                      onAction={onBack}
-                      shortcut={{ modifiers: ["cmd"], key: "arrowLeft" }}
-                    />
-                    <ActionPanel.Section title="Manage">
-                      <Action
-                        title="Delete Session"
-                        icon={Icon.Trash}
-                        style={Action.Style.Destructive}
-                        onAction={async () => {
-                          deleteSession(sessionItem.id);
-                          // Toast disabled for Windows compatibility
-                          // await showToast({
-                          //   style: Toast.Style.Success,
-                          //   title: "Session Deleted",
-                          //   message: "Session removed from history",
-                          // });
-                          // If we deleted the currently viewed session, go back
-                          if (sessionItem.id === session.id) {
-                            onBack();
-                          }
-                        }}
-                        shortcut={{ modifiers: ["cmd"], key: "backspace" }}
-                      />
-                    </ActionPanel.Section>
-                  </ActionPanel>
-                }
-              />
-            );
-          })}
-        </List.Section>
-      ))}
-    </List>
-  );
-}
-
 function SessionDetailView({ session }: { session: TimerSession }) {
+  const { moodEntries } = useTimerStore();
+
   // Ensure dates are Date objects (they might be strings when loaded from storage)
   const startTime = new Date(session.startTime);
   const endTime = session.endTime ? new Date(session.endTime) : null;
@@ -430,195 +411,209 @@ function SessionDetailView({ session }: { session: TimerSession }) {
     ? Math.floor((endTime.getTime() - startTime.getTime()) / 1000)
     : session.duration;
 
-  // Generate application usage section
-  const applicationUsageSection =
-    session.applicationUsage && session.applicationUsage.length > 0
-      ? `
-## Apps
-${session.applicationUsage
-  .slice(0, 3)
-  .map((app) => `**${app.name}** ${formatTime(app.timeSpent)}`)
-  .join(" • ")}
-`
-      : "";
+  // Find mood entries associated with this session
+  const associatedMoodEntries = moodEntries.filter(
+    (entry) => entry.sessionId === session.id
+  );
 
-  // Get status text based on end reason
+  // Get status information using native design tokens
+  const statusDot = getSessionStateDot(
+    session.type,
+    session.completed,
+    false,
+    false,
+    session.endReason
+  );
+
   const getStatusText = () => {
-    if (session.completed) {
-      return "**Completed**";
-    }
-
+    if (session.completed) return "Completed";
     switch (session.endReason) {
       case "stopped":
-        return "**Stopped**";
+        return "Stopped Early";
       case "skipped":
-        return "**Skipped**";
+        return "Skipped";
       default:
-        return "**Incomplete**";
-    }
-  };
-
-  // Generate tags section
-  const tagsSection =
-    session.tags && session.tags.length > 0
-      ? `
-## Tags
-${session.tags.map((tag) => `\`#${tag}\``).join(" ")}
-`
-      : "";
-
-  const markdown = `
-# ${getSessionTypeLabel(session.type)}
-
-${getStatusText()} • ${formatTime(duration)}
-${session.taskName ? `**${session.taskName}**` : ""}
-${session.projectName ? ` (${session.projectName})` : ""}
-${session.taskIcon ? `\n**Icon:** ${session.taskIcon}` : ""}
-
-${tagsSection}
-${applicationUsageSection}
-  `;
-
-  return <List.Item.Detail markdown={markdown} />;
-}
-
-function StatsView({ onBack }: { onBack: () => void }) {
-  const { stats, history } = useTimerStore();
-
-  const workSessions = history.filter(
-    (s: TimerSession) => s.type === SessionType.WORK && s.completed
-  );
-  const productivityScore = calculateProductivityScore(
-    stats.completedSessions,
-    stats.totalSessions
-  );
-
-  // Calculate application usage statistics
-  const sessionsWithAppUsage = workSessions.filter(
-    (s) => s.applicationUsage && s.applicationUsage.length > 0
-  );
-  const allAppUsage = new Map<
-    string,
-    { name: string; totalTime: number; sessionCount: number }
-  >();
-
-  sessionsWithAppUsage.forEach((session) => {
-    session.applicationUsage?.forEach((app) => {
-      const existing = allAppUsage.get(app.bundleId) || {
-        name: app.name,
-        totalTime: 0,
-        sessionCount: 0,
-      };
-      existing.totalTime += app.timeSpent;
-      existing.sessionCount += 1;
-      allAppUsage.set(app.bundleId, existing);
-    });
-  });
-
-  const topApps = Array.from(allAppUsage.values())
-    .sort((a, b) => b.totalTime - a.totalTime)
-    .slice(0, 5);
-
-  const markdown = `
-# Statistics
-
-| | |
-|--|--|
-| Total | ${stats.totalSessions} |
-| Completed | ${stats.completedSessions} |
-| Score | ${productivityScore}% |
-| Streak | ${stats.streakCount} days |
-| Work Time | ${formatDuration(stats.totalWorkTime)} |
-| Today | ${stats.todaysSessions} |
-${
-  topApps.length > 0
-    ? `
-## Top Apps
-${topApps
-  .slice(0, 3)
-  .map((app) => `**${app.name}** ${formatTime(app.totalTime)}`)
-  .join(" • ")}
-`
-    : ""
-}
-
----
-
-${
-  stats.streakCount > 0
-    ? `**${stats.streakCount} Day Streak**`
-    : "**Start Your Streak** - Complete sessions daily"
-}
-  `;
-
-  const handleExportJSON = async () => {
-    try {
-      const jsonData = dataService.exportDataAsJSON();
-      // Clipboard not available in Raycast environment
-      console.log("JSON Export:", jsonData);
-      // Toast disabled for Windows compatibility
-      // await showToast({
-      //   style: Toast.Style.Success,
-      //   title: "Data Exported",
-      //   message: "JSON data logged to console",
-      // });
-    } catch (error) {
-      // Toast disabled for Windows compatibility
-      // await showToast({
-      //   style: Toast.Style.Failure,
-      //   title: "Export Failed",
-      //   message: "Could not export data",
-      // });
-      console.error("Export failed:", error);
-    }
-  };
-
-  const handleExportCSV = async () => {
-    try {
-      const csvData = dataService.exportDataAsCSV();
-      console.log("CSV Export:", csvData);
-      // Toast disabled for Windows compatibility
-      // await showToast({
-      //   style: Toast.Style.Success,
-      //   title: "Data Exported",
-      //   message: "CSV data logged to console",
-      // });
-    } catch (error) {
-      // Toast disabled for Windows compatibility
-      // await showToast({
-      //   style: Toast.Style.Failure,
-      //   title: "Export Failed",
-      //   message: "Could not export data",
-      // });
-      console.error("Export failed:", error);
+        return "Incomplete";
     }
   };
 
   return (
-    <Detail
-      markdown={markdown}
-      actions={
-        <ActionPanel>
-          <Action
-            title="Back to History"
-            icon={Icon.ArrowLeft}
-            onAction={onBack}
+    <>
+      {/* Session Details Section */}
+      <List.Section title="Session Information">
+        <List.Item
+          title="Session Type"
+          subtitle={getSessionTypeLabel(session.type)}
+          icon={{
+            source: getSessionTypeIcon(session.type),
+            tintColor: getSessionColor(session.type, session.completed),
+          }}
+          accessories={[
+            {
+              icon: {
+                source: statusDot.icon,
+                tintColor: statusDot.tintColor,
+              },
+              tooltip: getStatusText(),
+            },
+          ]}
+        />
+        <List.Item
+          title="Duration"
+          subtitle={formatTime(duration)}
+          icon={{ source: Icon.Clock, tintColor: STATUS_COLORS.INFO }}
+          accessories={[
+            {
+              text: formatTime(duration),
+              tooltip: `Session lasted ${formatTime(duration)}`,
+            },
+          ]}
+        />
+        <List.Item
+          title="Started"
+          subtitle={format(startTime, "MMM d, yyyy 'at' h:mm a")}
+          icon={{ source: Icon.Calendar, tintColor: STATUS_COLORS.NEUTRAL }}
+          accessories={[
+            {
+              text: format(startTime, "h:mm a"),
+              tooltip: "Start time",
+            },
+          ]}
+        />
+        {endTime && (
+          <List.Item
+            title="Ended"
+            subtitle={format(endTime, "MMM d, yyyy 'at' h:mm a")}
+            icon={{ source: Icon.Calendar, tintColor: STATUS_COLORS.NEUTRAL }}
+            accessories={[
+              {
+                text: format(endTime, "h:mm a"),
+                tooltip: "End time",
+              },
+            ]}
           />
-          <ActionPanel.Section title="Export Data">
-            <Action
-              title="Export as JSON"
-              icon={Icon.Document}
-              onAction={handleExportJSON}
+        )}
+      </List.Section>
+
+      {/* Task Information Section */}
+      {(session.taskName || session.projectName) && (
+        <List.Section title="Task Information">
+          {session.taskName && (
+            <List.Item
+              title="Task"
+              subtitle={session.taskName}
+              icon={{
+                source: session.taskIcon || Icon.Document,
+                tintColor: STATUS_COLORS.PRIMARY,
+              }}
             />
-            <Action
-              title="Export as CSV"
-              icon={Icon.Document}
-              onAction={handleExportCSV}
+          )}
+          {session.projectName && (
+            <List.Item
+              title="Project"
+              subtitle={session.projectName}
+              icon={{ source: Icon.Folder, tintColor: STATUS_COLORS.ACCENT }}
             />
-          </ActionPanel.Section>
-        </ActionPanel>
-      }
-    />
+          )}
+        </List.Section>
+      )}
+
+      {/* Tags Section */}
+      {session.tags && session.tags.length > 0 && (
+        <List.Section title="Tags">
+          {session.tags.map((tag, index) => (
+            <List.Item
+              key={index}
+              title={`#${tag}`}
+              icon={{ source: Icon.Tag, tintColor: STATUS_COLORS.INFO }}
+            />
+          ))}
+        </List.Section>
+      )}
+
+      {/* Mood Entries Section */}
+      {associatedMoodEntries.length > 0 && (
+        <List.Section title="Mood Tracking">
+          {associatedMoodEntries.map((entry) => (
+            <List.Item
+              key={entry.id}
+              title={`${entry.mood.charAt(0).toUpperCase() + entry.mood.slice(1)} (${entry.intensity}/5)`}
+              subtitle={
+                entry.context === "pre-session"
+                  ? "Before session"
+                  : entry.context === "post-session"
+                    ? "After session"
+                    : entry.context === "during-session"
+                      ? "During session"
+                      : "Standalone"
+              }
+              icon={{
+                source: getMoodIcon(entry.mood),
+                tintColor: getMoodColor(entry.mood),
+              }}
+              accessories={[
+                {
+                  text: format(new Date(entry.timestamp), "h:mm a"),
+                  tooltip: `Logged at ${format(new Date(entry.timestamp), "h:mm a")}`,
+                },
+                ...(entry.notes
+                  ? [
+                      {
+                        icon: {
+                          source: Icon.Document,
+                          tintColor: STATUS_COLORS.INFO,
+                        },
+                        tooltip: "Has notes",
+                      },
+                    ]
+                  : []),
+              ]}
+            />
+          ))}
+        </List.Section>
+      )}
+
+      {/* Application Usage Section */}
+      {session.applicationUsage && session.applicationUsage.length > 0 && (
+        <List.Section title="Application Usage">
+          {session.applicationUsage.slice(0, 10).map((app, index) => (
+            <List.Item
+              key={app.bundleId}
+              title={app.name}
+              subtitle={`${app.percentage}% of session time`}
+              icon={{
+                source: Icon.Desktop,
+                tintColor:
+                  index < 3 ? getAppRankingColor(index) : STATUS_COLORS.NEUTRAL,
+              }}
+              accessories={[
+                {
+                  text: formatTime(app.timeSpent),
+                  tooltip: `Used for ${formatTime(app.timeSpent)}`,
+                },
+                {
+                  icon: {
+                    source: Icon.Circle,
+                    tintColor:
+                      index < 3
+                        ? getAppRankingColor(index)
+                        : STATUS_COLORS.NEUTRAL,
+                  },
+                  tooltip: `#${index + 1} most used app`,
+                },
+              ]}
+            />
+          ))}
+          {session.applicationUsage.length > 10 && (
+            <List.Item
+              title={`+${session.applicationUsage.length - 10} more applications`}
+              subtitle="Additional apps used during this session"
+              icon={{ source: Icon.Ellipsis, tintColor: STATUS_COLORS.NEUTRAL }}
+            />
+          )}
+        </List.Section>
+      )}
+    </>
   );
 }
 
@@ -671,166 +666,4 @@ function getSessionSubtitle(session: TimerSession): string {
   }
 
   return subtitle;
-}
-
-function AppAnalyticsView({ onBack }: { onBack: () => void }) {
-  const { history } = useTimerStore();
-
-  // Get sessions with application usage data
-  const sessionsWithAppUsage = history.filter(
-    (s: TimerSession) =>
-      s.type === SessionType.WORK &&
-      s.applicationUsage &&
-      s.applicationUsage.length > 0
-  );
-
-  // Aggregate application usage across all sessions
-  const allAppUsage = new Map<
-    string,
-    {
-      name: string;
-      totalTime: number;
-      sessionCount: number;
-      averageTime: number;
-    }
-  >();
-
-  sessionsWithAppUsage.forEach((session) => {
-    session.applicationUsage?.forEach((app) => {
-      const existing = allAppUsage.get(app.bundleId) || {
-        name: app.name,
-        totalTime: 0,
-        sessionCount: 0,
-        averageTime: 0,
-      };
-      existing.totalTime += app.timeSpent;
-      existing.sessionCount += 1;
-      existing.averageTime = Math.floor(
-        existing.totalTime / existing.sessionCount
-      );
-      allAppUsage.set(app.bundleId, existing);
-    });
-  });
-
-  const topApps = Array.from(allAppUsage.values())
-    .sort((a, b) => b.totalTime - a.totalTime)
-    .slice(0, 10);
-
-  // Get productivity insights from the service
-  const insights = applicationTrackingService.getProductivityInsights();
-
-  const markdown = `
-# Application Analytics
-
-## Overview
-- **Sessions with App Data**: ${sessionsWithAppUsage.length} / ${history.filter((s) => s.type === SessionType.WORK).length} work sessions
-- **Total Applications Used**: ${allAppUsage.size}
-- **Data Coverage**: ${history.length > 0 ? Math.round((sessionsWithAppUsage.length / history.filter((s) => s.type === SessionType.WORK).length) * 100) : 0}%
-
-${
-  topApps.length > 0
-    ? `
-## Top Applications
-${topApps
-  .map(
-    (app, index) =>
-      `${index + 1}. **${app.name}**
-   - Total time: ${formatTime(app.totalTime)}
-   - Used in ${app.sessionCount} sessions
-   - Average per session: ${formatTime(app.averageTime)}`
-  )
-  .join("\n\n")}
-`
-    : ""
-}
-
-${
-  insights.focusScore > 0
-    ? `
-## Productivity Analysis
-- **Focus Score**: ${insights.focusScore}%
-- **Productive Apps**: ${insights.productiveApps.length}
-- **Distraction Apps**: ${insights.distractionApps.length}
-
-${
-  insights.productiveApps.length > 0
-    ? `
-### Productive Applications
-${insights.productiveApps
-  .map(
-    (app, index) =>
-      `${index + 1}. **${app.name}** - ${formatTime(app.timeSpent)} (${app.percentage}%)`
-  )
-  .join("\n")}
-`
-    : ""
-}
-
-${
-  insights.distractionApps.length > 0
-    ? `
-### Potential Distractions
-${insights.distractionApps
-  .map(
-    (app, index) =>
-      `${index + 1}. **${app.name}** - ${formatTime(app.timeSpent)} (${app.percentage}%)`
-  )
-  .join("\n")}
-`
-    : ""
-}
-
-${
-  insights.recommendations.length > 0
-    ? `
-## Recommendations
-${insights.recommendations.map((rec, index) => `${index + 1}. ${rec}`).join("\n")}
-`
-    : ""
-}
-`
-    : ""
-}
-
-${
-  sessionsWithAppUsage.length === 0
-    ? `
-## Get Started with Application Tracking
-
-Application tracking is currently enabled in your preferences, but no data has been collected yet.
-
-**To start collecting application usage data:**
-1. Start a work session (application tracking only works during work sessions)
-2. Switch between different applications while the timer is running
-3. Complete the session to save the data
-4. Return here to see your application usage analytics
-
-**Benefits of Application Tracking:**
-- Understand which applications you spend the most time in
-- Get productivity insights and recommendations
-- Track your focus patterns over time
-- Identify potential distractions during work sessions
-`
-    : ""
-}
-
----
-
-*Application tracking helps you understand your work patterns and improve focus. Data is collected only during work sessions and stored locally.*
-  `;
-
-  return (
-    <Detail
-      markdown={markdown}
-      actions={
-        <ActionPanel>
-          <Action
-            title="Back to History"
-            icon={Icon.ArrowLeft}
-            onAction={onBack}
-          />
-        </ActionPanel>
-      }
-    />
-  );
 }

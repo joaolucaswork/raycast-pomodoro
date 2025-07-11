@@ -18,8 +18,11 @@ import {
   getSessionTypeLabel,
   getProgressPercentage,
 } from "./utils/helpers";
-import { SessionType, TimerConfig } from "./types/timer";
+import { SessionType, TimerConfig, MoodType } from "./types/timer";
 import { ACTION_ICONS, SHORTCUTS } from "./constants/design-tokens";
+
+import { formatDistanceToNow } from "date-fns";
+import { getMoodIcon, getMoodColor } from "./constants/design-tokens";
 
 interface Preferences {
   workDuration: string;
@@ -40,6 +43,7 @@ export default function FocusTimer() {
     undefined
   );
   const [targetRounds, setTargetRounds] = useState("1");
+  const [preSessionMood, setPreSessionMood] = useState<MoodType | null>(null);
   const [currentAppName, setCurrentAppName] = useState<string | null>(null);
   const [isAppTrackingActive, setIsAppTrackingActive] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -51,13 +55,17 @@ export default function FocusTimer() {
     pause,
     resume,
     stop,
+    complete,
     isRunning,
     isPaused,
     isIdle,
-    sessionCount,
+    isCompleted,
     updateCurrentSessionIcon,
     addTagToCurrentSession,
   } = useTimer();
+
+  const { currentFocusPeriodSessionCount, startNewFocusPeriod } =
+    useTimerStore();
 
   const {
     updateConfig,
@@ -68,6 +76,8 @@ export default function FocusTimer() {
     getTagConfig,
     clearAllTags,
     clearAllHistory,
+    moodEntries,
+    addMoodEntry,
   } = useTimerStore();
 
   // Memoize config to prevent unnecessary updates
@@ -82,6 +92,18 @@ export default function FocusTimer() {
       autoStartWork: preferences.autoStartWork ?? false,
       enableApplicationTracking: preferences.enableApplicationTracking ?? true,
       trackingInterval: parseInt(preferences.trackingInterval) || 5,
+      // ADHD-friendly defaults (will be configurable via preferences later)
+      enableAdaptiveTimers: false,
+      adaptiveMode: "energy-based",
+      minWorkDuration: 10,
+      maxWorkDuration: 60,
+      adaptiveBreakRatio: 0.2,
+      enableRewardSystem: true,
+      enableTransitionWarnings: true,
+      warningIntervals: [300, 120, 60],
+      enableHyperfocusDetection: true,
+      maxConsecutiveSessions: 3,
+      forcedBreakAfterHours: 2.5,
     }),
     [
       preferences.workDuration,
@@ -200,6 +222,12 @@ export default function FocusTimer() {
   );
 
   const handleStartWork = useCallback(async () => {
+    // Start new focus period if not already started or if starting fresh
+    const targetRoundsNum = parseInt(targetRounds);
+    if (currentFocusPeriodSessionCount === 0 || !currentSession) {
+      startNewFocusPeriod(targetRoundsNum);
+    }
+
     // Parse task name and tags from search text AND store new tags
     const { taskName, tags } = parseSearchTextAndStore(searchText);
 
@@ -225,15 +253,34 @@ export default function FocusTimer() {
       }
     }
 
+    // Start the work session
     startWorkSession(limitedTaskName, undefined, tags, iconToUse);
+
+    // Log pre-session mood if selected
+    if (preSessionMood) {
+      // Get the session ID after starting (we'll need to wait a moment for it to be created)
+      setTimeout(() => {
+        const currentState = useTimerStore.getState();
+        const sessionId = currentState.currentSession?.id;
+        if (sessionId) {
+          addMoodEntry(preSessionMood, 3, "pre-session", sessionId);
+        }
+      }, 100);
+    }
 
     // Note: We don't reset form state to maintain user's setup for next round
   }, [
+    targetRounds,
+    currentFocusPeriodSessionCount,
+    currentSession,
+    startNewFocusPeriod,
     searchText,
     startWorkSession,
     parseSearchTextAndStore,
     selectedTaskIcon,
     getTagConfig,
+    preSessionMood,
+    addMoodEntry,
   ]);
 
   // Get tag color based on tag name (with custom config support)
@@ -263,6 +310,18 @@ export default function FocusTimer() {
 
     // Fall back to generic tag icon
     return Icon.Tag;
+  };
+
+  // Get the most recent mood entry
+  const getMostRecentMoodEntry = () => {
+    if (moodEntries.length === 0) return null;
+
+    const sortedEntries = [...moodEntries].sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+
+    return sortedEntries[0];
   };
 
   const getTimerDisplay = () => {
@@ -321,6 +380,17 @@ export default function FocusTimer() {
   // Get current task info from search text (without storing tags)
   const { taskName: currentTaskName, tags: currentTags } =
     parseSearchTextOnly(searchText);
+
+  // Mood options for pre-session selection
+  const moodOptions: { value: MoodType; title: string }[] = [
+    { value: "energized", title: "Energized" },
+    { value: "focused", title: "Focused" },
+    { value: "calm", title: "Calm" },
+    { value: "motivated", title: "Motivated" },
+    { value: "neutral", title: "Neutral" },
+    { value: "tired", title: "Tired" },
+    { value: "stressed", title: "Stressed" },
+  ];
 
   // Helper function to create color selection actions for a tag
   const createTagColorActions = (tagName: string) => [
@@ -434,6 +504,8 @@ export default function FocusTimer() {
     />,
   ];
 
+  // Post-session mood logging removed to fix timer stop bug
+
   return (
     <List
       navigationTitle="Focus Timer"
@@ -469,7 +541,7 @@ export default function FocusTimer() {
             title={timerDisplay.timeDisplay}
             subtitle={
               currentSession.type === SessionType.WORK
-                ? `${currentSession.taskName ? `${currentSession.taskName} - ` : ""}Round ${sessionCount + 1}/${targetRounds}`
+                ? `${currentSession.taskName ? `${currentSession.taskName} - ` : ""}${currentFocusPeriodSessionCount + 1}/${targetRounds}`
                 : `${timerDisplay.title}${currentSession.taskName ? ` • ${currentSession.taskName}` : ""}`
             }
             accessories={[
@@ -497,7 +569,7 @@ export default function FocusTimer() {
                       <Action
                         title="Complete Round"
                         icon={ACTION_ICONS.COMPLETE}
-                        onAction={stop}
+                        onAction={complete}
                         shortcut={SHORTCUTS.PRIMARY_ACTION}
                       />
                     </>
@@ -541,6 +613,27 @@ export default function FocusTimer() {
 
           {/* Session Details */}
           <List.Section title="Session Info">
+            {/* Recent Mood Entry Display */}
+            {(() => {
+              const recentMood = getMostRecentMoodEntry();
+              return recentMood ? (
+                <List.Item
+                  icon={{
+                    source: getMoodIcon(recentMood.mood),
+                    tintColor: getMoodColor(recentMood.mood),
+                  }}
+                  title="Recent Mood"
+                  subtitle={`${recentMood.mood.charAt(0).toUpperCase() + recentMood.mood.slice(1)} • ${formatDistanceToNow(new Date(recentMood.timestamp), { addSuffix: true })}`}
+                  accessories={[
+                    {
+                      text: `${recentMood.intensity}/5`,
+                      tooltip: `Intensity: ${recentMood.intensity}/5`,
+                    },
+                  ]}
+                />
+              ) : null;
+            })()}
+
             {timerDisplay.nextBreakTime && (
               <List.Item
                 icon={Icon.Clock}
@@ -581,7 +674,7 @@ export default function FocusTimer() {
                             .map((tag) => (
                               <Action
                                 key={`add-tag-${tag}`}
-                                title={`Add #${tag}`}
+                                title={`#${tag}`}
                                 icon={{
                                   source: getTagIcon(tag),
                                   tintColor: getTagColor(tag),
@@ -752,8 +845,8 @@ export default function FocusTimer() {
             )}
           </List.Section>
         </>
-      ) : isIdle ? (
-        // Setup Interface - Only show when timer is idle
+      ) : isIdle || isCompleted ? (
+        // Setup Interface - Show when timer is idle or completed
         <>
           <List.Item
             icon={selectedTaskIcon || Icon.Play}
@@ -764,6 +857,17 @@ export default function FocusTimer() {
                 ? currentTags.map((tag) => ({
                     tag: { value: tag, color: getTagColor(tag) },
                   }))
+                : []),
+              ...(preSessionMood
+                ? [
+                    {
+                      icon: {
+                        source: getMoodIcon(preSessionMood),
+                        tintColor: getMoodColor(preSessionMood),
+                      },
+                      tooltip: `Pre-session mood: ${preSessionMood}`,
+                    },
+                  ]
                 : []),
               {
                 text: `${targetRounds} round${targetRounds !== "1" ? "s" : ""}`,
@@ -796,6 +900,30 @@ export default function FocusTimer() {
                       ))}
                     </>
                   )}
+
+                  <ActionPanel.Submenu
+                    title="Set Pre-Session Mood"
+                    icon={Icon.Heart}
+                  >
+                    {moodOptions.map((mood) => (
+                      <Action
+                        key={mood.value}
+                        title={mood.title}
+                        icon={{
+                          source: getMoodIcon(mood.value),
+                          tintColor: getMoodColor(mood.value),
+                        }}
+                        onAction={() => setPreSessionMood(mood.value)}
+                      />
+                    ))}
+                    {preSessionMood && (
+                      <Action
+                        title="Clear Mood Selection"
+                        icon={Icon.XMarkCircle}
+                        onAction={() => setPreSessionMood(null)}
+                      />
+                    )}
+                  </ActionPanel.Submenu>
 
                   <ActionPanel.Submenu
                     title="Select Task Icon"
@@ -994,7 +1122,7 @@ export default function FocusTimer() {
                       <List.Item
                         key={`custom-${tag}`}
                         icon={getTagIcon(tag)}
-                        title={`Add #${tag}`}
+                        title={`#${tag}`}
                         subtitle="Custom tag"
                         accessories={[
                           { tag: { value: tag, color: getTagColor(tag) } },
@@ -1003,7 +1131,7 @@ export default function FocusTimer() {
                           <ActionPanel>
                             <ActionPanel.Section title="Tag Actions">
                               <Action
-                                title={`Add #${tag} Tag`}
+                                title={`#${tag} Tag`}
                                 icon={Icon.Plus}
                                 onAction={() => {
                                   setSearchText((prevText) => {
@@ -1277,8 +1405,8 @@ export default function FocusTimer() {
                           source: getTagIcon(tag),
                           tintColor: Color.SecondaryText,
                         }}
-                        title={`Add #${tag}`}
-                        subtitle="Built-in tag"
+                        title={`#${tag}`}
+                        subtitle=""
                         accessories={[
                           { tag: { value: tag, color: Color.SecondaryText } },
                         ]}
@@ -1286,7 +1414,7 @@ export default function FocusTimer() {
                           <ActionPanel>
                             <ActionPanel.Section title="Tag Actions">
                               <Action
-                                title={`Add #${tag} Tag`}
+                                title={`#${tag} Tag`}
                                 icon={Icon.Plus}
                                 onAction={() => {
                                   setSearchText((prevText) => {
@@ -1374,8 +1502,8 @@ export default function FocusTimer() {
         </>
       ) : null}
 
-      {/* Empty View when idle and no search text */}
-      {isIdle && !searchText && (
+      {/* Empty View when idle/completed and no search text (fallback) */}
+      {(isIdle || isCompleted) && !searchText && (
         <List.EmptyView
           icon={Icon.Clock}
           title="Focus Timer"

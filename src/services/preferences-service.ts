@@ -20,6 +20,21 @@ export interface RaycastPreferences {
   trackingInterval: string;
 }
 
+// Default ADHD-related configuration values
+const getDefaultADHDConfig = () => ({
+  enableAdaptiveTimers: false,
+  adaptiveMode: "energy-based" as const,
+  minWorkDuration: 15,
+  maxWorkDuration: 45,
+  adaptiveBreakRatio: 0.2,
+  enableRewardSystem: true,
+  enableTransitionWarnings: true,
+  warningIntervals: [300, 120, 60], // 5min, 2min, 1min warnings
+  enableHyperfocusDetection: true,
+  maxConsecutiveSessions: 3,
+  forcedBreakAfterHours: 2.5,
+});
+
 export class PreferencesService {
   private static instance: PreferencesService;
   private presets: TimerPreset[] = [];
@@ -51,6 +66,7 @@ export class PreferencesService {
           autoStartWork: false,
           enableApplicationTracking: true,
           trackingInterval: 5,
+          ...getDefaultADHDConfig(),
         },
       },
       {
@@ -67,6 +83,7 @@ export class PreferencesService {
           autoStartWork: false,
           enableApplicationTracking: true,
           trackingInterval: 5,
+          ...getDefaultADHDConfig(),
         },
       },
       {
@@ -83,6 +100,7 @@ export class PreferencesService {
           autoStartWork: true,
           enableApplicationTracking: true,
           trackingInterval: 5,
+          ...getDefaultADHDConfig(),
         },
       },
       {
@@ -99,6 +117,7 @@ export class PreferencesService {
           autoStartWork: false,
           enableApplicationTracking: true,
           trackingInterval: 5,
+          ...getDefaultADHDConfig(),
         },
       },
       {
@@ -115,6 +134,7 @@ export class PreferencesService {
           autoStartWork: false,
           enableApplicationTracking: true,
           trackingInterval: 5,
+          ...getDefaultADHDConfig(),
         },
       },
     ];
@@ -155,6 +175,7 @@ export class PreferencesService {
           preferences.trackingInterval,
           5
         ),
+        ...getDefaultADHDConfig(),
       };
     } catch (error) {
       console.error("Failed to load preferences:", error);

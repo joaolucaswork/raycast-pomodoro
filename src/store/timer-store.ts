@@ -10,11 +10,20 @@ import {
   TimerStats,
   SessionEndReason,
   CustomTagConfig,
+  RewardSystem,
+  HyperfocusDetection,
+  BreakActivity,
+  Achievement,
+  MoodEntry,
+  MoodType,
+  MoodAnalytics,
 } from "../types/timer";
 import { generateId } from "../utils/helpers";
 import { isToday, isThisWeek, isThisMonth } from "date-fns";
 import { zustandStorage } from "../utils/zustand-storage";
 import { applicationTrackingService } from "../services/application-tracking-service";
+import { adhdSupportService } from "../services/adhd-support-service";
+import { moodTrackingService } from "../services/mood-tracking-service";
 
 const DEFAULT_CONFIG: TimerConfig = {
   workDuration: 25,
@@ -26,6 +35,18 @@ const DEFAULT_CONFIG: TimerConfig = {
   autoStartWork: false,
   enableApplicationTracking: true,
   trackingInterval: 5,
+  // ADHD-friendly defaults
+  enableAdaptiveTimers: false,
+  adaptiveMode: "energy-based",
+  minWorkDuration: 10,
+  maxWorkDuration: 60,
+  adaptiveBreakRatio: 0.2,
+  enableRewardSystem: true,
+  enableTransitionWarnings: true,
+  warningIntervals: [300, 120, 60], // 5min, 2min, 1min
+  enableHyperfocusDetection: true,
+  maxConsecutiveSessions: 3,
+  forcedBreakAfterHours: 2.5,
 };
 
 const DEFAULT_STATS: TimerStats = {
@@ -53,6 +74,32 @@ export const useTimerStore = create<PomodoroStore>()(
       customTags: [],
       customTagConfigs: [],
       hasCreatedCustomTag: false,
+      // Focus period tracking
+      currentFocusPeriodId: null,
+      currentFocusPeriodSessionCount: 0,
+      targetRounds: 1,
+      // ADHD-specific state
+      rewardSystem: {
+        points: 0,
+        level: 1,
+        streakMultiplier: 1,
+        achievements: [],
+        dailyGoal: 4, // 4 sessions per day
+      },
+      hyperfocusDetection: {
+        isHyperfocusDetected: false,
+        consecutiveSessions: 0,
+        totalFocusTime: 0,
+        appSwitchFrequency: 0,
+        warningShown: false,
+      },
+      breakActivities: adhdSupportService.getDefaultBreakActivities(),
+      currentBreakActivity: undefined,
+      // Mood tracking state
+      moodEntries: [],
+      // Post-session mood logging state
+      isPostSessionMoodPromptVisible: false,
+      lastCompletedSession: null,
 
       // Actions
       startTimer: (
@@ -168,7 +215,12 @@ export const useTimerStore = create<PomodoroStore>()(
       },
 
       skipSession: () => {
-        const { currentSession, history, sessionCount } = get();
+        const {
+          currentSession,
+          history,
+          sessionCount,
+          currentFocusPeriodSessionCount,
+        } = get();
         if (currentSession) {
           // Stop application tracking if it was running
           let applicationUsage = undefined;
@@ -193,19 +245,31 @@ export const useTimerStore = create<PomodoroStore>()(
               ? sessionCount + 1
               : sessionCount;
 
+          // Update focus period session count for work sessions (even if skipped)
+          const newFocusPeriodSessionCount =
+            currentSession.type === SessionType.WORK
+              ? currentFocusPeriodSessionCount + 1
+              : currentFocusPeriodSessionCount;
+
           set({
             currentSession: null,
             state: TimerState.IDLE,
             timeRemaining: 0,
             history: newHistory,
             sessionCount: newSessionCount,
+            currentFocusPeriodSessionCount: newFocusPeriodSessionCount,
             stats: calculateStats(newHistory),
           });
         }
       },
 
       completeSession: () => {
-        const { currentSession, history, sessionCount } = get();
+        const {
+          currentSession,
+          history,
+          sessionCount,
+          currentFocusPeriodSessionCount,
+        } = get();
         if (currentSession) {
           // Stop application tracking and capture usage data if it was a work session
           let applicationUsage = undefined;
@@ -230,14 +294,31 @@ export const useTimerStore = create<PomodoroStore>()(
               ? sessionCount + 1
               : sessionCount;
 
+          // Update focus period session count for work sessions
+          const newFocusPeriodSessionCount =
+            currentSession.type === SessionType.WORK
+              ? currentFocusPeriodSessionCount + 1
+              : currentFocusPeriodSessionCount;
+
           set({
             currentSession: null,
             state: TimerState.COMPLETED,
             timeRemaining: 0,
             history: newHistory,
             sessionCount: newSessionCount,
+            currentFocusPeriodSessionCount: newFocusPeriodSessionCount,
             stats: calculateStats(newHistory),
+            // Remove mood prompt to fix timer stop bug
+            isPostSessionMoodPromptVisible: false,
+            lastCompletedSession: null,
           });
+
+          // Auto-transition to idle after a short delay
+          setTimeout(() => {
+            set({
+              state: TimerState.IDLE,
+            });
+          }, 5000); // 5 seconds to show completion state
         }
       },
 
@@ -437,6 +518,237 @@ export const useTimerStore = create<PomodoroStore>()(
           customTagConfigs: filteredCustomTagConfigs,
           hasCreatedCustomTag:
             filteredCustomTags.length > predefinedTags.length,
+        });
+      },
+
+      // ADHD-specific actions
+      updateSessionEnergyLevel: (level: 1 | 2 | 3 | 4 | 5) => {
+        const { currentSession } = get();
+        if (currentSession) {
+          set({
+            currentSession: {
+              ...currentSession,
+              energyLevel: level,
+            },
+          });
+        }
+      },
+
+      updateSessionMoodState: (
+        mood: "motivated" | "neutral" | "struggling" | "hyperfocus"
+      ) => {
+        const { currentSession } = get();
+        if (currentSession) {
+          set({
+            currentSession: {
+              ...currentSession,
+              moodState: mood,
+            },
+          });
+        }
+      },
+
+      awardPoints: (points: number, reason: string) => {
+        const { rewardSystem, history } = get();
+        const newPoints = rewardSystem.points + points;
+        const newLevel = adhdSupportService.calculateLevel(newPoints);
+
+        // Check for new achievements
+        const newAchievements = adhdSupportService.checkAchievements(history, {
+          ...rewardSystem,
+          points: newPoints,
+        });
+
+        set({
+          rewardSystem: {
+            ...rewardSystem,
+            points: newPoints,
+            level: newLevel,
+            achievements: [...rewardSystem.achievements, ...newAchievements],
+          },
+        });
+      },
+
+      unlockAchievement: (achievementId: string) => {
+        const { rewardSystem } = get();
+        const defaultAchievements = adhdSupportService.getDefaultAchievements();
+        const achievement = defaultAchievements.find(
+          (a) => a.id === achievementId
+        );
+
+        if (
+          achievement &&
+          !rewardSystem.achievements.find((a) => a.id === achievementId)
+        ) {
+          set({
+            rewardSystem: {
+              ...rewardSystem,
+              achievements: [
+                ...rewardSystem.achievements,
+                { ...achievement, unlockedAt: new Date() },
+              ],
+              points: rewardSystem.points + achievement.points,
+            },
+          });
+        }
+      },
+
+      adaptSessionDuration: (newDuration: number, reason: string) => {
+        const { currentSession } = get();
+        if (currentSession) {
+          set({
+            currentSession: {
+              ...currentSession,
+              adaptiveAdjustments: {
+                originalDuration: currentSession.duration,
+                adjustedDuration: newDuration,
+                reason,
+              },
+              duration: newDuration,
+            },
+            timeRemaining: newDuration,
+          });
+        }
+      },
+
+      selectBreakActivity: (activityId: string) => {
+        const { breakActivities } = get();
+        const activity = breakActivities.find((a) => a.id === activityId);
+        if (activity) {
+          set({ currentBreakActivity: activity });
+        }
+      },
+
+      completeBreakActivity: (rating?: 1 | 2 | 3 | 4 | 5) => {
+        const { currentBreakActivity, rewardSystem } = get();
+        if (currentBreakActivity) {
+          // Award points for completing break activity
+          const points = 15 + (rating ? rating * 2 : 0);
+          set({
+            currentBreakActivity: undefined,
+            rewardSystem: {
+              ...rewardSystem,
+              points: rewardSystem.points + points,
+            },
+          });
+        }
+      },
+
+      checkHyperfocus: () => {
+        const { hyperfocusDetection, history, config } = get();
+        const recentSessions = history.slice(-5); // Check last 5 sessions
+        const completedSessions = recentSessions.filter((s) => s.completed);
+
+        const detection = adhdSupportService.detectHyperfocus(
+          completedSessions.length,
+          completedSessions.reduce((sum, s) => sum + s.duration, 0),
+          hyperfocusDetection.lastBreakTime,
+          config.maxConsecutiveSessions,
+          config.forcedBreakAfterHours
+        );
+
+        set({
+          hyperfocusDetection: {
+            ...hyperfocusDetection,
+            isHyperfocusDetected: detection.detected,
+            consecutiveSessions: completedSessions.length,
+            totalFocusTime: completedSessions.reduce(
+              (sum, s) => sum + s.duration,
+              0
+            ),
+          },
+        });
+      },
+
+      resetHyperfocusWarning: () => {
+        const { hyperfocusDetection } = get();
+        set({
+          hyperfocusDetection: {
+            ...hyperfocusDetection,
+            warningShown: false,
+            lastBreakTime: new Date(),
+          },
+        });
+      },
+
+      // Mood tracking actions
+      addMoodEntry: (
+        mood: MoodType,
+        intensity: 1 | 2 | 3 | 4 | 5,
+        context:
+          | "pre-session"
+          | "during-session"
+          | "post-session"
+          | "standalone",
+        sessionId?: string,
+        notes?: string
+      ) => {
+        const { moodEntries } = get();
+        const newEntry: MoodEntry = {
+          id: generateId(),
+          mood,
+          intensity,
+          timestamp: new Date(),
+          sessionId,
+          notes,
+          context,
+        };
+
+        set({
+          moodEntries: [...moodEntries, newEntry],
+        });
+      },
+
+      deleteMoodEntry: (entryId: string) => {
+        const { moodEntries } = get();
+        set({
+          moodEntries: moodEntries.filter((entry) => entry.id !== entryId),
+        });
+      },
+
+      getMoodEntries: () => {
+        const { moodEntries } = get();
+        return moodEntries;
+      },
+
+      getMoodAnalytics: () => {
+        const { moodEntries, history } = get();
+        return moodTrackingService.calculateMoodAnalytics(moodEntries, history);
+      },
+
+      // Post-session mood logging actions
+      showPostSessionMoodPrompt: (session: TimerSession) => {
+        set({
+          isPostSessionMoodPromptVisible: true,
+          lastCompletedSession: session,
+        });
+      },
+
+      hidePostSessionMoodPrompt: () => {
+        set({
+          isPostSessionMoodPromptVisible: false,
+          lastCompletedSession: null,
+          // Ensure timer transitions to idle when mood prompt is dismissed
+          state: TimerState.IDLE,
+          currentSession: null,
+          timeRemaining: 0,
+        });
+      },
+
+      // Focus period management
+      startNewFocusPeriod: (targetRounds: number) => {
+        set({
+          currentFocusPeriodId: generateId(),
+          currentFocusPeriodSessionCount: 0,
+          targetRounds,
+        });
+      },
+
+      resetFocusPeriod: () => {
+        set({
+          currentFocusPeriodId: null,
+          currentFocusPeriodSessionCount: 0,
+          targetRounds: 1,
         });
       },
     }),

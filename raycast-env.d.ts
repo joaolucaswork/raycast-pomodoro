@@ -34,6 +34,8 @@ declare type Preferences = ExtensionPreferences
 declare namespace Preferences {
   /** Preferences accessible in the `main-command` command */
   export type MainCommand = ExtensionPreferences & {}
+  /** Preferences accessible in the `profile-command` command */
+  export type ProfileCommand = ExtensionPreferences & {}
   /** Preferences accessible in the `timer-history` command */
   export type TimerHistory = ExtensionPreferences & {}
   /** Preferences accessible in the `menu-bar-timer` command */
@@ -43,6 +45,8 @@ declare namespace Preferences {
 declare namespace Arguments {
   /** Arguments passed to the `main-command` command */
   export type MainCommand = {}
+  /** Arguments passed to the `profile-command` command */
+  export type ProfileCommand = {}
   /** Arguments passed to the `timer-history` command */
   export type TimerHistory = {}
   /** Arguments passed to the `menu-bar-timer` command */

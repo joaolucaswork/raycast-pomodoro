@@ -6,6 +6,8 @@ import {
 } from "../types/timer";
 import { useTimerStore } from "../store/timer-store";
 import { storageAdapter } from "../utils/storage-adapter";
+import { adhdSupportService } from "./adhd-support-service";
+import { applicationTrackingService } from "./application-tracking-service";
 
 /**
  * Background timer service that manages timer state persistence
@@ -40,6 +42,24 @@ export class BackgroundTimerService {
     switch (type) {
       case SessionType.WORK:
         duration = config.workDuration * 60;
+
+        // Apply adaptive timer logic for work sessions if enabled
+        if (config.enableAdaptiveTimers) {
+          const currentSession = useTimerStore.getState().currentSession;
+          const energyLevel = currentSession?.energyLevel || 3;
+          const moodState = currentSession?.moodState || "neutral";
+
+          const adaptiveResult = adhdSupportService.calculateAdaptiveDuration(
+            config.workDuration,
+            energyLevel,
+            moodState,
+            config.adaptiveMode,
+            config.minWorkDuration,
+            config.maxWorkDuration
+          );
+
+          duration = adaptiveResult.duration * 60; // Convert to seconds
+        }
         break;
       case SessionType.SHORT_BREAK:
         duration = config.shortBreakDuration * 60;
@@ -76,6 +96,11 @@ export class BackgroundTimerService {
     };
 
     await this.saveBackgroundState(backgroundState);
+
+    // Start application tracking for work sessions if enabled
+    if (type === SessionType.WORK && config.enableApplicationTracking) {
+      applicationTrackingService.startTracking(config.trackingInterval);
+    }
 
     // Update Zustand store
     useTimerStore.setState({
@@ -160,6 +185,22 @@ export class BackgroundTimerService {
   }
 
   /**
+   * Manually completes the current timer session
+   */
+  public async completeTimer(): Promise<void> {
+    const backgroundState = await this.loadBackgroundState();
+    if (!backgroundState || backgroundState.state !== TimerState.RUNNING) {
+      return;
+    }
+
+    // Complete the session using the background timer completion handler
+    await this.handleTimerCompletion(backgroundState.session);
+
+    // Clear background state
+    await this.clearBackgroundState();
+  }
+
+  /**
    * Updates the timer state based on current time
    * This should be called periodically to sync the timer
    */
@@ -213,18 +254,35 @@ export class BackgroundTimerService {
    * Handles timer completion
    */
   private async handleTimerCompletion(session: TimerSession): Promise<void> {
-    const { history, sessionCount } = useTimerStore.getState();
+    const { history, sessionCount, currentFocusPeriodSessionCount } =
+      useTimerStore.getState();
+
+    // Stop application tracking and capture usage data if it was a work session
+    let applicationUsage = undefined;
+    if (
+      session.type === SessionType.WORK &&
+      applicationTrackingService.isCurrentlyTracking()
+    ) {
+      applicationUsage = applicationTrackingService.stopTracking();
+    }
 
     const completedSession: TimerSession = {
       ...session,
       endTime: new Date(),
       completed: true,
       endReason: SessionEndReason.COMPLETED,
+      applicationUsage,
     };
 
     const newHistory = [...history, completedSession];
     const newSessionCount =
       session.type === SessionType.WORK ? sessionCount + 1 : sessionCount;
+
+    // Update focus period session count for work sessions
+    const newFocusPeriodSessionCount =
+      session.type === SessionType.WORK
+        ? currentFocusPeriodSessionCount + 1
+        : currentFocusPeriodSessionCount;
 
     // Clear background state
     await this.clearBackgroundState();
@@ -287,7 +345,11 @@ export class BackgroundTimerService {
       timeRemaining: 0,
       history: newHistory,
       sessionCount: newSessionCount,
+      currentFocusPeriodSessionCount: newFocusPeriodSessionCount,
       stats: calculateStats(newHistory),
+      // Remove mood prompt to fix timer stop bug
+      isPostSessionMoodPromptVisible: false,
+      lastCompletedSession: null,
     });
 
     // Auto-transition to idle after a short delay

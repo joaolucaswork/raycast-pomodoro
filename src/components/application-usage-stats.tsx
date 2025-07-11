@@ -1,4 +1,4 @@
-import { List, Icon, Color, Detail } from "@raycast/api";
+import { List, Icon, Color } from "@raycast/api";
 import { ApplicationUsage } from "../types/timer";
 import { formatTime } from "../utils/helpers";
 import {
@@ -169,82 +169,244 @@ export function ApplicationAnalytics({
     : null;
   const health = applicationTrackingService.getTrackingHealth();
 
-  const markdown = `
-# 📱 Application Analytics
+  return (
+    <>
+      {/* Session Overview */}
+      <List.Section title="Session Overview">
+        <List.Item
+          title="Total Applications"
+          subtitle={`${stats.totalApplications} applications tracked`}
+          icon={{ source: Icon.Desktop, tintColor: Color.Blue }}
+          accessories={[
+            {
+              text: stats.totalApplications.toString(),
+              tooltip: "Number of applications used",
+            },
+          ]}
+        />
+        <List.Item
+          title="Session Duration"
+          subtitle={formatTime(stats.sessionDuration)}
+          icon={{ source: Icon.Clock, tintColor: Color.Blue }}
+          accessories={[
+            {
+              text: formatTime(stats.sessionDuration),
+              tooltip: "Total session time",
+            },
+          ]}
+        />
+        <List.Item
+          title="Tracking Accuracy"
+          subtitle={`${stats.trackingAccuracy}% accuracy`}
+          icon={{ source: Icon.BarChart, tintColor: Color.Green }}
+          accessories={[
+            {
+              text: `${stats.trackingAccuracy}%`,
+              tooltip: "Application tracking accuracy",
+            },
+          ]}
+        />
+        <List.Item
+          title="Average Time per App"
+          subtitle={formatTime(stats.averageTimePerApp)}
+          icon={{ source: Icon.Clock, tintColor: Color.Orange }}
+          accessories={[
+            {
+              text: formatTime(stats.averageTimePerApp),
+              tooltip: "Average time spent per application",
+            },
+          ]}
+        />
+      </List.Section>
 
-## Session Overview
-- **Total Applications**: ${stats.totalApplications}
-- **Session Duration**: ${formatTime(stats.sessionDuration)}
-- **Tracking Accuracy**: ${stats.trackingAccuracy}%
-- **Average Time per App**: ${formatTime(stats.averageTimePerApp)}
+      {/* Most Active Application */}
+      {stats.mostUsedApplication && (
+        <List.Section title="Most Active Application">
+          <List.Item
+            title={stats.mostUsedApplication.name}
+            subtitle={`${stats.mostUsedApplication.percentage}% of session time`}
+            icon={{ source: Icon.Desktop, tintColor: Color.Green }}
+            accessories={[
+              {
+                text: formatTime(stats.mostUsedApplication.timeSpent),
+                tooltip: "Time spent in this application",
+              },
+              {
+                icon: { source: Icon.Trophy, tintColor: Color.Yellow },
+                tooltip: "Most used application",
+              },
+            ]}
+          />
+        </List.Section>
+      )}
 
-${
-  stats.mostUsedApplication
-    ? `
-## Most Active Application
-**${stats.mostUsedApplication.name}**
-- Time spent: ${formatTime(stats.mostUsedApplication.timeSpent)}
-- Usage: ${stats.mostUsedApplication.percentage}% of session
-`
-    : ""
-}
+      {/* Productivity Insights */}
+      {insights && (
+        <>
+          <List.Section title="Productivity Insights">
+            <List.Item
+              title="Focus Score"
+              subtitle={`${insights.focusScore}% productivity rating`}
+              icon={{ source: Icon.BullsEye, tintColor: Color.Green }}
+              accessories={[
+                {
+                  text: `${insights.focusScore}%`,
+                  tooltip: "Overall focus quality score",
+                },
+              ]}
+            />
+            <List.Item
+              title="Productive Applications"
+              subtitle={`${insights.productiveApps.length} apps identified as productive`}
+              icon={{ source: Icon.CheckCircle, tintColor: Color.Green }}
+              accessories={[
+                {
+                  text: insights.productiveApps.length.toString(),
+                  tooltip: "Number of productive applications",
+                },
+              ]}
+            />
+            <List.Item
+              title="Potential Distractions"
+              subtitle={`${insights.distractionApps.length} apps may impact focus`}
+              icon={{ source: Icon.ExclamationMark, tintColor: Color.Orange }}
+              accessories={[
+                {
+                  text: insights.distractionApps.length.toString(),
+                  tooltip: "Number of potentially distracting applications",
+                },
+              ]}
+            />
+          </List.Section>
 
-${
-  insights
-    ? `
-## 🎯 Productivity Insights
-- **Focus Score**: ${insights.focusScore}%
-- **Productive Apps**: ${insights.productiveApps.length}
-- **Distraction Apps**: ${insights.distractionApps.length}
+          {/* Top Productive Applications */}
+          {insights.productiveApps.length > 0 && (
+            <List.Section title="Top Productive Applications">
+              {insights.productiveApps.slice(0, 5).map((app, index) => (
+                <List.Item
+                  key={app.name}
+                  title={app.name}
+                  subtitle={`${app.percentage}% of session time`}
+                  icon={{ source: Icon.CheckCircle, tintColor: Color.Green }}
+                  accessories={[
+                    {
+                      text: formatTime(app.timeSpent),
+                      tooltip: `Used for ${formatTime(app.timeSpent)}`,
+                    },
+                    {
+                      icon: { source: Icon.Circle, tintColor: Color.Green },
+                      tooltip: "Identified as productive",
+                    },
+                  ]}
+                />
+              ))}
+            </List.Section>
+          )}
 
-${
-  insights.productiveApps.length > 0
-    ? `
-### Top Productive Applications
-${insights.productiveApps
-  .map(
-    (app, index) =>
-      `${index + 1}. **${app.name}** - ${formatTime(app.timeSpent)} (${app.percentage}%)`
-  )
-  .join("\n")}
-`
-    : ""
-}
+          {/* Potential Distractions */}
+          {insights.distractionApps.length > 0 && (
+            <List.Section title="Potential Distractions">
+              {insights.distractionApps.slice(0, 5).map((app, index) => (
+                <List.Item
+                  key={app.name}
+                  title={app.name}
+                  subtitle={`${app.percentage}% of session time`}
+                  icon={{
+                    source: Icon.ExclamationMark,
+                    tintColor: Color.Orange,
+                  }}
+                  accessories={[
+                    {
+                      text: formatTime(app.timeSpent),
+                      tooltip: `Used for ${formatTime(app.timeSpent)}`,
+                    },
+                    {
+                      icon: { source: Icon.Circle, tintColor: Color.Orange },
+                      tooltip: "May impact focus",
+                    },
+                  ]}
+                />
+              ))}
+            </List.Section>
+          )}
 
-${
-  insights.distractionApps.length > 0
-    ? `
-### Potential Distractions
-${insights.distractionApps
-  .map(
-    (app, index) =>
-      `${index + 1}. **${app.name}** - ${formatTime(app.timeSpent)} (${app.percentage}%)`
-  )
-  .join("\n")}
-`
-    : ""
-}
+          {/* Recommendations */}
+          {insights.recommendations.length > 0 && (
+            <List.Section title="Improvement Recommendations">
+              {insights.recommendations.map((recommendation, index) => (
+                <List.Item
+                  key={index}
+                  title={recommendation}
+                  icon={{ source: Icon.LightBulb, tintColor: Color.Purple }}
+                  accessories={[
+                    {
+                      icon: { source: Icon.Circle, tintColor: Color.Purple },
+                      tooltip: "AI-powered suggestion",
+                    },
+                  ]}
+                />
+              ))}
+            </List.Section>
+          )}
+        </>
+      )}
 
-${
-  insights.recommendations.length > 0
-    ? `
-## 💡 Recommendations
-${insights.recommendations.map((rec, index) => `${index + 1}. ${rec}`).join("\n")}
-`
-    : ""
-}
-`
-    : ""
-}
-
-## 🔧 Tracking Health
-- **Status**: ${health.isHealthy ? "✅ Healthy" : "⚠️ Issues detected"}
-- **Uptime**: ${formatTime(Math.floor(health.uptime / 1000))}
-- **Error Count**: ${health.errorCount}
-${health.lastError ? `- **Last Error**: ${health.lastError}` : ""}
-  `;
-
-  return <Detail markdown={markdown} navigationTitle="Application Analytics" />;
+      {/* Tracking Health */}
+      <List.Section title="Tracking Health">
+        <List.Item
+          title="Status"
+          subtitle={health.isHealthy ? "Healthy" : "Issues detected"}
+          icon={{
+            source: health.isHealthy ? Icon.CheckCircle : Icon.ExclamationMark,
+            tintColor: health.isHealthy ? Color.Green : Color.Red,
+          }}
+          accessories={[
+            {
+              icon: {
+                source: Icon.Circle,
+                tintColor: health.isHealthy ? Color.Green : Color.Red,
+              },
+              tooltip: health.isHealthy
+                ? "Tracking is working properly"
+                : "Some issues detected",
+            },
+          ]}
+        />
+        <List.Item
+          title="Uptime"
+          subtitle={formatTime(Math.floor(health.uptime / 1000))}
+          icon={{ source: Icon.Clock, tintColor: Color.Blue }}
+          accessories={[
+            {
+              text: formatTime(Math.floor(health.uptime / 1000)),
+              tooltip: "How long tracking has been active",
+            },
+          ]}
+        />
+        <List.Item
+          title="Error Count"
+          subtitle={`${health.errorCount} errors encountered`}
+          icon={{
+            source: Icon.ExclamationMark,
+            tintColor: health.errorCount > 0 ? Color.Red : Color.Green,
+          }}
+          accessories={[
+            {
+              text: health.errorCount.toString(),
+              tooltip: "Number of tracking errors",
+            },
+          ]}
+        />
+        {health.lastError && (
+          <List.Item
+            title="Last Error"
+            subtitle={health.lastError}
+            icon={{ source: Icon.XMarkCircle, tintColor: Color.Red }}
+          />
+        )}
+      </List.Section>
+    </>
+  );
 }
 
 /**

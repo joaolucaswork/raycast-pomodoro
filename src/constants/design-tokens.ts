@@ -52,6 +52,24 @@ export const APP_TRACKING_ICONS = {
   HEALTH_CHECK: Icon.ExclamationMark,
 } as const;
 
+// Mood Tracking Icons - Native Raycast icons for different mood states
+export const MOOD_ICONS = {
+  ENERGIZED: Icon.Bolt,
+  FOCUSED: Icon.BullsEye,
+  CALM: Icon.Cloud,
+  MOTIVATED: Icon.Rocket,
+  NEUTRAL: Icon.Circle,
+  TIRED: Icon.Battery,
+  STRESSED: Icon.ExclamationMark,
+  OVERWHELMED: Icon.Warning,
+  DISTRACTED: Icon.QuestionMark,
+  // Context icons
+  PRE_SESSION: Icon.Play,
+  DURING_SESSION: Icon.Clock,
+  POST_SESSION: Icon.CheckCircle,
+  STANDALONE: Icon.Heart,
+} as const;
+
 // Action Icons - Consistent icons for common actions
 export const ACTION_ICONS = {
   PLAY: Icon.Play,
@@ -64,6 +82,7 @@ export const ACTION_ICONS = {
   BACK: Icon.ArrowLeft,
   COPY: Icon.Clipboard,
   SETTINGS: Icon.Gear,
+  SAVE: Icon.SaveDocument,
 } as const;
 
 // Status Colors - Semantic color usage
@@ -113,6 +132,28 @@ export const TRACKING_COLORS = {
   FOCUS_GOOD: Color.Green,
   FOCUS_MODERATE: Color.Orange,
   FOCUS_POOR: Color.Red,
+} as const;
+
+// Mood Tracking Colors - Semantic colors for different mood states
+export const MOOD_COLORS = {
+  // Positive moods
+  ENERGIZED: Color.Yellow,
+  FOCUSED: Color.Green,
+  CALM: Color.Blue,
+  MOTIVATED: Color.Purple,
+  // Neutral mood
+  NEUTRAL: Color.SecondaryText,
+  // Challenging moods
+  TIRED: Color.Orange,
+  STRESSED: Color.Red,
+  OVERWHELMED: Color.Red,
+  DISTRACTED: Color.Orange,
+  // Intensity levels
+  INTENSITY_1: Color.SecondaryText,
+  INTENSITY_2: Color.Orange,
+  INTENSITY_3: Color.Blue,
+  INTENSITY_4: Color.Green,
+  INTENSITY_5: Color.Purple,
 } as const;
 
 // Typography and Spacing - Removed emoji usage in favor of native Raycast icons
@@ -305,4 +346,116 @@ export const getSessionStateDot = (
     icon: Icon.Circle,
     tintColor: color,
   };
+};
+
+/**
+ * Get the appropriate icon for a mood type.
+ *
+ * @param mood - The mood type
+ * @returns Appropriate Raycast Icon for the mood
+ *
+ * @example
+ * ```typescript
+ * const energizedIcon = getMoodIcon('energized'); // Returns bolt icon
+ * const calmIcon = getMoodIcon('calm'); // Returns cloud icon
+ * ```
+ */
+export const getMoodIcon = (mood: string) => {
+  switch (mood.toLowerCase()) {
+    case "energized":
+      return MOOD_ICONS.ENERGIZED;
+    case "focused":
+      return MOOD_ICONS.FOCUSED;
+    case "calm":
+      return MOOD_ICONS.CALM;
+    case "motivated":
+      return MOOD_ICONS.MOTIVATED;
+    case "neutral":
+      return MOOD_ICONS.NEUTRAL;
+    case "tired":
+      return MOOD_ICONS.TIRED;
+    case "stressed":
+      return MOOD_ICONS.STRESSED;
+    case "overwhelmed":
+      return MOOD_ICONS.OVERWHELMED;
+    case "distracted":
+      return MOOD_ICONS.DISTRACTED;
+    default:
+      return MOOD_ICONS.NEUTRAL;
+  }
+};
+
+/**
+ * Get the appropriate color for a mood type.
+ *
+ * @param mood - The mood type
+ * @returns Appropriate color for the mood
+ */
+export const getMoodColor = (mood: string) => {
+  switch (mood.toLowerCase()) {
+    case "energized":
+      return MOOD_COLORS.ENERGIZED;
+    case "focused":
+      return MOOD_COLORS.FOCUSED;
+    case "calm":
+      return MOOD_COLORS.CALM;
+    case "motivated":
+      return MOOD_COLORS.MOTIVATED;
+    case "neutral":
+      return MOOD_COLORS.NEUTRAL;
+    case "tired":
+      return MOOD_COLORS.TIRED;
+    case "stressed":
+      return MOOD_COLORS.STRESSED;
+    case "overwhelmed":
+      return MOOD_COLORS.OVERWHELMED;
+    case "distracted":
+      return MOOD_COLORS.DISTRACTED;
+    default:
+      return MOOD_COLORS.NEUTRAL;
+  }
+};
+
+/**
+ * Get the appropriate color for mood intensity level.
+ *
+ * @param intensity - The intensity level (1-5)
+ * @returns Appropriate color for the intensity
+ */
+export const getMoodIntensityColor = (intensity: 1 | 2 | 3 | 4 | 5) => {
+  switch (intensity) {
+    case 1:
+      return MOOD_COLORS.INTENSITY_1;
+    case 2:
+      return MOOD_COLORS.INTENSITY_2;
+    case 3:
+      return MOOD_COLORS.INTENSITY_3;
+    case 4:
+      return MOOD_COLORS.INTENSITY_4;
+    case 5:
+      return MOOD_COLORS.INTENSITY_5;
+    default:
+      return MOOD_COLORS.INTENSITY_3;
+  }
+};
+
+/**
+ * Get the appropriate icon for mood context.
+ *
+ * @param context - The mood context
+ * @returns Appropriate Raycast Icon for the context
+ */
+export const getMoodContextIcon = (context: string) => {
+  switch (context) {
+    case "pre-session":
+      return MOOD_ICONS.PRE_SESSION;
+    case "during-session":
+      return MOOD_ICONS.DURING_SESSION;
+    case "post-session":
+      return MOOD_ICONS.POST_SESSION;
+    case "standalone":
+      return MOOD_ICONS.STANDALONE;
+    default:
+      return MOOD_ICONS.STANDALONE;
+  }
 };
