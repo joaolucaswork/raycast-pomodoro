@@ -6,7 +6,7 @@ import {
   Color,
   useNavigation,
 } from "@raycast/api";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTimerStore } from "./store/timer-store";
 import {
   formatTime,
@@ -50,7 +50,19 @@ export default function TimerHistory() {
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [completionFilter, setCompletionFilter] =
     useState<CompletionFilter>("all");
-  const { history, deleteSession, getTagConfig, moodEntries } = useTimerStore();
+  const {
+    history,
+    deleteSession,
+    getTagConfig,
+    moodEntries,
+    refreshConfigFromPreferences,
+  } = useTimerStore();
+
+  // Refresh preferences when the history command is opened
+  useEffect(() => {
+    refreshConfigFromPreferences();
+    console.log("[TimerHistory] Refreshed config from preferences");
+  }, [refreshConfigFromPreferences]);
 
   // Handle detail toggle
   const handleDetailToggle = (sessionId?: string) => {

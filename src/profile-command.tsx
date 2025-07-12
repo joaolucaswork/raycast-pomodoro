@@ -1,5 +1,5 @@
 import { Action, ActionPanel, Icon, List } from "@raycast/api";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useTimerStore } from "./store/timer-store";
 import { dataService } from "./services/data-service";
 import {
@@ -23,7 +23,14 @@ export default function ProfileCommand() {
     addMoodEntry,
     deleteMoodEntry,
     getMoodAnalytics,
+    refreshConfigFromPreferences,
   } = useTimerStore();
+
+  // Refresh preferences when the profile command is opened
+  useEffect(() => {
+    refreshConfigFromPreferences();
+    console.log("[ProfileCommand] Refreshed config from preferences");
+  }, [refreshConfigFromPreferences]);
 
   // Calculate detailed statistics
   const detailedStats = useMemo(() => {

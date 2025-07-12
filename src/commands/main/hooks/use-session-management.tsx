@@ -57,6 +57,11 @@ export function useSessionManagement() {
   useEffect(() => {
     const initializeTimer = async () => {
       try {
+        // Refresh config from preferences first to ensure we have the latest settings
+        const { refreshConfigFromPreferences } = useTimerStore.getState();
+        refreshConfigFromPreferences();
+        console.log("[useSessionManagement] Refreshed config from preferences");
+
         await backgroundTimerService.updateTimerState();
 
         // After updating timer state, check if we need to restart application tracking
@@ -88,6 +93,14 @@ export function useSessionManagement() {
     initializeTimer();
   }, []);
 
+  // Additional preference refresh when component mounts
+  // This ensures preference changes are picked up when the user returns to the extension
+  useEffect(() => {
+    const { refreshConfigFromPreferences } = useTimerStore.getState();
+    refreshConfigFromPreferences();
+    console.log("[useSessionManagement] Additional config refresh on mount");
+  }, []);
+
   // Initialize predefined tags with their icons and colors on first load
   useEffect(() => {
     const predefinedTagConfigs = [
@@ -108,6 +121,13 @@ export function useSessionManagement() {
 
   // Handle starting a work session
   const handleStartWork = useCallback(async () => {
+    // Refresh config from preferences before starting to ensure we have the latest duration settings
+    const { refreshConfigFromPreferences } = useTimerStore.getState();
+    refreshConfigFromPreferences();
+    console.log(
+      "[useSessionManagement] Refreshed config before starting session"
+    );
+
     // Start new focus period if not already started or if starting fresh
     const targetRoundsNum = parseInt(targetRounds);
     if (currentFocusPeriodSessionCount === 0 || !currentSession) {
