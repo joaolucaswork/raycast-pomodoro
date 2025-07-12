@@ -47,7 +47,7 @@ export class MoodTrackingService {
    */
   public calculateMoodAnalytics(
     moodEntries: MoodEntry[],
-    sessions: TimerSession[] = []
+    sessions: TimerSession[] = [],
   ): MoodAnalytics {
     if (moodEntries.length === 0) {
       return this.getEmptyAnalytics();
@@ -60,15 +60,15 @@ export class MoodTrackingService {
     const weeklyTrend = this.calculateWeeklyTrend(moodEntries);
     const correlationWithProductivity = this.calculateProductivityCorrelation(
       moodEntries,
-      sessions
+      sessions,
     );
     const bestPerformanceMoods = this.getBestPerformanceMoods(
       moodEntries,
-      sessions
+      sessions,
     );
     const improvementSuggestions = this.generateImprovementSuggestions(
       moodEntries,
-      sessions
+      sessions,
     );
 
     return {
@@ -89,7 +89,7 @@ export class MoodTrackingService {
   public getMoodEntriesInRange(
     moodEntries: MoodEntry[],
     startDate: Date,
-    endDate: Date
+    endDate: Date,
   ): MoodEntry[] {
     return moodEntries.filter((entry) => {
       const entryDate = new Date(entry.timestamp);
@@ -105,7 +105,7 @@ export class MoodTrackingService {
     return this.getMoodEntriesInRange(
       moodEntries,
       startOfDay(today),
-      endOfDay(today)
+      endOfDay(today),
     );
   }
 
@@ -117,7 +117,7 @@ export class MoodTrackingService {
     return this.getMoodEntriesInRange(
       moodEntries,
       startOfWeek(today, { weekStartsOn: 1 }),
-      endOfWeek(today, { weekStartsOn: 1 })
+      endOfWeek(today, { weekStartsOn: 1 }),
     );
   }
 
@@ -127,7 +127,7 @@ export class MoodTrackingService {
   public validateMoodEntry(
     mood: MoodType,
     intensity: number,
-    context: string
+    context: string,
   ): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
@@ -175,7 +175,7 @@ export class MoodTrackingService {
   public getMoodRecommendations(
     currentMood: MoodType,
     intensity: number,
-    recentEntries: MoodEntry[]
+    recentEntries: MoodEntry[],
   ): string[] {
     const recommendations: string[] = [];
 
@@ -183,14 +183,14 @@ export class MoodTrackingService {
     if (currentMood === "stressed" || currentMood === "overwhelmed") {
       if (intensity >= 4) {
         recommendations.push(
-          "Consider taking a longer break before starting your next session"
+          "Consider taking a longer break before starting your next session",
         );
         recommendations.push(
-          "Try a 5-minute breathing exercise or mindfulness activity"
+          "Try a 5-minute breathing exercise or mindfulness activity",
         );
       }
       recommendations.push(
-        "Reduce session duration by 25-50% to prevent burnout"
+        "Reduce session duration by 25-50% to prevent burnout",
       );
     }
 
@@ -198,7 +198,7 @@ export class MoodTrackingService {
     if (currentMood === "tired" && intensity >= 3) {
       recommendations.push("Consider shorter 15-20 minute sessions");
       recommendations.push(
-        "Take a brief walk or do light stretching before focusing"
+        "Take a brief walk or do light stretching before focusing",
       );
     }
 
@@ -209,18 +209,19 @@ export class MoodTrackingService {
     ) {
       recommendations.push("This is a great time for challenging tasks");
       recommendations.push(
-        "Consider extending your session duration by 20-30%"
+        "Consider extending your session duration by 20-30%",
       );
     }
 
     // Pattern-based recommendations
     const recentStressfulMoods = recentEntries.filter(
       (entry) =>
-        ["stressed", "overwhelmed"].includes(entry.mood) && entry.intensity >= 3
+        ["stressed", "overwhelmed"].includes(entry.mood) &&
+        entry.intensity >= 3,
     );
     if (recentStressfulMoods.length >= 3) {
       recommendations.push(
-        "You've been experiencing stress lately - consider adjusting your daily goals"
+        "You've been experiencing stress lately - consider adjusting your daily goals",
       );
     }
 
@@ -251,12 +252,12 @@ export class MoodTrackingService {
   private getMostCommonMood(moodEntries: MoodEntry[]): MoodType {
     const moodCounts = this.calculateMoodDistribution(moodEntries);
     return Object.entries(moodCounts).reduce((a, b) =>
-      moodCounts[a[0] as MoodType] > moodCounts[b[0] as MoodType] ? a : b
+      moodCounts[a[0] as MoodType] > moodCounts[b[0] as MoodType] ? a : b,
     )[0] as MoodType;
   }
 
   private calculateMoodDistribution(
-    moodEntries: MoodEntry[]
+    moodEntries: MoodEntry[],
   ): Record<MoodType, number> {
     const distribution = {} as Record<MoodType, number>;
 
@@ -268,7 +269,7 @@ export class MoodTrackingService {
   }
 
   private calculateWeeklyTrend(
-    moodEntries: MoodEntry[]
+    moodEntries: MoodEntry[],
   ): MoodAnalytics["weeklyTrend"] {
     const sevenDaysAgo = subDays(new Date(), 7);
     const today = new Date();
@@ -278,7 +279,7 @@ export class MoodTrackingService {
       const dayEntries = this.getMoodEntriesInRange(
         moodEntries,
         startOfDay(date),
-        endOfDay(date)
+        endOfDay(date),
       );
 
       const averageMood =
@@ -294,7 +295,7 @@ export class MoodTrackingService {
 
   private calculateProductivityCorrelation(
     moodEntries: MoodEntry[],
-    sessions: TimerSession[]
+    sessions: TimerSession[],
   ): MoodAnalytics["correlationWithProductivity"] {
     const moodTypes: MoodType[] = [
       "energized",
@@ -316,9 +317,9 @@ export class MoodTrackingService {
               entry.sessionId === session.id ||
               Math.abs(
                 new Date(entry.timestamp).getTime() -
-                  new Date(session.startTime).getTime()
+                  new Date(session.startTime).getTime(),
               ) <
-                30 * 60 * 1000
+                30 * 60 * 1000,
           );
           return relatedMoodEntry?.mood === mood;
         });
@@ -347,16 +348,16 @@ export class MoodTrackingService {
 
   private getBestPerformanceMoods(
     moodEntries: MoodEntry[],
-    sessions: TimerSession[]
+    sessions: TimerSession[],
   ): MoodType[] {
     const correlations = this.calculateProductivityCorrelation(
       moodEntries,
-      sessions
+      sessions,
     );
 
     return correlations
       .filter(
-        (c) => c.averageSessionCompletion >= 80 && c.averageFocusQuality >= 4
+        (c) => c.averageSessionCompletion >= 80 && c.averageFocusQuality >= 4,
       )
       .sort((a, b) => b.averageSessionCompletion - a.averageSessionCompletion)
       .slice(0, 3)
@@ -368,7 +369,7 @@ export class MoodTrackingService {
    */
   public getMoodProductivityInsights(
     moodEntries: MoodEntry[],
-    sessions: TimerSession[]
+    sessions: TimerSession[],
   ): {
     optimalMoodTimes: { hour: number; mood: MoodType; productivity: number }[];
     moodSessionCorrelation: {
@@ -389,19 +390,19 @@ export class MoodTrackingService {
   } {
     const optimalMoodTimes = this.calculateOptimalMoodTimes(
       moodEntries,
-      sessions
+      sessions,
     );
     const moodSessionCorrelation = this.calculateMoodSessionCorrelation(
       moodEntries,
-      sessions
+      sessions,
     );
     const energyLevelImpact = this.calculateEnergyLevelImpact(
       moodEntries,
-      sessions
+      sessions,
     );
     const contextualInsights = this.calculateContextualInsights(
       moodEntries,
-      sessions
+      sessions,
     );
 
     return {
@@ -420,7 +421,7 @@ export class MoodTrackingService {
     intensity: number,
     timeOfDay: number,
     recentEntries: MoodEntry[],
-    historicalData: { moodEntries: MoodEntry[]; sessions: TimerSession[] }
+    historicalData: { moodEntries: MoodEntry[]; sessions: TimerSession[] },
   ): {
     recommendedDuration: number;
     sessionType: "short" | "normal" | "extended";
@@ -430,13 +431,13 @@ export class MoodTrackingService {
   } {
     const insights = this.getMoodProductivityInsights(
       historicalData.moodEntries,
-      historicalData.sessions
+      historicalData.sessions,
     );
 
     // Find similar mood patterns in historical data
     const similarMoodSessions = historicalData.sessions.filter((session) => {
       const relatedMood = historicalData.moodEntries.find(
-        (entry) => entry.sessionId === session.id && entry.mood === currentMood
+        (entry) => entry.sessionId === session.id && entry.mood === currentMood,
       );
       return relatedMood && Math.abs(relatedMood.intensity - intensity) <= 1;
     });
@@ -484,7 +485,7 @@ export class MoodTrackingService {
 
     const confidenceScore = Math.min(
       0.95,
-      Math.max(0.3, similarMoodSessions.length / 10)
+      Math.max(0.3, similarMoodSessions.length / 10),
     );
 
     return {
@@ -498,7 +499,7 @@ export class MoodTrackingService {
 
   private calculateOptimalMoodTimes(
     moodEntries: MoodEntry[],
-    sessions: TimerSession[]
+    sessions: TimerSession[],
   ): { hour: number; mood: MoodType; productivity: number }[] {
     const hourlyData: Record<
       number,
@@ -512,9 +513,9 @@ export class MoodTrackingService {
           entry.sessionId === session.id ||
           Math.abs(
             new Date(entry.timestamp).getTime() -
-              new Date(session.startTime).getTime()
+              new Date(session.startTime).getTime(),
           ) <
-            30 * 60 * 1000
+            30 * 60 * 1000,
       );
 
       if (relatedMood) {
@@ -531,7 +532,7 @@ export class MoodTrackingService {
         const mostCommonMood = data.moods.reduce((a, b, _, arr) =>
           arr.filter((v) => v === a).length >= arr.filter((v) => v === b).length
             ? a
-            : b
+            : b,
         );
         const avgProductivity =
           data.productivity.reduce((a, b) => a + b, 0) /
@@ -548,7 +549,7 @@ export class MoodTrackingService {
 
   private calculateMoodSessionCorrelation(
     moodEntries: MoodEntry[],
-    sessions: TimerSession[]
+    sessions: TimerSession[],
   ): { mood: MoodType; avgDuration: number; completionRate: number }[] {
     const moodTypes: MoodType[] = [
       "energized",
@@ -566,7 +567,7 @@ export class MoodTrackingService {
       .map((mood) => {
         const moodSessions = sessions.filter((session) => {
           const relatedMood = moodEntries.find(
-            (entry) => entry.sessionId === session.id && entry.mood === mood
+            (entry) => entry.sessionId === session.id && entry.mood === mood,
           );
           return relatedMood;
         });
@@ -596,7 +597,7 @@ export class MoodTrackingService {
 
   private calculateEnergyLevelImpact(
     moodEntries: MoodEntry[],
-    sessions: TimerSession[]
+    sessions: TimerSession[],
   ): { level: number; avgFocusQuality: number; completionRate: number }[] {
     const energyLevels = [1, 2, 3, 4, 5];
 
@@ -605,7 +606,7 @@ export class MoodTrackingService {
         const levelSessions = sessions.filter((session) => {
           const relatedMood = moodEntries.find(
             (entry) =>
-              entry.sessionId === session.id && entry.intensity === level
+              entry.sessionId === session.id && entry.intensity === level,
           );
           return relatedMood;
         });
@@ -634,7 +635,7 @@ export class MoodTrackingService {
 
   private calculateContextualInsights(
     moodEntries: MoodEntry[],
-    sessions: TimerSession[]
+    sessions: TimerSession[],
   ): { context: string; bestMoods: MoodType[]; avgProductivity: number }[] {
     const contexts = [
       "pre-session",
@@ -646,10 +647,10 @@ export class MoodTrackingService {
     return contexts
       .map((context) => {
         const contextEntries = moodEntries.filter(
-          (entry) => entry.context === context
+          (entry) => entry.context === context,
         );
         const contextSessions = sessions.filter((session) =>
-          contextEntries.some((entry) => entry.sessionId === session.id)
+          contextEntries.some((entry) => entry.sessionId === session.id),
         );
 
         const moodProductivity: Record<MoodType, number[]> = {} as Record<
@@ -659,7 +660,7 @@ export class MoodTrackingService {
 
         contextSessions.forEach((session) => {
           const relatedMood = contextEntries.find(
-            (entry) => entry.sessionId === session.id
+            (entry) => entry.sessionId === session.id,
           );
           if (relatedMood) {
             if (!moodProductivity[relatedMood.mood]) {
@@ -698,7 +699,7 @@ export class MoodTrackingService {
 
   private generateImprovementSuggestions(
     moodEntries: MoodEntry[],
-    sessions: TimerSession[]
+    sessions: TimerSession[],
   ): string[] {
     const suggestions: string[] = [];
     const recentEntries = moodEntries.slice(-10); // Last 10 entries
@@ -706,7 +707,7 @@ export class MoodTrackingService {
 
     // Check for stress patterns
     const stressfulEntries = recentEntries.filter((entry) =>
-      ["stressed", "overwhelmed"].includes(entry.mood)
+      ["stressed", "overwhelmed"].includes(entry.mood),
     );
     if (stressfulEntries.length >= 3) {
       suggestions.push("Consider shorter sessions when feeling stressed");
@@ -715,11 +716,11 @@ export class MoodTrackingService {
 
     // Check for low energy patterns
     const lowEnergyEntries = recentEntries.filter(
-      (entry) => entry.mood === "tired" && entry.intensity >= 3
+      (entry) => entry.mood === "tired" && entry.intensity >= 3,
     );
     if (lowEnergyEntries.length >= 2) {
       suggestions.push(
-        "Schedule demanding tasks during your high-energy periods"
+        "Schedule demanding tasks during your high-energy periods",
       );
     }
 
@@ -727,7 +728,7 @@ export class MoodTrackingService {
     const bestMoods = this.getBestPerformanceMoods(moodEntries, sessions);
     if (bestMoods.length > 0) {
       suggestions.push(
-        `You perform best when feeling ${bestMoods[0]} - try to identify what creates this state`
+        `You perform best when feeling ${bestMoods[0]} - try to identify what creates this state`,
       );
     }
 
@@ -735,17 +736,17 @@ export class MoodTrackingService {
     if (insights.optimalMoodTimes.length > 0) {
       const bestTime = insights.optimalMoodTimes[0];
       suggestions.push(
-        `Your most productive time is ${bestTime.hour}:00 when feeling ${bestTime.mood}`
+        `Your most productive time is ${bestTime.hour}:00 when feeling ${bestTime.mood}`,
       );
     }
 
     // Energy level insights
     const highEnergyImpact = insights.energyLevelImpact.find(
-      (impact) => impact.level >= 4
+      (impact) => impact.level >= 4,
     );
     if (highEnergyImpact && highEnergyImpact.completionRate >= 80) {
       suggestions.push(
-        "High energy levels significantly boost your performance - prioritize energy management"
+        "High energy levels significantly boost your performance - prioritize energy management",
       );
     }
 
@@ -753,7 +754,7 @@ export class MoodTrackingService {
     if (suggestions.length === 0) {
       suggestions.push("Track your mood consistently to identify patterns");
       suggestions.push(
-        "Notice how different activities affect your mood and focus"
+        "Notice how different activities affect your mood and focus",
       );
     }
 

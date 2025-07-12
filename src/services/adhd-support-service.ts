@@ -37,7 +37,7 @@ export class ADHDSupportService {
     moodState: "motivated" | "neutral" | "struggling" | "hyperfocus",
     mode: "energy-based" | "focus-based" | "mood-based",
     minDuration: number,
-    maxDuration: number
+    maxDuration: number,
   ): { duration: number; reason: string } {
     let multiplier = 1;
     let reason = "Standard duration";
@@ -86,7 +86,7 @@ export class ADHDSupportService {
     const adaptedDuration = Math.round(baseDuration * multiplier);
     const clampedDuration = Math.max(
       minDuration,
-      Math.min(maxDuration, adaptedDuration)
+      Math.min(maxDuration, adaptedDuration),
     );
 
     return {
@@ -103,7 +103,7 @@ export class ADHDSupportService {
     duration: number,
     completed: boolean,
     energyLevel?: number,
-    moodState?: string
+    moodState?: string,
   ): number {
     let basePoints = 10; // Base points for starting
 
@@ -190,7 +190,7 @@ export class ADHDSupportService {
 
   public checkAchievements(
     history: any[],
-    rewardSystem: RewardSystem
+    rewardSystem: RewardSystem,
   ): Achievement[] {
     const newAchievements: Achievement[] = [];
     const unlockedIds = rewardSystem.achievements.map((a) => a.id);
@@ -209,13 +209,13 @@ export class ADHDSupportService {
 
         case "energy-warrior":
           shouldUnlock = history.some(
-            (s) => s.completed && s.energyLevel && s.energyLevel <= 2
+            (s) => s.completed && s.energyLevel && s.energyLevel <= 2,
           );
           break;
 
         case "struggle-champion":
           const strugglingCompletions = history.filter(
-            (s) => s.completed && s.moodState === "struggling"
+            (s) => s.completed && s.moodState === "struggling",
           ).length;
           shouldUnlock = strugglingCompletions >= 5;
           break;
@@ -251,8 +251,8 @@ export class ADHDSupportService {
             history.some(
               (s) =>
                 s.completed &&
-                startOfDay(new Date(s.startTime)).getTime() === day.getTime()
-            )
+                startOfDay(new Date(s.startTime)).getTime() === day.getTime(),
+            ),
           );
           break;
 
@@ -261,11 +261,11 @@ export class ADHDSupportService {
           const todaysSessions = history.filter(
             (s) =>
               s.completed &&
-              startOfDay(new Date(s.startTime)).getTime() === today.getTime()
+              startOfDay(new Date(s.startTime)).getTime() === today.getTime(),
           );
           const totalTodayTime = todaysSessions.reduce(
             (sum, s) => sum + s.duration,
-            0
+            0,
           );
           shouldUnlock = totalTodayTime >= 4 * 60 * 60; // 4 hours in seconds
           break;
@@ -356,7 +356,7 @@ export class ADHDSupportService {
   public suggestBreakActivity(
     energyLevel?: number,
     moodState?: string,
-    sessionDuration?: number
+    sessionDuration?: number,
   ): BreakActivity {
     const activities = this.getDefaultBreakActivities();
 
@@ -366,19 +366,19 @@ export class ADHDSupportService {
     if (energyLevel && energyLevel <= 2) {
       // Low energy - prefer gentle activities
       suitableActivities = activities.filter(
-        (a) => a.type === "mindfulness" || a.type === "sensory"
+        (a) => a.type === "mindfulness" || a.type === "sensory",
       );
     } else if (energyLevel && energyLevel >= 4) {
       // High energy - prefer movement
       suitableActivities = activities.filter(
-        (a) => a.type === "movement" || a.type === "cognitive"
+        (a) => a.type === "movement" || a.type === "cognitive",
       );
     }
 
     if (moodState === "struggling") {
       // When struggling, prefer calming activities
       suitableActivities = suitableActivities.filter(
-        (a) => a.type === "mindfulness" || a.type === "sensory"
+        (a) => a.type === "mindfulness" || a.type === "sensory",
       );
     }
 
@@ -396,7 +396,7 @@ export class ADHDSupportService {
     totalFocusTime: number,
     lastBreakTime?: Date,
     maxConsecutive: number = 3,
-    maxHours: number = 2.5
+    maxHours: number = 2.5,
   ): { detected: boolean; reason: string; recommendation: string } {
     const now = new Date();
     const hoursSinceLastBreak = lastBreakTime

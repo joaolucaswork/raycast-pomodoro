@@ -5,7 +5,7 @@
   "title": "Pomodoro Timer",
   "description": "A comprehensive Pomodoro timer extension for Raycast with persistent background operation, menu bar integration, and advanced productivity tracking",
   "icon": "icon.png",
-  "author": "joaolucaswork",
+  "author": "joaolucas-dev",
   "categories": [
     "Productivity"
   ],
@@ -34,112 +34,45 @@
   "commands": [
     {
       "name": "main-command",
-      "title": "Focus Timer",
+      "title": "Focus Session",
       "description": "Start, stop, and manage your focus rounds",
-      "mode": "view"
-    },
-    {
-      "name": "profile-command",
-      "title": "Focus Profile",
-      "description": "View your profile, statistics, achievements, and configure ADHD settings",
-      "mode": "view"
+      "mode": "view",
+      "keywords": [
+        "pomodoro",
+        "pomodoro timer",
+        "timer",
+        "focus",
+        "start",
+        "work",
+        "session"
+      ]
     },
     {
       "name": "timer-history",
       "title": "Timer History",
       "description": "View your focus round history",
-      "mode": "view"
+      "mode": "view",
+      "keywords": [
+        "history",
+        "sessions",
+        "past",
+        "completed",
+        "log"
+      ]
     },
     {
-      "name": "menu-bar-timer",
-      "title": "Menu Bar Timer",
-      "description": "Persistent focus timer in the menu bar",
-      "mode": "menu-bar",
-      "interval": "1s"
-    },
-    {
-      "name": "fix-sessions-command",
-      "title": "Fix Existing Sessions",
-      "description": "Retroactively process completed sessions to award missing points and achievements",
-      "mode": "view"
-    }
-  ],
-  "preferences": [
-    {
-      "name": "workDuration",
-      "title": "Work Duration (minutes)",
-      "description": "Duration of work intervals in minutes",
-      "type": "textfield",
-      "default": "25",
-      "required": false
-    },
-    {
-      "name": "shortBreakDuration",
-      "title": "Short Break Duration (minutes)",
-      "description": "Duration of short breaks in minutes",
-      "type": "textfield",
-      "default": "5",
-      "required": false
-    },
-    {
-      "name": "longBreakDuration",
-      "title": "Long Break Duration (minutes)",
-      "description": "Duration of long breaks in minutes",
-      "type": "textfield",
-      "default": "15",
-      "required": false
-    },
-    {
-      "name": "longBreakInterval",
-      "title": "Long Break Interval",
-      "description": "Number of work sessions before a long break",
-      "type": "textfield",
-      "default": "4",
-      "required": false
-    },
-    {
-      "name": "enableNotifications",
-      "title": "Enable Audio Notifications",
-      "description": "Play sound when timer completes",
-      "type": "checkbox",
-      "required": false,
-      "default": true,
-      "label": "Enable audio notifications"
-    },
-    {
-      "name": "autoStartBreaks",
-      "title": "Auto-start Breaks",
-      "description": "Automatically start break timers after work sessions",
-      "type": "checkbox",
-      "required": false,
-      "default": false,
-      "label": "Auto-start breaks"
-    },
-    {
-      "name": "autoStartWork",
-      "title": "Auto-start Work",
-      "description": "Automatically start work timers after breaks",
-      "type": "checkbox",
-      "required": false,
-      "default": false,
-      "label": "Auto-start work sessions"
-    },
-    {
-      "name": "enableApplicationTracking",
-      "title": "Enable Application Tracking",
-      "description": "Track which applications you use during work sessions",
-      "type": "checkbox",
-      "required": false,
-      "default": true,
-      "label": "Track application usage during work sessions"
-    },
-    {
-      "name": "trackingInterval",
-      "title": "Tracking Interval (seconds)",
-      "description": "How often to check the active application (lower values are more accurate but use more resources)",
-      "type": "textfield",
-      "default": "5",
-      "required": false
+      "name": "profile-command",
+      "title": "Statistics & Profile",
+      "description": "View your statistics, achievements, and configure settings",
+      "mode": "view",
+      "keywords": [
+        "profile",
+        "stats",
+        "statistics",
+        "achievements",
+        "settings",
+        "config"
+      ]
     }
   ],
   "dependencies": {

@@ -66,7 +66,7 @@ export class TaskService {
     name: string,
     projectId?: string,
     estimatedPomodoros: number = 1,
-    priority: "low" | "medium" | "high" = "medium"
+    priority: "low" | "medium" | "high" = "medium",
   ): Task {
     const task: Task = {
       id: `task-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -128,7 +128,7 @@ export class TaskService {
 
   public getTasksByProject(projectId: string): Task[] {
     return Array.from(this.tasks.values()).filter(
-      (task) => task.project === projectId
+      (task) => task.project === projectId,
     );
   }
 
@@ -144,7 +144,7 @@ export class TaskService {
   public createProject(
     name: string,
     description?: string,
-    color: string = "#007AFF"
+    color: string = "#007AFF",
   ): Project {
     const project: Project = {
       id: `project-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -198,7 +198,7 @@ export class TaskService {
 
   public getActiveProjects(): Project[] {
     return Array.from(this.projects.values()).filter(
-      (project) => !project.completedAt
+      (project) => !project.completedAt,
     );
   }
 
@@ -210,7 +210,7 @@ export class TaskService {
         t.name.toLowerCase() === taskName.toLowerCase() &&
         (!projectName ||
           this.getProject(t.project!)?.name.toLowerCase() ===
-            projectName.toLowerCase())
+            projectName.toLowerCase()),
     );
 
     if (!task) {
@@ -218,7 +218,7 @@ export class TaskService {
       let projectId: string | undefined;
       if (projectName) {
         let project = Array.from(this.projects.values()).find(
-          (p) => p.name.toLowerCase() === projectName.toLowerCase()
+          (p) => p.name.toLowerCase() === projectName.toLowerCase(),
         );
         if (!project) {
           project = this.createProject(projectName);
@@ -255,7 +255,7 @@ export class TaskService {
 
     const totalPomodoros = tasks.reduce(
       (sum, task) => sum + task.completedPomodoros,
-      0
+      0,
     );
     const averagePomodorosPerTask =
       tasks.length > 0 ? totalPomodoros / tasks.length : 0;
@@ -295,7 +295,7 @@ export class TaskService {
       .filter((task) => !task.completedAt)
       .sort(
         (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
       )
       .slice(0, 10);
 
@@ -310,7 +310,7 @@ export class TaskService {
 
     return activeProjects
       .filter((project) =>
-        project.name.toLowerCase().includes(query.toLowerCase())
+        project.name.toLowerCase().includes(query.toLowerCase()),
       )
       .map((project) => project.name);
   }
@@ -335,11 +335,11 @@ export class TaskService {
 
     const totalEstimated = projectTasks.reduce(
       (sum, task) => sum + task.estimatedPomodoros,
-      0
+      0,
     );
     const totalCompleted = projectTasks.reduce(
       (sum, task) => sum + task.completedPomodoros,
-      0
+      0,
     );
 
     return totalEstimated > 0

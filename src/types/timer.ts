@@ -289,6 +289,10 @@ export interface TimerActions {
     notes?: string
   ) => void;
   deleteMoodEntry: (entryId: string) => void;
+  updateMoodEntry: (
+    entryId: string,
+    updates: Partial<Omit<MoodEntry, "id" | "timestamp">>
+  ) => void;
   getMoodEntries: () => MoodEntry[];
   getMoodAnalytics: () => MoodAnalytics;
   // Post-session mood logging actions

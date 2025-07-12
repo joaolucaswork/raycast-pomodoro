@@ -139,3 +139,117 @@ export function formatSessionSummary(
 
   return summary;
 }
+
+/**
+ * Minimum session duration in seconds to be saved to history
+ */
+export const MIN_SESSION_DURATION_FOR_HISTORY = 40;
+
+/**
+ * Ensures a value is a valid Date object
+ */
+function ensureDate(value: any): Date {
+  if (value instanceof Date) return value;
+  if (typeof value === "string" || typeof value === "number") {
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) return date;
+  }
+  return new Date();
+}
+
+/**
+ * Checks if a session should be saved to history based on its duration
+ */
+export function shouldSaveSessionToHistory(
+  session: import("../types/timer").TimerSession
+): boolean {
+  if (!session.startTime) return false;
+
+  try {
+    const startTime = ensureDate(session.startTime);
+    const endTime = session.endTime ? ensureDate(session.endTime) : new Date();
+    const actualDuration = Math.floor(
+      (endTime.getTime() - startTime.getTime()) / 1000
+    );
+
+    return actualDuration >= MIN_SESSION_DURATION_FOR_HISTORY;
+  } catch (error) {
+    console.warn("Error checking session duration:", error);
+    return false;
+  }
+}
+
+/**
+ * Gets the actual duration of a session in seconds
+ */
+export function getActualSessionDuration(
+  session: import("../types/timer").TimerSession
+): number {
+  if (!session.startTime) return 0;
+
+  try {
+    const startTime = ensureDate(session.startTime);
+    const endTime = session.endTime ? ensureDate(session.endTime) : new Date();
+    return Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+  } catch (error) {
+    console.warn("Error calculating session duration:", error);
+    return 0;
+  }
+}
+
+/**
+ * Ensures all date properties in a session are proper Date objects
+ */
+export function sanitizeSessionDates(
+  session: import("../types/timer").TimerSession
+): import("../types/timer").TimerSession {
+  return {
+    ...session,
+    startTime: ensureDate(session.startTime),
+    endTime: session.endTime ? ensureDate(session.endTime) : undefined,
+  };
+}
+
+/**
+ * Test function to verify the minimum duration logic
+ */
+export function testMinimumDurationLogic(): void {
+  const now = new Date();
+
+  // Test session with 30 seconds (should NOT be saved)
+  const shortSession = {
+    id: "test-1",
+    type: "work" as any,
+    duration: 1500,
+    startTime: new Date(now.getTime() - 30000), // 30 seconds ago
+    endTime: now,
+    completed: true,
+  };
+
+  // Test session with 50 seconds (should be saved)
+  const longSession = {
+    id: "test-2",
+    type: "work" as any,
+    duration: 1500,
+    startTime: new Date(now.getTime() - 50000), // 50 seconds ago
+    endTime: now,
+    completed: true,
+  };
+
+  console.log(
+    "Short session (30s) should be saved:",
+    shouldSaveSessionToHistory(shortSession)
+  );
+  console.log(
+    "Long session (50s) should be saved:",
+    shouldSaveSessionToHistory(longSession)
+  );
+  console.log(
+    "Short session actual duration:",
+    getActualSessionDuration(shortSession)
+  );
+  console.log(
+    "Long session actual duration:",
+    getActualSessionDuration(longSession)
+  );
+}

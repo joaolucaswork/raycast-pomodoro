@@ -185,7 +185,18 @@ export const useTimerStore = create<PomodoroStore>()(
             applicationUsage,
           };
 
-          const newHistory = [...history, stoppedSession];
+          // Check if session should be saved to history based on duration
+          const {
+            shouldSaveSessionToHistory,
+            getActualSessionDuration,
+          } = require("../utils/helpers");
+          const shouldSave = shouldSaveSessionToHistory(stoppedSession);
+          const actualDuration = getActualSessionDuration(stoppedSession);
+
+          // Only add to history if session meets minimum duration requirement
+          const newHistory = shouldSave
+            ? [...history, stoppedSession]
+            : history;
 
           set({
             currentSession: null,
@@ -194,6 +205,16 @@ export const useTimerStore = create<PomodoroStore>()(
             history: newHistory,
             stats: calculateStats(newHistory),
           });
+
+          // Show notification if session was too short to be saved
+          if (!shouldSave) {
+            const { showToast, Toast } = require("@raycast/api");
+            showToast({
+              style: Toast.Style.Failure,
+              title: "Session Too Short",
+              message: `Session stopped after ${actualDuration}s and won't be saved to history (minimum: 40s)`,
+            });
+          }
         } else {
           // No current session, just reset state
           set({
@@ -239,15 +260,26 @@ export const useTimerStore = create<PomodoroStore>()(
             applicationUsage,
           };
 
-          const newHistory = [...history, completedSession];
+          // Check if session should be saved to history based on duration
+          const {
+            shouldSaveSessionToHistory,
+            getActualSessionDuration,
+          } = require("../utils/helpers");
+          const shouldSave = shouldSaveSessionToHistory(completedSession);
+          const actualDuration = getActualSessionDuration(completedSession);
+
+          // Only add to history if session meets minimum duration requirement
+          const newHistory = shouldSave
+            ? [...history, completedSession]
+            : history;
           const newSessionCount =
-            currentSession.type === SessionType.WORK
+            shouldSave && currentSession.type === SessionType.WORK
               ? sessionCount + 1
               : sessionCount;
 
-          // Update focus period session count for work sessions (even if skipped)
+          // Update focus period session count for work sessions (only if saved to history)
           const newFocusPeriodSessionCount =
-            currentSession.type === SessionType.WORK
+            shouldSave && currentSession.type === SessionType.WORK
               ? currentFocusPeriodSessionCount + 1
               : currentFocusPeriodSessionCount;
 
@@ -260,6 +292,16 @@ export const useTimerStore = create<PomodoroStore>()(
             currentFocusPeriodSessionCount: newFocusPeriodSessionCount,
             stats: calculateStats(newHistory),
           });
+
+          // Show notification if session was too short to be saved
+          if (!shouldSave) {
+            const { showToast, Toast } = require("@raycast/api");
+            showToast({
+              style: Toast.Style.Failure,
+              title: "Session Too Short",
+              message: `Session skipped after ${actualDuration}s and won't be saved to history (minimum: 40s)`,
+            });
+          }
         }
       },
 
@@ -288,15 +330,26 @@ export const useTimerStore = create<PomodoroStore>()(
             applicationUsage,
           };
 
-          const newHistory = [...history, completedSession];
+          // Check if session should be saved to history based on duration
+          const {
+            shouldSaveSessionToHistory,
+            getActualSessionDuration,
+          } = require("../utils/helpers");
+          const shouldSave = shouldSaveSessionToHistory(completedSession);
+          const actualDuration = getActualSessionDuration(completedSession);
+
+          // Only add to history if session meets minimum duration requirement
+          const newHistory = shouldSave
+            ? [...history, completedSession]
+            : history;
           const newSessionCount =
-            currentSession.type === SessionType.WORK
+            shouldSave && currentSession.type === SessionType.WORK
               ? sessionCount + 1
               : sessionCount;
 
-          // Update focus period session count for work sessions
+          // Update focus period session count for work sessions (only if saved to history)
           const newFocusPeriodSessionCount =
-            currentSession.type === SessionType.WORK
+            shouldSave && currentSession.type === SessionType.WORK
               ? currentFocusPeriodSessionCount + 1
               : currentFocusPeriodSessionCount;
 
@@ -310,8 +363,18 @@ export const useTimerStore = create<PomodoroStore>()(
             stats: calculateStats(newHistory),
             // Remove mood prompt to fix timer stop bug
             isPostSessionMoodPromptVisible: false,
-            lastCompletedSession: null,
+            lastCompletedSession: shouldSave ? completedSession : null,
           });
+
+          // Show notification if session was too short to be saved
+          if (!shouldSave) {
+            const { showToast, Toast } = require("@raycast/api");
+            showToast({
+              style: Toast.Style.Failure,
+              title: "Session Too Short",
+              message: `Session completed in ${actualDuration}s but won't be saved to history (minimum: 40s)`,
+            });
+          }
 
           // Auto-transition to idle after a short delay
           setTimeout(() => {
@@ -746,6 +809,19 @@ export const useTimerStore = create<PomodoroStore>()(
         });
       },
 
+      updateMoodEntry: (
+        entryId: string,
+        updates: Partial<Omit<MoodEntry, "id" | "timestamp">>
+      ) => {
+        const { moodEntries } = get();
+        const newMoodEntries = moodEntries.map((entry) =>
+          entry.id === entryId ? { ...entry, ...updates } : entry
+        );
+        set({
+          moodEntries: newMoodEntries,
+        });
+      },
+
       getMoodEntries: () => {
         const { moodEntries } = get();
         return moodEntries;
@@ -867,7 +943,7 @@ function calculateStreak(sessions: TimerSession[]): number {
   );
 
   let streak = 0;
-  let currentDate = new Date();
+  const currentDate = new Date();
 
   for (const dateStr of sortedDates) {
     const sessionDate = new Date(dateStr);

@@ -523,7 +523,7 @@ export class ApplicationIconService {
    */
   public getApplicationMapping(
     bundleId: string,
-    name: string
+    name: string,
   ): ApplicationIconMapping | null {
     return (
       this.iconMappings.get(bundleId.toLowerCase()) ||

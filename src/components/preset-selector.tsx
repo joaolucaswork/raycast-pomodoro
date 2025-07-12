@@ -57,7 +57,7 @@ export function PresetSelector({
 
     return preferencesService.getRecommendedPresetForUser(
       stats.completedSessions,
-      avgSessionLength
+      avgSessionLength,
     );
   };
 
@@ -82,7 +82,7 @@ export function PresetSelector({
           accessories={[
             {
               text: preferencesService.getConfigSummary(
-                recommendedPreset.config
+                recommendedPreset.config,
               ),
             },
           ]}
@@ -101,7 +101,7 @@ export function PresetSelector({
                     style: Toast.Style.Success,
                     title: recommendedPreset.name,
                     message: preferencesService.getConfigSummary(
-                      recommendedPreset.config
+                      recommendedPreset.config,
                     ),
                   });
                 }}

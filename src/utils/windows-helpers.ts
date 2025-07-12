@@ -27,7 +27,7 @@ export async function executeWindowsCommand(command: string): Promise<string> {
       (error as any).code === "ENOENT"
     ) {
       throw new Error(
-        "Command not found. Please ensure the tool is installed and in PATH."
+        "Command not found. Please ensure the tool is installed and in PATH.",
       );
     }
     throw error;
@@ -52,7 +52,7 @@ export function parseWindowsCSV(csvOutput: string): string[][] {
  */
 export function parseCustomCommand(
   command: string,
-  replacements: Record<string, string>
+  replacements: Record<string, string>,
 ): { executable: string; args: string[] } {
   const commandParts = command.match(/"[^"]+"|\\S+/g) || [];
 
@@ -80,7 +80,7 @@ export function parseCustomCommand(
  */
 export async function executeCustomCommand(
   command: string,
-  replacements: Record<string, string>
+  replacements: Record<string, string>,
 ): Promise<string> {
   const { executable, args } = parseCustomCommand(command, replacements);
   const { stdout } = await execFileAsync(executable, args);
@@ -108,7 +108,7 @@ export function formatBytes(bytes: number, decimals = 2): string {
 export async function processItemsWithRecovery<T>(
   items: T[],
   processor: (item: T) => Promise<void>,
-  onProgress?: (completed: number, total: number) => void
+  onProgress?: (completed: number, total: number) => void,
 ): Promise<{
   successful: number;
   failed: number;
@@ -127,7 +127,7 @@ export async function processItemsWithRecovery<T>(
     } catch (error) {
       results.failed++;
       results.errors.push(
-        error instanceof Error ? error.message : "Unknown error"
+        error instanceof Error ? error.message : "Unknown error",
       );
     }
 
@@ -146,7 +146,7 @@ export async function showProcessingResults(
     failed: number;
     errors: string[];
   },
-  operation: string
+  operation: string,
 ): Promise<void> {
   if (results.failed === 0) {
     await showToast({
@@ -210,7 +210,7 @@ export async function getProcessList(): Promise<
  */
 export async function searchWithEverything(
   query: string,
-  maxResults = 100
+  maxResults = 100,
 ): Promise<string[]> {
   try {
     const command = `es.exe -n ${maxResults} ${query}`;
@@ -219,7 +219,7 @@ export async function searchWithEverything(
   } catch (error) {
     if (error instanceof Error && error.message.includes("not found")) {
       throw new Error(
-        "Everything CLI not found. Please install Everything and its CLI tool."
+        "Everything CLI not found. Please install Everything and its CLI tool.",
       );
     }
     throw error;

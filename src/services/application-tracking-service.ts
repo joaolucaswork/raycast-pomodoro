@@ -113,9 +113,15 @@ class ApplicationTrackingService {
    */
   startTracking(intervalSeconds: number = 5): void {
     if (this.isTracking) {
+      console.log(
+        `[ApplicationTracking] Already tracking, ignoring start request`
+      );
       return;
     }
 
+    console.log(
+      `[ApplicationTracking] Starting tracking with ${intervalSeconds}s interval`
+    );
     this.isTracking = true;
     this.resetTrackingData();
 
@@ -124,6 +130,7 @@ class ApplicationTrackingService {
 
     // Set up periodic polling
     this.startTrackingInterval(intervalSeconds);
+    console.log(`[ApplicationTracking] Tracking started successfully`);
   }
 
   /**
@@ -132,10 +139,19 @@ class ApplicationTrackingService {
    */
   private startTrackingInterval(intervalSeconds: number): void {
     if (this.trackingInterval) {
+      console.log(
+        `[ApplicationTracking] Clearing existing interval before starting new one`
+      );
       clearInterval(this.trackingInterval);
     }
 
+    console.log(
+      `[ApplicationTracking] Setting up interval timer for ${intervalSeconds}s`
+    );
     this.trackingInterval = setInterval(() => {
+      console.log(
+        `[ApplicationTracking] Interval tick - capturing application`
+      );
       this.captureCurrentApplication();
     }, intervalSeconds * 1000);
   }
@@ -145,20 +161,30 @@ class ApplicationTrackingService {
    */
   stopTracking(): ApplicationUsage[] {
     if (!this.isTracking) {
+      console.log(
+        `[ApplicationTracking] Not currently tracking, ignoring stop request`
+      );
       return [];
     }
 
+    console.log(`[ApplicationTracking] Stopping tracking...`);
     this.isTracking = false;
 
     if (this.trackingInterval) {
       clearInterval(this.trackingInterval);
       this.trackingInterval = null;
+      console.log(`[ApplicationTracking] Cleared tracking interval`);
     }
 
     // Final capture to account for time since last poll
     this.captureCurrentApplication();
 
-    return this.getApplicationUsageArray();
+    const usageData = this.getApplicationUsageArray();
+    console.log(
+      `[ApplicationTracking] Tracking stopped. Captured ${usageData.length} applications`
+    );
+
+    return usageData;
   }
 
   /**
@@ -200,13 +226,27 @@ class ApplicationTrackingService {
    * Capture the currently active application
    */
   private async captureCurrentApplication(): Promise<void> {
+    const captureStartTime = performance.now();
+
     try {
+      console.log(
+        `[ApplicationTracking] Attempting to capture frontmost application...`
+      );
       const frontmostApp = await getFrontmostApplication();
       const currentTime = Date.now();
+      const captureEndTime = performance.now();
+
+      console.log(
+        `[ApplicationTracking] Successfully captured app: ${frontmostApp.name} (${frontmostApp.bundleId}) in ${(captureEndTime - captureStartTime).toFixed(2)}ms`
+      );
 
       // Update time for previous application if it exists
       if (this.trackingData.currentApplication) {
+        const previousApp = this.trackingData.currentApplication.name;
         this.updateCurrentApplicationTime();
+        console.log(
+          `[ApplicationTracking] Updated time for previous app: ${previousApp}`
+        );
       }
 
       // Set new current application
@@ -216,6 +256,9 @@ class ApplicationTrackingService {
       // Initialize tracking for new application if not seen before
       const bundleId = this.getApplicationId(frontmostApp);
       if (!this.trackingData.applications.has(bundleId)) {
+        console.log(
+          `[ApplicationTracking] New application detected: ${frontmostApp.name} (${bundleId})`
+        );
         const appName = frontmostApp.name || "Unknown Application";
         const raycastIcon =
           applicationIconService.getIconByBundleId(bundleId) ||
@@ -242,10 +285,17 @@ class ApplicationTrackingService {
 
       // Reset error count on successful capture
       if (this.trackingData.errorCount > 0) {
+        console.log(
+          `[ApplicationTracking] Resetting error count from ${this.trackingData.errorCount} to 0`
+        );
         this.trackingData.errorCount = 0;
         delete this.trackingData.lastError;
       }
     } catch (error) {
+      const captureEndTime = performance.now();
+      console.error(
+        `[ApplicationTracking] Capture failed after ${(captureEndTime - captureStartTime).toFixed(2)}ms`
+      );
       this.handleTrackingError(error);
     }
   }
@@ -259,14 +309,24 @@ class ApplicationTrackingService {
     this.trackingData.lastError = errorMessage;
 
     console.error(
-      `Application tracking error (${this.trackingData.errorCount}/${this.MAX_ERROR_COUNT}):`,
+      `[ApplicationTracking] Error (${this.trackingData.errorCount}/${this.MAX_ERROR_COUNT}):`,
       errorMessage
     );
+    console.error(
+      `[ApplicationTracking] Error stack:`,
+      error instanceof Error ? error.stack : "No stack trace"
+    );
+    console.error(`[ApplicationTracking] Tracking state:`, {
+      isTracking: this.isTracking,
+      hasInterval: !!this.trackingInterval,
+      lastUpdateTime: new Date(this.trackingData.lastUpdateTime).toISOString(),
+      currentApp: this.trackingData.currentApplication?.name || "None",
+    });
 
     // If too many errors, temporarily disable tracking
     if (this.trackingData.errorCount >= this.MAX_ERROR_COUNT) {
       console.warn(
-        "Too many application tracking errors. Temporarily disabling tracking."
+        "[ApplicationTracking] Too many errors. Temporarily disabling tracking."
       );
       this.pauseTrackingDueToErrors();
     }

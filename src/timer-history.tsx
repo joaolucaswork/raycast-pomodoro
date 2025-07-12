@@ -5,6 +5,7 @@ import {
   List,
   Color,
   useNavigation,
+  Detail,
 } from "@raycast/api";
 import { useState, useMemo } from "react";
 import { useTimerStore } from "./store/timer-store";
@@ -26,6 +27,7 @@ import {
   SessionNotesForm,
   SessionIconForm,
   SessionNameForm,
+  SessionManagementForm,
 } from "./components/session-editing";
 
 import {
@@ -47,28 +49,20 @@ type CompletionFilter = "all" | "completed" | "incomplete";
 
 export default function TimerHistory() {
   const { push } = useNavigation();
-  const [selectedSession, setSelectedSession] = useState<TimerSession | null>(
-    null
-  );
+  // Default to hidden details, but preserve user preference during session
+  const [isShowingDetail, setIsShowingDetail] = useState(false);
+  const [hasUserToggledDetail, setHasUserToggledDetail] = useState(false);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [completionFilter, setCompletionFilter] =
     useState<CompletionFilter>("all");
-  const {
-    history,
-    deleteSession,
-    getTagConfig,
-    getMoodAnalytics,
-    moodEntries,
-  } = useTimerStore();
+  const { history, deleteSession, getTagConfig } = useTimerStore();
 
-  // Calculate mood analytics
-  const moodAnalytics = useMemo(() => {
-    if (moodEntries.length === 0) {
-      return null;
-    }
-    return getMoodAnalytics();
-  }, [moodEntries, getMoodAnalytics]);
+  // Handle detail toggle with session persistence
+  const handleDetailToggle = () => {
+    setIsShowingDetail(!isShowingDetail);
+    setHasUserToggledDetail(true);
+  };
 
   // Get tag color based on tag name (with custom config support)
   const getTagColor = (tag: string): Color => {
@@ -128,72 +122,11 @@ export default function TimerHistory() {
     return sorted;
   }, [history, filterType, completionFilter, sortBy]);
 
-  const groupedSessions = groupSessionsByDate(filteredAndSortedSessions);
-
-  // Conditional returns after all hooks
-  if (selectedSession) {
-    return (
-      <List
-        navigationTitle={`${getSessionTypeLabel(selectedSession.type)} Session Details`}
-        searchBarPlaceholder="Search session details..."
-        actions={
-          <ActionPanel>
-            <Action
-              title="Back to History"
-              icon={ACTION_ICONS.BACK}
-              onAction={() => setSelectedSession(null)}
-              shortcut={SHORTCUTS.BACK}
-            />
-            <ActionPanel.Section title="Edit">
-              <Action
-                title="Edit Icon"
-                icon={Icon.Pencil}
-                onAction={() =>
-                  push(<SessionIconForm session={selectedSession} />)
-                }
-                shortcut={{ modifiers: ["cmd"], key: "i" }}
-              />
-              <Action
-                title="Edit Notes"
-                icon={Icon.Document}
-                onAction={() =>
-                  push(<SessionNotesForm session={selectedSession} />)
-                }
-                shortcut={{ modifiers: ["cmd"], key: "n" }}
-              />
-              <Action
-                title="Edit Name"
-                icon={Icon.Text}
-                onAction={() =>
-                  push(<SessionNameForm session={selectedSession} />)
-                }
-                shortcut={{ modifiers: ["cmd"], key: "r" }}
-              />
-            </ActionPanel.Section>
-            <ActionPanel.Section title="Manage">
-              <Action
-                title="Delete Session"
-                icon={Icon.Trash}
-                style={Action.Style.Destructive}
-                onAction={async () => {
-                  deleteSession(selectedSession.id);
-                  setSelectedSession(null);
-                }}
-                shortcut={{ modifiers: ["cmd"], key: "delete" }}
-              />
-            </ActionPanel.Section>
-          </ActionPanel>
-        }
-      >
-        <SessionDetailView session={selectedSession} />
-      </List>
-    );
-  }
-
   return (
     <List
       navigationTitle="Focus History"
       searchBarPlaceholder="Search rounds..."
+      isShowingDetail={isShowingDetail && filteredAndSortedSessions.length > 0}
       searchBarAccessory={
         <List.Dropdown
           tooltip="Sort Rounds"
@@ -208,6 +141,16 @@ export default function TimerHistory() {
       }
       actions={
         <ActionPanel>
+          <ActionPanel.Section title="View">
+            <Action
+              title={isShowingDetail ? "Hide Details" : "Show Details"}
+              icon={
+                isShowingDetail ? Icon.EyeDisabled : ACTION_ICONS.VIEW_DETAILS
+              }
+              onAction={handleDetailToggle}
+              shortcut={{ modifiers: ["cmd"], key: "d" }}
+            />
+          </ActionPanel.Section>
           <ActionPanel.Section title="Filter">
             <ActionPanel.Submenu title="Round Type" icon={Icon.Filter}>
               <Action
@@ -248,90 +191,33 @@ export default function TimerHistory() {
         </ActionPanel>
       }
     >
-      {/* Quick Overview */}
-      <List.Section title="Overview">
-        <List.Item
-          title="Today's Sessions"
-          subtitle={`${
-            history.filter((s) => {
-              const sessionDate = new Date(s.startTime);
-              const today = new Date();
-              return sessionDate.toDateString() === today.toDateString();
-            }).length
-          } rounds completed today`}
-          icon={{
-            source: SESSION_ICONS.WORK,
-            tintColor: STATUS_COLORS.SUCCESS,
-          }}
-          accessories={[
-            {
-              text: `${useTimerStore.getState().stats.streakCount} day streak`,
-              icon: { source: Icon.Trophy, tintColor: STATUS_COLORS.SUCCESS },
-              tooltip: "Current daily streak",
-            },
-          ]}
-        />
-        <List.Item
-          title="Total Sessions"
-          subtitle={`${useTimerStore.getState().stats.completedSessions} completed of ${useTimerStore.getState().stats.totalSessions} total`}
-          icon={{ source: Icon.BarChart, tintColor: STATUS_COLORS.INFO }}
-          accessories={[
-            {
-              text: `${Math.round((useTimerStore.getState().stats.completedSessions / Math.max(useTimerStore.getState().stats.totalSessions, 1)) * 100)}%`,
-              icon: { source: Icon.Circle, tintColor: STATUS_COLORS.INFO },
-              tooltip: "Completion rate",
-            },
-          ]}
-        />
+      {Object.entries(
+        filteredAndSortedSessions.reduce(
+          (groups, session) => {
+            const startTime = new Date(session.startTime);
+            let groupKey: string;
 
-        {/* Mood Statistics */}
-        {moodAnalytics && (
-          <>
-            <List.Item
-              title="Most Common Mood"
-              subtitle={`${moodAnalytics.mostCommonMood.charAt(0).toUpperCase() + moodAnalytics.mostCommonMood.slice(1)} (${moodAnalytics.totalEntries} entries)`}
-              icon={{
-                source: getMoodIcon(moodAnalytics.mostCommonMood),
-                tintColor: getMoodColor(moodAnalytics.mostCommonMood),
-              }}
-              accessories={[
-                {
-                  text: `${moodAnalytics.averageIntensity.toFixed(1)}/5`,
-                  icon: {
-                    source: Icon.Circle,
-                    tintColor: STATUS_COLORS.ACCENT,
-                  },
-                  tooltip: "Average intensity",
-                },
-              ]}
-            />
-            {moodAnalytics.bestPerformanceMoods.length > 0 && (
-              <List.Item
-                title="Best Performance Moods"
-                subtitle={moodAnalytics.bestPerformanceMoods
-                  .map((mood) => mood.charAt(0).toUpperCase() + mood.slice(1))
-                  .join(", ")}
-                icon={{
-                  source: MOOD_ICONS.MOTIVATED,
-                  tintColor: STATUS_COLORS.SUCCESS,
-                }}
-                accessories={[
-                  {
-                    text: "Optimal",
-                    icon: {
-                      source: Icon.Star,
-                      tintColor: STATUS_COLORS.SUCCESS,
-                    },
-                    tooltip: "Moods with highest session completion rates",
-                  },
-                ]}
-              />
-            )}
-          </>
-        )}
-      </List.Section>
+            if (isToday(startTime)) {
+              groupKey = "Today";
+            } else if (isYesterday(startTime)) {
+              groupKey = "Yesterday";
+            } else if (isThisWeek(startTime)) {
+              groupKey = format(startTime, "EEEE");
+            } else if (isThisMonth(startTime)) {
+              groupKey = format(startTime, "MMMM d");
+            } else {
+              groupKey = format(startTime, "MMMM yyyy");
+            }
 
-      {Object.entries(groupedSessions).map(([dateGroup, sessions]) => (
+            if (!groups[groupKey]) {
+              groups[groupKey] = [];
+            }
+            groups[groupKey].push(session);
+            return groups;
+          },
+          {} as Record<string, TimerSession[]>
+        )
+      ).map(([dateGroup, sessions]) => (
         <List.Section key={dateGroup} title={dateGroup}>
           {sessions.map((session) => {
             const hasAppData =
@@ -397,41 +283,35 @@ export default function TimerHistory() {
                           : "Session incomplete",
                   },
                 ]}
+                detail={
+                  isShowingDetail ? (
+                    <SessionDetailView session={session} />
+                  ) : undefined
+                }
                 actions={
                   <ActionPanel>
+                    {/* Primary action: View Details */}
                     <Action
-                      title="View Details"
-                      icon={ACTION_ICONS.VIEW_DETAILS}
-                      onAction={() => setSelectedSession(session)}
+                      title={isShowingDetail ? "Hide Details" : "Show Details"}
+                      icon={
+                        isShowingDetail
+                          ? Icon.EyeDisabled
+                          : ACTION_ICONS.VIEW_DETAILS
+                      }
+                      onAction={handleDetailToggle}
                       shortcut={SHORTCUTS.PRIMARY_ACTION}
                     />
-                    <ActionPanel.Section title="Edit">
-                      <Action
-                        title="Edit Icon"
-                        icon={Icon.Pencil}
-                        onAction={() =>
-                          push(<SessionIconForm session={session} />)
-                        }
-                        shortcut={{ modifiers: ["cmd"], key: "i" }}
-                      />
-                      <Action
-                        title="Edit Notes"
-                        icon={Icon.Document}
-                        onAction={() =>
-                          push(<SessionNotesForm session={session} />)
-                        }
-                        shortcut={{ modifiers: ["cmd"], key: "n" }}
-                      />
-                      <Action
-                        title="Edit Name"
-                        icon={Icon.Text}
-                        onAction={() =>
-                          push(<SessionNameForm session={session} />)
-                        }
-                        shortcut={{ modifiers: ["cmd"], key: "r" }}
-                      />
-                    </ActionPanel.Section>
-                    <ActionPanel.Section title="Manage">
+
+                    {/* Secondary action: Manage Session */}
+                    <Action
+                      title="Manage Session"
+                      icon={Icon.Gear}
+                      onAction={() =>
+                        push(<SessionManagementForm session={session} />)
+                      }
+                      shortcut={{ modifiers: ["cmd"], key: "m" }}
+                    />
+                    <ActionPanel.Section title="Actions">
                       <Action
                         title="Delete Session"
                         icon={Icon.Trash}
@@ -465,7 +345,11 @@ export default function TimerHistory() {
   );
 }
 
-function SessionDetailView({ session }: { session: TimerSession }) {
+interface SessionDetailViewProps {
+  session: TimerSession;
+}
+
+function SessionDetailView({ session }: SessionDetailViewProps) {
   const { moodEntries } = useTimerStore();
 
   // Ensure dates are Date objects (they might be strings when loaded from storage)
@@ -481,15 +365,6 @@ function SessionDetailView({ session }: { session: TimerSession }) {
     (entry) => entry.sessionId === session.id
   );
 
-  // Get status information using native design tokens
-  const statusDot = getSessionStateDot(
-    session.type,
-    session.completed,
-    false,
-    false,
-    session.endReason
-  );
-
   const getStatusText = () => {
     if (session.completed) return "Completed";
     switch (session.endReason) {
@@ -503,70 +378,13 @@ function SessionDetailView({ session }: { session: TimerSession }) {
   };
 
   return (
-    <>
-      {/* Session Details Section */}
-      <List.Section title="Session Information">
-        <List.Item
-          title="Session Type"
-          subtitle={getSessionTypeLabel(session.type)}
-          icon={{
-            source: getSessionTypeIcon(session.type),
-            tintColor: getSessionColor(session.type, session.completed),
-          }}
-          accessories={[
-            {
-              icon: {
-                source: statusDot.icon,
-                tintColor: statusDot.tintColor,
-              },
-              tooltip: getStatusText(),
-            },
-          ]}
-        />
-        <List.Item
-          title="Duration"
-          subtitle={formatTime(duration)}
-          icon={{ source: Icon.Clock, tintColor: STATUS_COLORS.INFO }}
-          accessories={[
-            {
-              text: formatTime(duration),
-              tooltip: `Session lasted ${formatTime(duration)}`,
-            },
-          ]}
-        />
-        <List.Item
-          title="Started"
-          subtitle={format(startTime, "MMM d, yyyy 'at' h:mm a")}
-          icon={{ source: Icon.Calendar, tintColor: STATUS_COLORS.NEUTRAL }}
-          accessories={[
-            {
-              text: format(startTime, "h:mm a"),
-              tooltip: "Start time",
-            },
-          ]}
-        />
-        {endTime && (
-          <List.Item
-            title="Ended"
-            subtitle={format(endTime, "MMM d, yyyy 'at' h:mm a")}
-            icon={{ source: Icon.Calendar, tintColor: STATUS_COLORS.NEUTRAL }}
-            accessories={[
-              {
-                text: format(endTime, "h:mm a"),
-                tooltip: "End time",
-              },
-            ]}
-          />
-        )}
-      </List.Section>
-
-      {/* Task Information Section */}
-      {(session.taskName || session.projectName) && (
-        <List.Section title="Task Information">
+    <List.Item.Detail
+      metadata={
+        <List.Item.Detail.Metadata>
           {session.taskName && (
-            <List.Item
+            <List.Item.Detail.Metadata.Label
               title="Task"
-              subtitle={session.taskName}
+              text={session.taskName}
               icon={{
                 source: session.taskIcon || Icon.Document,
                 tintColor: STATUS_COLORS.PRIMARY,
@@ -574,173 +392,162 @@ function SessionDetailView({ session }: { session: TimerSession }) {
             />
           )}
           {session.projectName && (
-            <List.Item
+            <List.Item.Detail.Metadata.Label
               title="Project"
-              subtitle={session.projectName}
+              text={session.projectName}
               icon={{ source: Icon.Folder, tintColor: STATUS_COLORS.ACCENT }}
             />
           )}
-        </List.Section>
-      )}
 
-      {/* Notes Section */}
-      {session.notes && (
-        <List.Section title="Session Notes">
-          <List.Item
-            title="Notes"
-            subtitle={session.notes}
-            icon={{ source: Icon.Document, tintColor: STATUS_COLORS.INFO }}
-            accessories={[
-              {
-                icon: {
-                  source: Icon.Pencil,
-                  tintColor: STATUS_COLORS.NEUTRAL,
-                },
-                tooltip: "Click to edit notes",
-              },
-            ]}
+          {(session.taskName || session.projectName) && (
+            <List.Item.Detail.Metadata.Separator />
+          )}
+
+          <List.Item.Detail.Metadata.Label
+            title="Status"
+            text={getStatusText()}
+            icon={{
+              source: session.completed ? Icon.CheckCircle : Icon.XMarkCircle,
+              tintColor: session.completed
+                ? STATUS_COLORS.SUCCESS
+                : STATUS_COLORS.ERROR,
+            }}
           />
-        </List.Section>
-      )}
-
-      {/* Tags Section */}
-      {session.tags && session.tags.length > 0 && (
-        <List.Section title="Tags">
-          {session.tags.map((tag, index) => (
-            <List.Item
-              key={index}
-              title={`#${tag}`}
-              icon={{ source: Icon.Tag, tintColor: STATUS_COLORS.INFO }}
+          <List.Item.Detail.Metadata.Label
+            title="Duration"
+            text={formatTime(duration)}
+            icon={{ source: Icon.Clock, tintColor: STATUS_COLORS.INFO }}
+          />
+          <List.Item.Detail.Metadata.Label
+            title="Started"
+            text={format(startTime, "MMM d, yyyy 'at' h:mm a")}
+            icon={{ source: Icon.Calendar, tintColor: STATUS_COLORS.NEUTRAL }}
+          />
+          {endTime && (
+            <List.Item.Detail.Metadata.Label
+              title="Ended"
+              text={format(endTime, "MMM d, yyyy 'at' h:mm a")}
+              icon={{ source: Icon.Calendar, tintColor: STATUS_COLORS.NEUTRAL }}
             />
-          ))}
-        </List.Section>
-      )}
+          )}
 
-      {/* Mood Entries Section */}
-      {associatedMoodEntries.length > 0 && (
-        <List.Section title="Mood Tracking">
-          {associatedMoodEntries.map((entry) => (
-            <List.Item
-              key={entry.id}
-              title={`${entry.mood.charAt(0).toUpperCase() + entry.mood.slice(1)} (${entry.intensity}/5)`}
-              subtitle={
-                entry.context === "pre-session"
-                  ? "Before session"
-                  : entry.context === "post-session"
-                    ? "After session"
-                    : entry.context === "during-session"
-                      ? "During session"
-                      : "Standalone"
-              }
-              icon={{
-                source: getMoodIcon(entry.mood),
-                tintColor: getMoodColor(entry.mood),
-              }}
-              accessories={[
-                {
-                  text: format(new Date(entry.timestamp), "h:mm a"),
-                  tooltip: `Logged at ${format(new Date(entry.timestamp), "h:mm a")}`,
-                },
-                ...(entry.notes
-                  ? [
-                      {
-                        icon: {
-                          source: Icon.Document,
-                          tintColor: STATUS_COLORS.INFO,
-                        },
-                        tooltip: "Has notes",
-                      },
-                    ]
-                  : []),
-              ]}
-            />
-          ))}
-        </List.Section>
-      )}
+          {session.tags && session.tags.length > 0 && (
+            <>
+              <List.Item.Detail.Metadata.Separator />
+              <List.Item.Detail.Metadata.TagList title="Tags">
+                {session.tags.map((tag) => (
+                  <List.Item.Detail.Metadata.TagList.Item
+                    key={tag}
+                    text={tag}
+                  />
+                ))}
+              </List.Item.Detail.Metadata.TagList>
+            </>
+          )}
 
-      {/* Application Usage Section */}
-      {session.applicationUsage && session.applicationUsage.length > 0 && (
-        <List.Section title="Application Usage">
-          {session.applicationUsage.slice(0, 10).map((app, index) => (
-            <List.Item
-              key={app.bundleId}
-              title={app.name}
-              subtitle={`${app.percentage}% of session time`}
-              icon={{
-                source: Icon.Desktop,
-                tintColor:
-                  index < 3 ? getAppRankingColor(index) : STATUS_COLORS.NEUTRAL,
-              }}
-              accessories={[
-                {
-                  text: formatTime(app.timeSpent),
-                  tooltip: `Used for ${formatTime(app.timeSpent)}`,
-                },
-                {
-                  icon: {
+          {session.notes && (
+            <>
+              <List.Item.Detail.Metadata.Separator />
+              <List.Item.Detail.Metadata.Label
+                title="Notes"
+                text={session.notes}
+                icon={{ source: Icon.Document, tintColor: STATUS_COLORS.INFO }}
+              />
+            </>
+          )}
+
+          {associatedMoodEntries.length > 0 && (
+            <>
+              <List.Item.Detail.Metadata.Separator />
+              <List.Item.Detail.Metadata.Label
+                title="Mood Entries"
+                text={`${associatedMoodEntries.length} ${associatedMoodEntries.length === 1 ? "entry" : "entries"}`}
+                icon={{ source: Icon.Heart, tintColor: STATUS_COLORS.ACCENT }}
+              />
+              {associatedMoodEntries.slice(0, 3).map((entry) => {
+                const contextText =
+                  entry.context === "pre-session"
+                    ? "Before session"
+                    : entry.context === "post-session"
+                      ? "After session"
+                      : entry.context === "during-session"
+                        ? "During session"
+                        : "Standalone";
+
+                return (
+                  <List.Item.Detail.Metadata.Label
+                    key={entry.id}
+                    title={`${entry.mood.charAt(0).toUpperCase() + entry.mood.slice(1)} (${entry.intensity}/5)`}
+                    text={`${contextText} - ${format(new Date(entry.timestamp), "h:mm a")}`}
+                    icon={{
+                      source: getMoodIcon(entry.mood),
+                      tintColor: getMoodColor(entry.mood),
+                    }}
+                  />
+                );
+              })}
+              {associatedMoodEntries.length > 3 && (
+                <List.Item.Detail.Metadata.Label
+                  title="More Mood Entries"
+                  text={`+${associatedMoodEntries.length - 3} additional entries`}
+                  icon={{
+                    source: Icon.Ellipsis,
+                    tintColor: STATUS_COLORS.NEUTRAL,
+                  }}
+                />
+              )}
+            </>
+          )}
+
+          {session.applicationUsage && session.applicationUsage.length > 0 && (
+            <>
+              <List.Item.Detail.Metadata.Separator />
+              <List.Item.Detail.Metadata.Label
+                title="Application Usage"
+                text={`${session.applicationUsage.length} applications tracked`}
+                icon={{ source: Icon.Desktop, tintColor: STATUS_COLORS.INFO }}
+              />
+              {session.applicationUsage.slice(0, 5).map((app, index) => (
+                <List.Item.Detail.Metadata.Label
+                  key={app.bundleId}
+                  title={app.name}
+                  text={`${app.percentage}% (${formatTime(app.timeSpent)})`}
+                  icon={{
                     source: Icon.Circle,
                     tintColor:
                       index < 3
                         ? getAppRankingColor(index)
                         : STATUS_COLORS.NEUTRAL,
-                  },
-                  tooltip: `#${index + 1} most used app`,
-                },
-              ]}
-            />
-          ))}
-          {session.applicationUsage.length > 10 && (
-            <List.Item
-              title={`+${session.applicationUsage.length - 10} more applications`}
-              subtitle="Additional apps used during this session"
-              icon={{ source: Icon.Ellipsis, tintColor: STATUS_COLORS.NEUTRAL }}
-            />
+                  }}
+                />
+              ))}
+              {session.applicationUsage.length > 5 && (
+                <List.Item.Detail.Metadata.Label
+                  title="More Applications"
+                  text={`+${session.applicationUsage.length - 5} additional apps`}
+                  icon={{
+                    source: Icon.Ellipsis,
+                    tintColor: STATUS_COLORS.NEUTRAL,
+                  }}
+                />
+              )}
+            </>
           )}
-        </List.Section>
-      )}
-    </>
+        </List.Item.Detail.Metadata>
+      }
+    />
   );
 }
 
-function groupSessionsByDate(
-  sessions: TimerSession[]
-): Record<string, TimerSession[]> {
-  const groups: Record<string, TimerSession[]> = {};
-
-  sessions
-    .sort(
-      (a, b) =>
-        new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-    )
-    .forEach((session) => {
-      // Ensure startTime is a Date object
-      const startTime = new Date(session.startTime);
-      let groupKey: string;
-
-      if (isToday(startTime)) {
-        groupKey = "Today";
-      } else if (isYesterday(startTime)) {
-        groupKey = "Yesterday";
-      } else if (isThisWeek(startTime)) {
-        groupKey = format(startTime, "EEEE");
-      } else if (isThisMonth(startTime)) {
-        groupKey = format(startTime, "MMMM d");
-      } else {
-        groupKey = format(startTime, "MMMM yyyy");
-      }
-
-      if (!groups[groupKey]) {
-        groups[groupKey] = [];
-      }
-      groups[groupKey].push(session);
-    });
-
-  return groups;
-}
-
 function getSessionSubtitle(session: TimerSession): string {
-  const time = format(new Date(session.startTime), "HH:mm");
-  let subtitle = time;
+  const startTime = format(new Date(session.startTime), "HH:mm");
+  const endTime = session.endTime
+    ? format(new Date(session.endTime), "HH:mm")
+    : null;
+
+  let subtitle = endTime
+    ? `${startTime} - ${endTime}`
+    : `${startTime} (ongoing)`;
 
   if (session.taskName) {
     subtitle += ` • ${session.taskName}`;

@@ -87,7 +87,7 @@ export function PostSessionMoodLogging({
       intensityNum,
       "post-session",
       completedSession.id,
-      notes || undefined
+      notes || undefined,
     );
 
     showToast({

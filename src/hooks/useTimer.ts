@@ -104,12 +104,12 @@ export function useTimer() {
         completedSession.duration,
         true,
         completedSession.energyLevel,
-        completedSession.moodState
+        completedSession.moodState,
       );
 
       store.awardPoints(
         points,
-        `Completed ${getSessionTypeLabel(completedSession.type)} session`
+        `Completed ${getSessionTypeLabel(completedSession.type)} session`,
       );
     }
 
@@ -121,7 +121,7 @@ export function useTimer() {
     // Show completion notification using notification service
     await notificationService.notifySessionComplete(
       currentSessionType,
-      config.enableNotifications
+      config.enableNotifications,
     );
 
     // Auto-start next session if enabled
@@ -155,14 +155,14 @@ export function useTimer() {
     taskName?: string,
     projectName?: string,
     tags?: string[],
-    taskIcon?: import("@raycast/api").Icon
+    taskIcon?: import("@raycast/api").Icon,
   ) => {
     await backgroundTimerService.startTimer(
       SessionType.WORK,
       taskName,
       projectName,
       tags,
-      taskIcon
+      taskIcon,
     );
     await notificationService.notifySessionStart(SessionType.WORK);
   };

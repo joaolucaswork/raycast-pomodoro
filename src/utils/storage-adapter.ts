@@ -21,7 +21,9 @@ class StorageAdapter {
     } catch (error) {
       this.isStorageAvailable = false;
       if (environment.isDevelopment) {
-        console.log("Storage unavailable in development mode, using memory fallback");
+        console.log(
+          "Storage unavailable in development mode, using memory fallback",
+        );
       }
     }
   }
@@ -82,7 +84,7 @@ class StorageAdapter {
         this.isStorageAvailable = false;
       }
     }
-    
+
     const items: Record<string, string> = {};
     for (const [key, value] of this.memoryStorage.entries()) {
       items[key] = value;
