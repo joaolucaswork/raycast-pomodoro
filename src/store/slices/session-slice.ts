@@ -1,5 +1,5 @@
 import { StateCreator } from "zustand";
-import { Icon } from "@raycast/api";
+import { Icon, showToast, Toast } from "@raycast/api";
 import {
   TimerState,
   SessionType,
@@ -7,8 +7,13 @@ import {
   SessionEndReason,
   PomodoroStore,
 } from "../../types/timer";
-import { generateId } from "../../utils/helpers";
+import {
+  generateId,
+  shouldSaveSessionToHistory,
+  getActualSessionDuration,
+} from "../../utils/helpers";
 import { applicationTrackingService } from "../../services/application-tracking";
+import { calculateStats } from "./stats-slice";
 
 /**
  * Session slice interface - defines session-related state and actions
@@ -168,18 +173,11 @@ export const createSessionSlice: StateCreator<
       };
 
       // Check if session should be saved to history based on duration
-      const {
-        shouldSaveSessionToHistory,
-        getActualSessionDuration,
-      } = require("../../utils/helpers");
       const shouldSave = shouldSaveSessionToHistory(stoppedSession);
       const actualDuration = getActualSessionDuration(stoppedSession);
 
       // Only add to history if session meets minimum duration requirement
       const newHistory = shouldSave ? [...history, stoppedSession] : history;
-
-      // Calculate new stats
-      const { calculateStats } = require("../../utils/helpers");
 
       set({
         currentSession: null,
@@ -191,7 +189,6 @@ export const createSessionSlice: StateCreator<
 
       // Show notification if session was too short to be saved
       if (!shouldSave) {
-        const { showToast, Toast } = require("@raycast/api");
         showToast({
           style: Toast.Style.Failure,
           title: "Session Too Short",
@@ -245,11 +242,6 @@ export const createSessionSlice: StateCreator<
       };
 
       // Check if session should be saved to history based on duration
-      const {
-        shouldSaveSessionToHistory,
-        getActualSessionDuration,
-        calculateStats,
-      } = require("../../utils/helpers");
       const shouldSave = shouldSaveSessionToHistory(completedSession);
       const actualDuration = getActualSessionDuration(completedSession);
 
@@ -283,7 +275,6 @@ export const createSessionSlice: StateCreator<
 
       // Show notification if session was too short to be saved
       if (!shouldSave) {
-        const { showToast, Toast } = require("@raycast/api");
         showToast({
           style: Toast.Style.Failure,
           title: "Session Too Short",
@@ -385,7 +376,6 @@ export const createSessionSlice: StateCreator<
   deleteSession: (sessionId: string) => {
     const { history } = get();
     const newHistory = history.filter((session) => session.id !== sessionId);
-    const { calculateStats } = require("../../utils/helpers");
 
     set({
       history: newHistory,
@@ -398,7 +388,6 @@ export const createSessionSlice: StateCreator<
     const newHistory = history.map((session) =>
       session.id === sessionId ? { ...session, taskIcon } : session
     );
-    const { calculateStats } = require("../../utils/helpers");
 
     set({
       history: newHistory,
@@ -411,7 +400,6 @@ export const createSessionSlice: StateCreator<
     const newHistory = history.map((session) =>
       session.id === sessionId ? { ...session, notes } : session
     );
-    const { calculateStats } = require("../../utils/helpers");
 
     set({
       history: newHistory,
@@ -424,7 +412,6 @@ export const createSessionSlice: StateCreator<
     const newHistory = history.map((session) =>
       session.id === sessionId ? { ...session, taskName } : session
     );
-    const { calculateStats } = require("../../utils/helpers");
 
     set({
       history: newHistory,
@@ -469,7 +456,6 @@ export const createSessionSlice: StateCreator<
     });
 
     // Recalculate stats after clearing history
-    const { calculateStats } = require("../../utils/helpers");
     set({
       stats: calculateStats([]),
     });

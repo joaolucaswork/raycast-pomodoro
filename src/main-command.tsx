@@ -51,10 +51,8 @@ export default function FocusTimer() {
     moodEntries,
   } = useSessionManagement();
 
-  const { currentAppName, isAppTrackingActive } = useAppTracking(
-    isRunning,
-    currentSession?.type
-  );
+  const { currentAppName, currentAppBundleId, isAppTrackingActive } =
+    useAppTracking(isRunning, currentSession?.type);
 
   // Get current task info from search text (without storing tags)
   const { taskName: currentTaskName, tags: currentTags } =
@@ -157,6 +155,7 @@ export default function FocusTimer() {
       <AppTrackingDisplay
         isAppTrackingActive={isAppTrackingActive}
         currentAppName={currentAppName}
+        currentAppBundleId={currentAppBundleId}
         currentSessionType={currentSession?.type}
       />
     </List>

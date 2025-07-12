@@ -1,0 +1,451 @@
+{
+  "metadata": {
+    "version": "1.0.0",
+    "description": "Application to Raycast Icon mappings for the Focus Timer extension",
+    "lastUpdated": "2025-01-12",
+    "totalMappings": 85
+  },
+  "defaultIcon": "Desktop",
+  "categoryFallbacks": {
+    "development": "Code",
+    "browser": "Globe",
+    "communication": "Message",
+    "design": "Brush",
+    "productivity": "Document",
+    "media": "Music",
+    "system": "Gear",
+    "gaming": "GameController",
+    "finance": "BankNote",
+    "education": "Book",
+    "other": "Desktop"
+  },
+  "applications": {
+    "development": {
+      "Visual Studio Code": {
+        "bundleIds": ["com.microsoft.VSCode", "com.microsoft.VSCodeInsiders"],
+        "icon": "Code",
+        "aliases": ["VSCode", "VS Code", "Code"]
+      },
+      "IntelliJ IDEA": {
+        "bundleIds": ["com.jetbrains.intellij", "com.jetbrains.intellij.ce"],
+        "icon": "Code",
+        "aliases": ["IntelliJ", "IDEA"]
+      },
+      "WebStorm": {
+        "bundleIds": ["com.jetbrains.WebStorm"],
+        "icon": "Code",
+        "aliases": ["WebStorm"]
+      },
+      "PyCharm": {
+        "bundleIds": ["com.jetbrains.PyCharm", "com.jetbrains.PyCharm.ce"],
+        "icon": "Code",
+        "aliases": ["PyCharm"]
+      },
+      "Xcode": {
+        "bundleIds": ["com.apple.dt.Xcode"],
+        "icon": "Code",
+        "aliases": ["Xcode"]
+      },
+      "Android Studio": {
+        "bundleIds": ["com.google.android.studio"],
+        "icon": "Code",
+        "aliases": ["Android Studio"]
+      },
+      "Sublime Text": {
+        "bundleIds": ["com.sublimetext.4", "com.sublimetext.3"],
+        "icon": "Code",
+        "aliases": ["Sublime", "Sublime Text"]
+      },
+      "Atom": {
+        "bundleIds": ["com.github.atom"],
+        "icon": "Code",
+        "aliases": ["Atom"]
+      },
+      "Vim": {
+        "bundleIds": ["org.vim.MacVim"],
+        "icon": "Terminal",
+        "aliases": ["MacVim", "Vim"]
+      },
+      "Terminal": {
+        "bundleIds": ["com.apple.Terminal"],
+        "icon": "Terminal",
+        "aliases": ["Terminal"]
+      },
+      "iTerm2": {
+        "bundleIds": ["com.googlecode.iterm2"],
+        "icon": "Terminal",
+        "aliases": ["iTerm", "iTerm2"]
+      },
+      "GitHub Desktop": {
+        "bundleIds": ["com.github.GitHubDesktop"],
+        "icon": "Code",
+        "aliases": ["GitHub Desktop", "GitHub"]
+      },
+      "Docker Desktop": {
+        "bundleIds": ["com.docker.docker"],
+        "icon": "Box",
+        "aliases": ["Docker"]
+      },
+      "Postman": {
+        "bundleIds": ["com.postmanlabs.mac"],
+        "icon": "Globe",
+        "aliases": ["Postman"]
+      }
+    },
+    "browser": {
+      "Google Chrome": {
+        "bundleIds": ["com.google.Chrome", "com.google.Chrome.canary"],
+        "icon": "Globe",
+        "aliases": ["Chrome", "Google Chrome"]
+      },
+      "Mozilla Firefox": {
+        "bundleIds": ["org.mozilla.firefox"],
+        "icon": "Globe",
+        "aliases": ["Firefox", "Mozilla Firefox"]
+      },
+      "Safari": {
+        "bundleIds": ["com.apple.Safari"],
+        "icon": "Globe",
+        "aliases": ["Safari"]
+      },
+      "Microsoft Edge": {
+        "bundleIds": ["com.microsoft.edgemac", "com.microsoft.edgemac.beta"],
+        "icon": "Globe",
+        "aliases": ["Edge", "Microsoft Edge"]
+      },
+      "Opera": {
+        "bundleIds": ["com.operasoftware.Opera"],
+        "icon": "Globe",
+        "aliases": ["Opera"]
+      },
+      "Brave Browser": {
+        "bundleIds": ["com.brave.Browser"],
+        "icon": "Globe",
+        "aliases": ["Brave"]
+      },
+      "Arc": {
+        "bundleIds": ["company.thebrowser.Browser"],
+        "icon": "Globe",
+        "aliases": ["Arc"]
+      }
+    },
+    "communication": {
+      "Slack": {
+        "bundleIds": ["com.tinyspeck.slackmacgap"],
+        "icon": "Message",
+        "aliases": ["Slack"]
+      },
+      "Discord": {
+        "bundleIds": ["com.hnc.Discord"],
+        "icon": "Message",
+        "aliases": ["Discord"]
+      },
+      "Microsoft Teams": {
+        "bundleIds": ["com.microsoft.teams", "com.microsoft.teams2"],
+        "icon": "Message",
+        "aliases": ["Teams", "Microsoft Teams"]
+      },
+      "Zoom": {
+        "bundleIds": ["us.zoom.xos"],
+        "icon": "Video",
+        "aliases": ["Zoom"]
+      },
+      "Skype": {
+        "bundleIds": ["com.skype.skype"],
+        "icon": "Video",
+        "aliases": ["Skype"]
+      },
+      "WhatsApp": {
+        "bundleIds": ["net.whatsapp.WhatsApp"],
+        "icon": "Message",
+        "aliases": ["WhatsApp"]
+      },
+      "Telegram": {
+        "bundleIds": ["ru.keepcoder.Telegram"],
+        "icon": "Message",
+        "aliases": ["Telegram"]
+      },
+      "Mail": {
+        "bundleIds": ["com.apple.mail"],
+        "icon": "Envelope",
+        "aliases": ["Mail", "Apple Mail"]
+      },
+      "Outlook": {
+        "bundleIds": ["com.microsoft.Outlook"],
+        "icon": "Envelope",
+        "aliases": ["Outlook", "Microsoft Outlook"]
+      }
+    },
+    "productivity": {
+      "Notion": {
+        "bundleIds": ["notion.id"],
+        "icon": "Document",
+        "aliases": ["Notion"]
+      },
+      "Obsidian": {
+        "bundleIds": ["md.obsidian"],
+        "icon": "Document",
+        "aliases": ["Obsidian"]
+      },
+      "Evernote": {
+        "bundleIds": ["com.evernote.Evernote"],
+        "icon": "Document",
+        "aliases": ["Evernote"]
+      },
+      "OneNote": {
+        "bundleIds": ["com.microsoft.onenote.mac"],
+        "icon": "Document",
+        "aliases": ["OneNote", "Microsoft OneNote"]
+      },
+      "Bear": {
+        "bundleIds": ["net.shinyfrog.bear"],
+        "icon": "Document",
+        "aliases": ["Bear"]
+      },
+      "Todoist": {
+        "bundleIds": ["com.todoist.mac.Todoist"],
+        "icon": "List",
+        "aliases": ["Todoist"]
+      },
+      "Things 3": {
+        "bundleIds": ["com.culturedcode.ThingsMac"],
+        "icon": "List",
+        "aliases": ["Things", "Things 3"]
+      },
+      "OmniFocus 3": {
+        "bundleIds": ["com.omnigroup.OmniFocus3"],
+        "icon": "BullsEye",
+        "aliases": ["OmniFocus", "OmniFocus 3"]
+      },
+      "Trello": {
+        "bundleIds": ["com.atlassian.trello"],
+        "icon": "List",
+        "aliases": ["Trello"]
+      },
+      "Asana": {
+        "bundleIds": ["com.asana.AsanaDesktop"],
+        "icon": "List",
+        "aliases": ["Asana"]
+      },
+      "Microsoft Word": {
+        "bundleIds": ["com.microsoft.Word"],
+        "icon": "Document",
+        "aliases": ["Word", "Microsoft Word"]
+      },
+      "Microsoft Excel": {
+        "bundleIds": ["com.microsoft.Excel"],
+        "icon": "BarChart",
+        "aliases": ["Excel", "Microsoft Excel"]
+      },
+      "Microsoft PowerPoint": {
+        "bundleIds": ["com.microsoft.Powerpoint"],
+        "icon": "Document",
+        "aliases": ["PowerPoint", "Microsoft PowerPoint"]
+      },
+      "Google Docs": {
+        "bundleIds": ["com.google.Chrome"],
+        "icon": "Document",
+        "aliases": ["Google Docs", "Docs"]
+      },
+      "Google Sheets": {
+        "bundleIds": ["com.google.Chrome"],
+        "icon": "BarChart",
+        "aliases": ["Google Sheets", "Sheets"]
+      },
+      "Airtable": {
+        "bundleIds": ["com.airtable.airtable"],
+        "icon": "BarChart",
+        "aliases": ["Airtable"]
+      }
+    },
+    "design": {
+      "Figma": {
+        "bundleIds": ["com.figma.Desktop"],
+        "icon": "Brush",
+        "aliases": ["Figma"]
+      },
+      "Sketch": {
+        "bundleIds": ["com.bohemiancoding.sketch3"],
+        "icon": "Brush",
+        "aliases": ["Sketch"]
+      },
+      "Adobe Photoshop": {
+        "bundleIds": ["com.adobe.Photoshop"],
+        "icon": "Brush",
+        "aliases": ["Photoshop", "Adobe Photoshop"]
+      },
+      "Adobe Illustrator": {
+        "bundleIds": ["com.adobe.Illustrator"],
+        "icon": "Brush",
+        "aliases": ["Illustrator", "Adobe Illustrator"]
+      },
+      "Adobe XD": {
+        "bundleIds": ["com.adobe.xd"],
+        "icon": "Brush",
+        "aliases": ["XD", "Adobe XD"]
+      },
+      "Canva": {
+        "bundleIds": ["com.canva.CanvaDesktop"],
+        "icon": "Brush",
+        "aliases": ["Canva"]
+      },
+      "Blender": {
+        "bundleIds": ["org.blenderfoundation.blender"],
+        "icon": "Brush",
+        "aliases": ["Blender"]
+      }
+    },
+    "media": {
+      "Spotify": {
+        "bundleIds": ["com.spotify.client"],
+        "icon": "Music",
+        "aliases": ["Spotify"]
+      },
+      "Apple Music": {
+        "bundleIds": ["com.apple.Music"],
+        "icon": "Music",
+        "aliases": ["Music", "Apple Music"]
+      },
+      "VLC": {
+        "bundleIds": ["org.videolan.vlc"],
+        "icon": "Video",
+        "aliases": ["VLC", "VLC Media Player"]
+      },
+      "QuickTime Player": {
+        "bundleIds": ["com.apple.QuickTimePlayerX"],
+        "icon": "Video",
+        "aliases": ["QuickTime", "QuickTime Player"]
+      },
+      "Final Cut Pro": {
+        "bundleIds": ["com.apple.FinalCut"],
+        "icon": "Video",
+        "aliases": ["Final Cut Pro", "Final Cut"]
+      },
+      "Adobe Premiere Pro": {
+        "bundleIds": ["com.adobe.PremierePro"],
+        "icon": "Video",
+        "aliases": ["Premiere Pro", "Adobe Premiere"]
+      },
+      "Logic Pro": {
+        "bundleIds": ["com.apple.logic10"],
+        "icon": "Music",
+        "aliases": ["Logic Pro", "Logic"]
+      },
+      "GarageBand": {
+        "bundleIds": ["com.apple.GarageBand10"],
+        "icon": "Music",
+        "aliases": ["GarageBand"]
+      }
+    },
+    "system": {
+      "Finder": {
+        "bundleIds": ["com.apple.finder"],
+        "icon": "Folder",
+        "aliases": ["Finder"]
+      },
+      "System Preferences": {
+        "bundleIds": ["com.apple.systempreferences"],
+        "icon": "Gear",
+        "aliases": ["System Preferences", "Preferences"]
+      },
+      "Activity Monitor": {
+        "bundleIds": ["com.apple.ActivityMonitor"],
+        "icon": "BarChart",
+        "aliases": ["Activity Monitor"]
+      },
+      "Console": {
+        "bundleIds": ["com.apple.Console"],
+        "icon": "Terminal",
+        "aliases": ["Console"]
+      },
+      "Disk Utility": {
+        "bundleIds": ["com.apple.DiskUtility"],
+        "icon": "HardDrive",
+        "aliases": ["Disk Utility"]
+      },
+      "CleanMyMac X": {
+        "bundleIds": ["com.macpaw.CleanMyMac4"],
+        "icon": "Gear",
+        "aliases": ["CleanMyMac", "CleanMyMac X"]
+      }
+    },
+    "gaming": {
+      "Steam": {
+        "bundleIds": ["com.valvesoftware.steam"],
+        "icon": "GameController",
+        "aliases": ["Steam"]
+      },
+      "Epic Games Launcher": {
+        "bundleIds": ["com.epicgames.EpicGamesLauncher"],
+        "icon": "GameController",
+        "aliases": ["Epic Games", "Epic"]
+      },
+      "Discord": {
+        "bundleIds": ["com.hnc.Discord"],
+        "icon": "GameController",
+        "aliases": ["Discord"]
+      }
+    },
+    "finance": {
+      "Mint": {
+        "bundleIds": ["com.mint.Mint"],
+        "icon": "BankNote",
+        "aliases": ["Mint"]
+      },
+      "YNAB": {
+        "bundleIds": ["com.youneedabudget.YNAB4"],
+        "icon": "BankNote",
+        "aliases": ["YNAB", "You Need A Budget"]
+      },
+      "MoneyMoney": {
+        "bundleIds": ["com.moneymoney-app.MoneyMoney"],
+        "icon": "BankNote",
+        "aliases": ["MoneyMoney"]
+      }
+    },
+    "education": {
+      "Anki": {
+        "bundleIds": ["net.ankiweb.dtop"],
+        "icon": "Book",
+        "aliases": ["Anki"]
+      },
+      "Coursera": {
+        "bundleIds": ["org.coursera.desktop"],
+        "icon": "Book",
+        "aliases": ["Coursera"]
+      },
+      "Khan Academy": {
+        "bundleIds": ["org.khanacademy.desktop"],
+        "icon": "Book",
+        "aliases": ["Khan Academy"]
+      }
+    },
+    "other": {
+      "1Password 7": {
+        "bundleIds": ["com.1password.1password7", "com.1password.1password8"],
+        "icon": "Lock",
+        "aliases": ["1Password", "1Password 7", "1Password 8"]
+      },
+      "Bitwarden": {
+        "bundleIds": ["com.bitwarden.desktop"],
+        "icon": "Lock",
+        "aliases": ["Bitwarden"]
+      },
+      "Raycast": {
+        "bundleIds": ["com.raycast.macos"],
+        "icon": "CommandSymbol",
+        "aliases": ["Raycast"]
+      },
+      "Alfred": {
+        "bundleIds": ["com.runningwithcrayons.Alfred"],
+        "icon": "CommandSymbol",
+        "aliases": ["Alfred"]
+      },
+      "Spotlight": {
+        "bundleIds": ["com.apple.Spotlight"],
+        "icon": "MagnifyingGlass",
+        "aliases": ["Spotlight"]
+      }
+    }
+  }
+}

@@ -10,6 +10,9 @@ export function useAppTracking(
   currentSessionType?: SessionType
 ) {
   const [currentAppName, setCurrentAppName] = useState<string | null>(null);
+  const [currentAppBundleId, setCurrentAppBundleId] = useState<string | null>(
+    null
+  );
   const [isAppTrackingActive, setIsAppTrackingActive] = useState(false);
 
   // Update current application display when tracking is active
@@ -28,6 +31,7 @@ export function useAppTracking(
 
         setIsAppTrackingActive(isTracking);
         setCurrentAppName(currentApp?.name || null);
+        setCurrentAppBundleId(currentApp?.bundleId || null);
 
         // Debug logging to help troubleshoot
         if (isRunning && currentSessionType === SessionType.WORK) {
@@ -39,6 +43,7 @@ export function useAppTracking(
         console.error("[useAppTracking] Error updating current app:", error);
         setIsAppTrackingActive(false);
         setCurrentAppName(null);
+        setCurrentAppBundleId(null);
       }
     };
 
@@ -60,6 +65,7 @@ export function useAppTracking(
 
   return {
     currentAppName,
+    currentAppBundleId,
     isAppTrackingActive,
   };
 }

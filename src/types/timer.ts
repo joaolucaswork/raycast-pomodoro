@@ -26,6 +26,9 @@ export interface ApplicationUsage {
     | "productivity"
     | "media"
     | "system"
+    | "gaming"
+    | "finance"
+    | "education"
     | "other";
   isRecognized?: boolean; // Whether the app was recognized in our mapping
   firstUsed?: Date; // When the app was first used in the session

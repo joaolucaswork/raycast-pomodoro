@@ -5,6 +5,7 @@ import {
   applicationTrackingService,
   ApplicationTrackingStats,
 } from "../services/application-tracking";
+import { jsonApplicationIconService } from "../services/json-app-icon-service";
 
 interface ApplicationUsageStatsProps {
   applicationUsage: ApplicationUsage[];
@@ -50,7 +51,7 @@ export function ApplicationUsageStats({
               title={app.name}
               subtitle={`${formatTime(app.timeSpent)} • ${app.percentage}% of session`}
               icon={{
-                source: Icon.Desktop,
+                source: app.raycastIcon || Icon.Desktop,
                 tintColor: iconColor,
               }}
               accessories={[
@@ -225,7 +226,10 @@ export function ApplicationAnalytics({
           <List.Item
             title={stats.mostUsedApplication.name}
             subtitle={`${stats.mostUsedApplication.percentage}% of session time`}
-            icon={{ source: Icon.Desktop, tintColor: Color.Green }}
+            icon={{
+              source: stats.mostUsedApplication.raycastIcon || Icon.Desktop,
+              tintColor: Color.Green,
+            }}
             accessories={[
               {
                 text: formatTime(stats.mostUsedApplication.timeSpent),
@@ -449,11 +453,17 @@ export function CurrentApplicationDisplay({
     return displayText;
   }
 
+  // Get appropriate icon for the current application
+  const appIcon =
+    jsonApplicationIconService.getIconByBundleId(
+      currentApp.bundleId || currentApp.name
+    ) || jsonApplicationIconService.getIconByName(currentApp.name);
+
   return (
     <List.Item
       title="Currently Active Application"
       subtitle={`${currentApp.name} • Tracking ${health.isHealthy ? "healthy" : "issues detected"}`}
-      icon={{ source: Icon.Desktop, tintColor: Color.Green }}
+      icon={{ source: appIcon, tintColor: Color.Green }}
       accessories={[
         {
           text: "Live",

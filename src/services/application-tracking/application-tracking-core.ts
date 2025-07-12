@@ -1,6 +1,7 @@
 import { getFrontmostApplication, Application } from "@raycast/api";
 import { ApplicationUsage } from "../../types/timer";
 import { applicationIconService } from "../application-icon-service";
+import { jsonApplicationIconService } from "../json-app-icon-service";
 import {
   ApplicationTrackingData,
   TRACKING_CONSTANTS,
@@ -134,10 +135,27 @@ export class ApplicationTrackingCore {
     } else {
       // Add new application
       try {
-        const mapping = applicationIconService.getApplicationMapping(
+        // Try JSON-based service first (more comprehensive and up-to-date)
+        let mapping = jsonApplicationIconService.getApplicationMapping(
           app.bundleId || app.name,
           app.name
         );
+
+        // Fallback to original service if not found in JSON
+        if (!mapping) {
+          const legacyMapping = applicationIconService.getApplicationMapping(
+            app.bundleId || app.name,
+            app.name
+          );
+          if (legacyMapping) {
+            mapping = {
+              icon: legacyMapping.icon,
+              category: legacyMapping.category,
+              isRecognized: true,
+              recognizedName: app.name,
+            };
+          }
+        }
 
         const newUsage: ApplicationUsage = {
           name: app.name,
@@ -147,7 +165,7 @@ export class ApplicationTrackingCore {
           firstUsed: new Date(),
           lastUsed: new Date(),
           raycastIcon: mapping?.icon,
-          category: mapping?.category,
+          category: mapping?.category as ApplicationUsage["category"],
           isRecognized: mapping !== null,
         };
 
