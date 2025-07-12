@@ -59,7 +59,7 @@ export function SessionListItem({
 
   return (
     <List.Item
-      key={session.id}
+      id={session.id}
       title={getSessionDisplayTitle(session)}
       subtitle={getSessionSubtitle(session)}
       icon={{

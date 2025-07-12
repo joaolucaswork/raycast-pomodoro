@@ -8,7 +8,11 @@ import {
 } from "@raycast/api";
 import { useState, useMemo } from "react";
 import { useTimerStore } from "./store/timer-store";
-import { formatTime } from "./utils/helpers";
+import {
+  formatTime,
+  getSessionTypeLabel,
+  getSessionTypeIcon,
+} from "./utils/helpers";
 import { TimerSession } from "./types/timer";
 import {
   format,
@@ -37,6 +41,10 @@ export default function TimerHistory() {
   const { push } = useNavigation();
   // Default to hidden details, but preserve user preference during session
   const [isShowingDetail, setIsShowingDetail] = useState(false);
+  // Track which session is currently selected for detail view
+  const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
+    null
+  );
 
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [filterType, setFilterType] = useState<FilterType>("all");
@@ -45,8 +53,25 @@ export default function TimerHistory() {
   const { history, deleteSession, getTagConfig, moodEntries } = useTimerStore();
 
   // Handle detail toggle
-  const handleDetailToggle = () => {
+  const handleDetailToggle = (sessionId?: string) => {
+    if (!isShowingDetail) {
+      // If showing details for the first time, set the selected session
+      if (sessionId) {
+        setSelectedSessionId(sessionId);
+      } else if (filteredAndSortedSessions.length > 0) {
+        // Default to first session if no specific session provided
+        setSelectedSessionId(filteredAndSortedSessions[0].id);
+      }
+    }
     setIsShowingDetail(!isShowingDetail);
+  };
+
+  // Handle session selection for detail view
+  const handleSessionSelect = (sessionId: string) => {
+    setSelectedSessionId(sessionId);
+    if (!isShowingDetail) {
+      setIsShowingDetail(true);
+    }
   };
 
   // Get tag color based on tag name (with custom config support)
@@ -107,11 +132,21 @@ export default function TimerHistory() {
     return sorted;
   }, [history, filterType, completionFilter, sortBy]);
 
+  // Find the currently selected session for detail view
+  const selectedSession = selectedSessionId
+    ? history.find((session) => session.id === selectedSessionId)
+    : null;
+
   return (
     <List
       navigationTitle="Focus History"
       searchBarPlaceholder="Search rounds..."
       isShowingDetail={isShowingDetail && filteredAndSortedSessions.length > 0}
+      onSelectionChange={(id) => {
+        if (id) {
+          setSelectedSessionId(id);
+        }
+      }}
       searchBarAccessory={
         <List.Dropdown
           tooltip="Sort Rounds"
@@ -132,7 +167,7 @@ export default function TimerHistory() {
               icon={
                 isShowingDetail ? Icon.EyeDisabled : ACTION_ICONS.VIEW_DETAILS
               }
-              onAction={handleDetailToggle}
+              onAction={() => handleDetailToggle()}
               shortcut={{ modifiers: ["cmd"], key: "d" }}
             />
           </ActionPanel.Section>
@@ -222,7 +257,7 @@ export default function TimerHistory() {
                         ? Icon.EyeDisabled
                         : ACTION_ICONS.VIEW_DETAILS
                     }
-                    onAction={handleDetailToggle}
+                    onAction={() => handleDetailToggle(session.id)}
                     shortcut={SHORTCUTS.PRIMARY_ACTION}
                   />
 
@@ -304,27 +339,21 @@ function SessionDetailView({ session }: SessionDetailViewProps) {
     <List.Item.Detail
       metadata={
         <List.Item.Detail.Metadata>
-          {session.taskName && (
-            <List.Item.Detail.Metadata.Label
-              title="Task"
-              text={session.taskName}
-              icon={{
-                source: session.taskIcon || Icon.Document,
-                tintColor: STATUS_COLORS.PRIMARY,
-              }}
-            />
-          )}
-          {session.projectName && (
-            <List.Item.Detail.Metadata.Label
-              title="Project"
-              text={session.projectName}
-              icon={{ source: Icon.Folder, tintColor: STATUS_COLORS.ACCENT }}
-            />
-          )}
+          {/* Session Overview Section */}
+          <List.Item.Detail.Metadata.Label
+            title="Session Overview"
+            text={session.taskName || getSessionTypeLabel(session.type)}
+            icon={{
+              source: session.taskIcon || getSessionTypeIcon(session.type),
+              tintColor: STATUS_COLORS.PRIMARY,
+            }}
+          />
 
-          {(session.taskName || session.projectName) && (
-            <List.Item.Detail.Metadata.Separator />
-          )}
+          <List.Item.Detail.Metadata.Label
+            title="Duration"
+            text={formatTime(duration)}
+            icon={{ source: Icon.Clock, tintColor: STATUS_COLORS.INFO }}
+          />
 
           <List.Item.Detail.Metadata.Label
             title="Status"
@@ -336,11 +365,9 @@ function SessionDetailView({ session }: SessionDetailViewProps) {
                 : STATUS_COLORS.ERROR,
             }}
           />
-          <List.Item.Detail.Metadata.Label
-            title="Duration"
-            text={formatTime(duration)}
-            icon={{ source: Icon.Clock, tintColor: STATUS_COLORS.INFO }}
-          />
+
+          {/* Time Information Section */}
+          <List.Item.Detail.Metadata.Separator />
           <List.Item.Detail.Metadata.Label
             title="Started"
             text={format(startTime, "MMM d, yyyy 'at' h:mm a")}
@@ -352,6 +379,18 @@ function SessionDetailView({ session }: SessionDetailViewProps) {
               text={format(endTime, "MMM d, yyyy 'at' h:mm a")}
               icon={{ source: Icon.Calendar, tintColor: STATUS_COLORS.NEUTRAL }}
             />
+          )}
+
+          {/* Project Information Section */}
+          {session.projectName && (
+            <>
+              <List.Item.Detail.Metadata.Separator />
+              <List.Item.Detail.Metadata.Label
+                title="Project"
+                text={session.projectName}
+                icon={{ source: Icon.Folder, tintColor: STATUS_COLORS.ACCENT }}
+              />
+            </>
           )}
 
           {session.tags && session.tags.length > 0 && (
