@@ -51,6 +51,9 @@ export const useTimerStore = create<CombinedPomodoroStore>()(
 export const initializeTimerStore = () => {
   const store = useTimerStore.getState();
 
+  // Refresh config from native preferences
+  store.refreshConfigFromPreferences();
+
   // Initialize predefined tags
   store.initializePredefinedTags();
 
@@ -110,7 +113,7 @@ export const timerStoreUtils = {
     const store = useTimerStore.getState();
 
     // Reset all slices
-    store.resetConfig();
+    store.refreshConfigFromPreferences(); // Refresh config instead of reset
     store.resetStats();
     store.resetRewardSystem();
     store.clearAllTags();

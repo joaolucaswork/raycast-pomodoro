@@ -8,11 +8,13 @@ import {
 } from "../../../constants/design-tokens";
 import { getTagColor, getTagIcon } from "../utils/search-parsing";
 import { MOOD_OPTIONS } from "../utils/timer-display-helpers";
+import { createTaskIconSelectionActions } from "../../../components/inline-icon-selection";
 
 interface SessionSetupProps {
   currentTaskName: string;
   currentTags: string[];
   selectedTaskIcon?: Icon;
+  setSelectedTaskIcon: (icon: Icon | undefined) => void;
   targetRounds: string;
   preSessionMood: MoodType | null;
   config: TimerConfig;
@@ -26,6 +28,7 @@ export function SessionSetup({
   currentTaskName,
   currentTags,
   selectedTaskIcon,
+  setSelectedTaskIcon,
   targetRounds,
   preSessionMood,
   config,
@@ -96,6 +99,12 @@ export function SessionSetup({
           </ActionPanel.Section>
 
           <ActionPanel.Section title="Customize">
+            {/* Session Icon Selection */}
+            {createTaskIconSelectionActions(
+              (icon) => setSelectedTaskIcon(icon),
+              selectedTaskIcon
+            )}
+
             {/* Dynamic Tag Color Selection - Only show if there are current tags */}
             {currentTags.length > 0 && (
               <>

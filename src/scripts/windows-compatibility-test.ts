@@ -5,7 +5,7 @@
  * and various Windows applications to ensure proper functionality.
  */
 
-import { applicationTrackingService } from "../services/application-tracking-service";
+import { applicationTrackingService } from "../services/application-tracking";
 import { showToast, Toast, getFrontmostApplication } from "@raycast/api";
 
 interface WindowsCompatibilityReport {
@@ -77,7 +77,7 @@ export async function runWindowsCompatibilityTest(): Promise<WindowsCompatibilit
 
     if (!report.platform.isWindows) {
       console.log(
-        "⚠️ Warning: Not running on Windows. Some tests may not be applicable.",
+        "⚠️ Warning: Not running on Windows. Some tests may not be applicable."
       );
     }
 
@@ -121,7 +121,7 @@ export async function runWindowsCompatibilityTest(): Promise<WindowsCompatibilit
 
     console.log("Starting application tracking...");
     console.log(
-      "Please switch between different Windows applications for 20 seconds",
+      "Please switch between different Windows applications for 20 seconds"
     );
 
     applicationTrackingService.startTracking(2); // 2 second interval
@@ -155,7 +155,7 @@ export async function runWindowsCompatibilityTest(): Promise<WindowsCompatibilit
 
     report.applicationSupport.totalApplicationsTested = usage.length;
     report.applicationSupport.successfullyTracked = usage.filter(
-      (app) => app.timeSpent > 0,
+      (app) => app.timeSpent > 0
     ).length;
     report.applicationSupport.commonApplications = usage.map((app) => ({
       name: app.name,
@@ -173,17 +173,17 @@ export async function runWindowsCompatibilityTest(): Promise<WindowsCompatibilit
         : 0;
 
     console.log(
-      `Applications tracked: ${report.applicationSupport.totalApplicationsTested}`,
+      `Applications tracked: ${report.applicationSupport.totalApplicationsTested}`
     );
     console.log(
-      `Successfully tracked: ${report.applicationSupport.successfullyTracked}`,
+      `Successfully tracked: ${report.applicationSupport.successfullyTracked}`
     );
     console.log(`Tracking accuracy: ${stats.trackingAccuracy}%`);
     console.log(
-      `Health status: ${health.isHealthy ? "Healthy" : "Issues detected"}`,
+      `Health status: ${health.isHealthy ? "Healthy" : "Issues detected"}`
     );
     console.log(
-      `Average detection time: ${report.performance.averageDetectionTime.toFixed(2)} ms`,
+      `Average detection time: ${report.performance.averageDetectionTime.toFixed(2)} ms`
     );
 
     // Test 4: Common Windows Applications
@@ -214,11 +214,11 @@ export async function runWindowsCompatibilityTest(): Promise<WindowsCompatibilit
 
     const trackedApps = usage.map((app) => app.name.toLowerCase());
     const detectedCommonApps = commonWindowsApps.filter((app) =>
-      trackedApps.some((tracked) => tracked.includes(app.toLowerCase())),
+      trackedApps.some((tracked) => tracked.includes(app.toLowerCase()))
     );
 
     console.log(
-      `Common Windows apps detected: ${detectedCommonApps.length}/${commonWindowsApps.length}`,
+      `Common Windows apps detected: ${detectedCommonApps.length}/${commonWindowsApps.length}`
     );
     console.log(`Detected apps: ${detectedCommonApps.join(", ")}`);
 
@@ -243,7 +243,7 @@ export async function runWindowsCompatibilityTest(): Promise<WindowsCompatibilit
 
     console.log(`CPU Impact: ${cpuImpact}`);
     console.log(
-      `Estimated Memory Usage: ${report.performance.memoryUsage.toFixed(2)} MB`,
+      `Estimated Memory Usage: ${report.performance.memoryUsage.toFixed(2)} MB`
     );
 
     // Generate Recommendations
@@ -251,7 +251,7 @@ export async function runWindowsCompatibilityTest(): Promise<WindowsCompatibilit
 
     if (!report.apiCompatibility.getFrontmostApplicationWorks) {
       report.recommendations.push(
-        "Raycast API compatibility issues detected. Update Raycast to the latest version.",
+        "Raycast API compatibility issues detected. Update Raycast to the latest version."
       );
     }
 
@@ -260,50 +260,50 @@ export async function runWindowsCompatibilityTest(): Promise<WindowsCompatibilit
       report.applicationSupport.totalApplicationsTested * 0.8
     ) {
       report.recommendations.push(
-        "Low application tracking success rate. Consider increasing tracking interval.",
+        "Low application tracking success rate. Consider increasing tracking interval."
       );
     }
 
     if (report.performance.averageDetectionTime > 50) {
       report.recommendations.push(
-        "High detection latency detected. Consider optimizing tracking frequency.",
+        "High detection latency detected. Consider optimizing tracking frequency."
       );
     }
 
     if (health.errorCount > 3) {
       report.recommendations.push(
-        "Multiple tracking errors detected. Check Windows permissions and antivirus settings.",
+        "Multiple tracking errors detected. Check Windows permissions and antivirus settings."
       );
     }
 
     if (detectedCommonApps.length < 3) {
       report.recommendations.push(
-        "Few common Windows applications detected. Test with more diverse applications.",
+        "Few common Windows applications detected. Test with more diverse applications."
       );
     }
 
     if (report.performance.cpuImpact === "High") {
       report.recommendations.push(
-        "High performance impact detected. Consider reducing tracking frequency or optimizing code.",
+        "High performance impact detected. Consider reducing tracking frequency or optimizing code."
       );
     }
 
     if (report.recommendations.length === 0) {
       report.recommendations.push(
-        "Excellent Windows compatibility! No issues detected.",
+        "Excellent Windows compatibility! No issues detected."
       );
     }
 
     // Final Report
     console.log("\n📊 Windows Compatibility Report Summary");
     console.log(
-      `Platform: ${report.platform.isWindows ? "Windows ✅" : "Other Platform ⚠️"}`,
+      `Platform: ${report.platform.isWindows ? "Windows ✅" : "Other Platform ⚠️"}`
     );
     console.log(
-      `API Compatibility: ${report.apiCompatibility.getFrontmostApplicationWorks ? "Working ✅" : "Issues ❌"}`,
+      `API Compatibility: ${report.apiCompatibility.getFrontmostApplicationWorks ? "Working ✅" : "Issues ❌"}`
     );
     console.log(
-      `Applications Tracked: ${report.applicationSupport.successfullyTracked}/${report.applicationSupport.totalApplicationsTested}`,
+      `Applications Tracked: ${report.applicationSupport.successfullyTracked}/${report.applicationSupport.totalApplicationsTested}`
     );
     console.log(`Performance Impact: ${report.performance.cpuImpact}`);
     console.log(`Recommendations: ${report.recommendations.length}`);
@@ -346,7 +346,7 @@ export async function runWindowsCompatibilityTest(): Promise<WindowsCompatibilit
 }
 
 function calculateCompatibilityScore(
-  report: WindowsCompatibilityReport,
+  report: WindowsCompatibilityReport
 ): number {
   let score = 0;
 

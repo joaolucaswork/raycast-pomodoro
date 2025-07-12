@@ -4,7 +4,7 @@ import { formatTime } from "../utils/helpers";
 import {
   applicationTrackingService,
   ApplicationTrackingStats,
-} from "../services/application-tracking-service";
+} from "../services/application-tracking";
 
 interface ApplicationUsageStatsProps {
   applicationUsage: ApplicationUsage[];
@@ -35,7 +35,7 @@ export function ApplicationUsageStats({
           const isTopApp = index === 0;
           const isTopThree = index < 3;
           const usagePercentage = Math.round(
-            (app.timeSpent / totalSessionTime) * 100,
+            (app.timeSpent / totalSessionTime) * 100
           );
 
           // Determine icon color based on ranking
@@ -111,7 +111,7 @@ export function ApplicationUsageSummary({
   const totalApps = applicationUsage.length;
   const totalTime = applicationUsage.reduce(
     (sum, app) => sum + app.timeSpent,
-    0,
+    0
   );
   const focusScore = mostUsedApp.percentage;
 
@@ -373,13 +373,13 @@ export function ApplicationAnalytics({
           ]}
         />
         <List.Item
-          title="Uptime"
-          subtitle={formatTime(Math.floor(health.uptime / 1000))}
+          title="Success Rate"
+          subtitle={`${health.successRate}%`}
           icon={{ source: Icon.Clock, tintColor: Color.Blue }}
           accessories={[
             {
-              text: formatTime(Math.floor(health.uptime / 1000)),
-              tooltip: "How long tracking has been active",
+              text: `${health.successRate}%`,
+              tooltip: "Percentage of successful tracking attempts",
             },
           ]}
         />

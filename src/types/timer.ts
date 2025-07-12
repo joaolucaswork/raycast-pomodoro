@@ -28,6 +28,8 @@ export interface ApplicationUsage {
     | "system"
     | "other";
   isRecognized?: boolean; // Whether the app was recognized in our mapping
+  firstUsed?: Date; // When the app was first used in the session
+  lastUsed?: Date; // When the app was last used in the session
 }
 
 export enum SessionEndReason {
@@ -237,7 +239,7 @@ export interface TimerActions {
   resetTimer: () => void;
   skipSession: () => void;
   completeSession: () => void;
-  updateConfig: (config: Partial<TimerConfig>) => void;
+
   addTaskToSession: (
     taskName: string,
     projectName?: string,

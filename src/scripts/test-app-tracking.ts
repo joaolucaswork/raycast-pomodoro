@@ -5,7 +5,7 @@
  * in a real Raycast environment.
  */
 
-import { applicationTrackingService } from "../services/application-tracking-service";
+import { applicationTrackingService } from "../services/application-tracking";
 import { showToast, Toast } from "@raycast/api";
 
 export async function testApplicationTracking() {
@@ -57,7 +57,7 @@ export async function testApplicationTracking() {
 
     console.log("\n🏥 Health Status:");
     console.log(
-      `Status: ${health.isHealthy ? "✅ Healthy" : "⚠️ Issues detected"}`,
+      `Status: ${health.isHealthy ? "✅ Healthy" : "⚠️ Issues detected"}`
     );
     console.log(`Error count: ${health.errorCount}`);
     console.log(`Uptime: ${Math.floor(health.uptime / 1000)}s`);
@@ -78,7 +78,7 @@ export async function testApplicationTracking() {
       const mostUsed = applicationTrackingService.getMostUsedApplication();
       if (mostUsed) {
         console.log(
-          `🏆 Most used application: ${mostUsed.name} (${mostUsed.timeSpent}s)`,
+          `🏆 Most used application: ${mostUsed.name} (${mostUsed.timeSpent}s)`
         );
       }
     } else {
@@ -94,7 +94,7 @@ export async function testApplicationTracking() {
       console.log("\n💼 Top Productive Apps:");
       insights.productiveApps.forEach((app, index) => {
         console.log(
-          `${index + 1}. ${app.name}: ${app.timeSpent}s (${app.percentage}%)`,
+          `${index + 1}. ${app.name}: ${app.timeSpent}s (${app.percentage}%)`
         );
       });
     }
@@ -103,7 +103,7 @@ export async function testApplicationTracking() {
       console.log("\n🎮 Potential Distractions:");
       insights.distractionApps.forEach((app, index) => {
         console.log(
-          `${index + 1}. ${app.name}: ${app.timeSpent}s (${app.percentage}%)`,
+          `${index + 1}. ${app.name}: ${app.timeSpent}s (${app.percentage}%)`
         );
       });
     }
@@ -135,7 +135,7 @@ export async function testApplicationTracking() {
 
     const finalHealth = applicationTrackingService.getTrackingHealth();
     console.log(
-      `Final health status: ${finalHealth.isHealthy ? "Healthy" : "Issues detected"}`,
+      `Final health status: ${finalHealth.isHealthy ? "Healthy" : "Issues detected"}`
     );
     console.log(`Final error count: ${finalHealth.errorCount}`);
 
@@ -216,7 +216,7 @@ export const testScenarios = {
     applicationTrackingService.stopTracking();
 
     console.log(
-      `Long session test: ${stats.sessionDuration}s duration, ${stats.trackingAccuracy}% accuracy`,
+      `Long session test: ${stats.sessionDuration}s duration, ${stats.trackingAccuracy}% accuracy`
     );
     return stats.trackingAccuracy;
   },
@@ -239,7 +239,7 @@ export const testScenarios = {
     applicationTrackingService.stopTracking();
 
     console.log(
-      `Focus test: ${usage.length} apps, ${insights.focusScore}% focus score`,
+      `Focus test: ${usage.length} apps, ${insights.focusScore}% focus score`
     );
     return insights.focusScore;
   },

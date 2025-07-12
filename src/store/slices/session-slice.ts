@@ -8,7 +8,7 @@ import {
   PomodoroStore,
 } from "../../types/timer";
 import { generateId } from "../../utils/helpers";
-import { applicationTrackingService } from "../../services/application-tracking-service";
+import { applicationTrackingService } from "../../services/application-tracking";
 
 /**
  * Session slice interface - defines session-related state and actions

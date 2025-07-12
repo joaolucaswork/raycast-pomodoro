@@ -1,5 +1,6 @@
 import { StateCreator } from "zustand";
 import { TimerConfig, PomodoroStore } from "../../types/timer";
+import { preferencesService } from "../../services/preferences-service";
 
 /**
  * Default timer configuration with ADHD-friendly defaults
@@ -36,9 +37,8 @@ export interface ConfigSlice {
   config: TimerConfig;
 
   // Configuration actions
-  updateConfig: (newConfig: Partial<TimerConfig>) => void;
-  resetConfig: () => void;
-  
+  refreshConfigFromPreferences: () => void;
+
   // Configuration utilities
   getWorkDuration: () => number;
   getShortBreakDuration: () => number;
@@ -49,7 +49,7 @@ export interface ConfigSlice {
   isAutoStartWorkEnabled: () => boolean;
   isApplicationTrackingEnabled: () => boolean;
   getTrackingInterval: () => number;
-  
+
   // ADHD feature getters
   isAdaptiveTimersEnabled: () => boolean;
   getAdaptiveMode: () => "energy-based" | "focus-based" | "mood-based";
@@ -73,21 +73,13 @@ export const createConfigSlice: StateCreator<
   [],
   ConfigSlice
 > = (set, get) => ({
-  // Initial state
-  config: DEFAULT_CONFIG,
+  // Initial state - load from preferences
+  config: preferencesService.getCurrentConfig(),
 
   // Configuration actions
-  updateConfig: (newConfig: Partial<TimerConfig>) => {
-    const { config } = get();
-    set({
-      config: { ...config, ...newConfig },
-    });
-  },
-
-  resetConfig: () => {
-    set({
-      config: DEFAULT_CONFIG,
-    });
+  refreshConfigFromPreferences: () => {
+    const newConfig = preferencesService.getCurrentConfig();
+    set({ config: newConfig });
   },
 
   // Configuration utilities

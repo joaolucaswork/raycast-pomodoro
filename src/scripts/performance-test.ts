@@ -5,7 +5,7 @@
  * application tracking enabled, to ensure it doesn't impact system performance.
  */
 
-import { applicationTrackingService } from "../services/application-tracking-service";
+import { applicationTrackingService } from "../services/application-tracking";
 import { showToast, Toast } from "@raycast/api";
 
 interface PerformanceMetrics {
@@ -50,7 +50,7 @@ export async function runPerformanceTests(): Promise<PerformanceMetrics> {
     console.log("\n📊 Test 1: Memory Usage Baseline");
     metrics.memoryUsage.initial = getMemoryUsage();
     console.log(
-      `Initial memory usage: ${metrics.memoryUsage.initial.toFixed(2)} MB`,
+      `Initial memory usage: ${metrics.memoryUsage.initial.toFixed(2)} MB`
     );
 
     // Test 2: Startup Performance
@@ -93,11 +93,11 @@ export async function runPerformanceTests(): Promise<PerformanceMetrics> {
     metrics.memoryUsage.peak = peakMemory;
 
     console.log(
-      `Tracking overhead: ${metrics.timing.trackingOverhead.toFixed(2)} ms`,
+      `Tracking overhead: ${metrics.timing.trackingOverhead.toFixed(2)} ms`
     );
     console.log(`Peak memory usage: ${metrics.memoryUsage.peak.toFixed(2)} MB`);
     console.log(
-      `Memory increase: ${(metrics.memoryUsage.peak - metrics.memoryUsage.initial).toFixed(2)} MB`,
+      `Memory increase: ${(metrics.memoryUsage.peak - metrics.memoryUsage.initial).toFixed(2)} MB`
     );
 
     // Test 4: Data Retrieval Performance
@@ -117,10 +117,10 @@ export async function runPerformanceTests(): Promise<PerformanceMetrics> {
     metrics.timing.dataRetrievalTime = retrievalEnd - retrievalStart;
 
     console.log(
-      `Data retrieval time (100 iterations): ${metrics.timing.dataRetrievalTime.toFixed(2)} ms`,
+      `Data retrieval time (100 iterations): ${metrics.timing.dataRetrievalTime.toFixed(2)} ms`
     );
     console.log(
-      `Average per retrieval: ${(metrics.timing.dataRetrievalTime / 100).toFixed(2)} ms`,
+      `Average per retrieval: ${(metrics.timing.dataRetrievalTime / 100).toFixed(2)} ms`
     );
 
     // Test 5: Accuracy and Error Rate
@@ -135,7 +135,7 @@ export async function runPerformanceTests(): Promise<PerformanceMetrics> {
 
     console.log(`Tracking accuracy: ${metrics.accuracy.trackingAccuracy}%`);
     console.log(
-      `Error rate: ${metrics.accuracy.errorRate.toFixed(2)}% (${health.errorCount} errors in 30s)`,
+      `Error rate: ${metrics.accuracy.errorRate.toFixed(2)}% (${health.errorCount} errors in 30s)`
     );
 
     // Test 6: Scalability Test
@@ -154,10 +154,10 @@ export async function runPerformanceTests(): Promise<PerformanceMetrics> {
     metrics.scalability.performanceAtScale = scaleEnd - scaleStart;
 
     console.log(
-      `Applications tracked: ${metrics.scalability.maxApplicationsTracked}`,
+      `Applications tracked: ${metrics.scalability.maxApplicationsTracked}`
     );
     console.log(
-      `Performance at scale (50 retrievals): ${metrics.scalability.performanceAtScale.toFixed(2)} ms`,
+      `Performance at scale (50 retrievals): ${metrics.scalability.performanceAtScale.toFixed(2)} ms`
     );
 
     // Test 7: Cleanup Performance
@@ -172,10 +172,10 @@ export async function runPerformanceTests(): Promise<PerformanceMetrics> {
 
     console.log(`Stop time: ${metrics.timing.stopTime.toFixed(2)} ms`);
     console.log(
-      `Final memory usage: ${metrics.memoryUsage.final.toFixed(2)} MB`,
+      `Final memory usage: ${metrics.memoryUsage.final.toFixed(2)} MB`
     );
     console.log(
-      `Memory cleanup: ${(metrics.memoryUsage.peak - metrics.memoryUsage.final).toFixed(2)} MB`,
+      `Memory cleanup: ${(metrics.memoryUsage.peak - metrics.memoryUsage.final).toFixed(2)} MB`
     );
 
     // Performance Analysis
@@ -191,25 +191,25 @@ export async function runPerformanceTests(): Promise<PerformanceMetrics> {
     const scalable = metrics.scalability.performanceAtScale < 100; // Less than 100ms for 50 retrievals
 
     console.log(
-      `✅ Memory Efficient: ${memoryEfficient} (${(metrics.memoryUsage.peak - metrics.memoryUsage.initial).toFixed(2)} MB increase)`,
+      `✅ Memory Efficient: ${memoryEfficient} (${(metrics.memoryUsage.peak - metrics.memoryUsage.initial).toFixed(2)} MB increase)`
     );
     console.log(
-      `✅ Fast Startup: ${fastStartup} (${metrics.timing.startupTime.toFixed(2)} ms)`,
+      `✅ Fast Startup: ${fastStartup} (${metrics.timing.startupTime.toFixed(2)} ms)`
     );
     console.log(
-      `✅ Low Overhead: ${lowOverhead} (${metrics.timing.trackingOverhead.toFixed(2)} ms for 30s)`,
+      `✅ Low Overhead: ${lowOverhead} (${metrics.timing.trackingOverhead.toFixed(2)} ms for 30s)`
     );
     console.log(
-      `✅ Fast Retrieval: ${fastRetrieval} (${(metrics.timing.dataRetrievalTime / 100).toFixed(2)} ms avg)`,
+      `✅ Fast Retrieval: ${fastRetrieval} (${(metrics.timing.dataRetrievalTime / 100).toFixed(2)} ms avg)`
     );
     console.log(
-      `✅ Accurate: ${accurate} (${metrics.accuracy.trackingAccuracy}% accuracy)`,
+      `✅ Accurate: ${accurate} (${metrics.accuracy.trackingAccuracy}% accuracy)`
     );
     console.log(
-      `✅ Low Errors: ${lowErrors} (${metrics.accuracy.errorRate.toFixed(2)}% error rate)`,
+      `✅ Low Errors: ${lowErrors} (${metrics.accuracy.errorRate.toFixed(2)}% error rate)`
     );
     console.log(
-      `✅ Scalable: ${scalable} (${metrics.scalability.performanceAtScale.toFixed(2)} ms for 50 ops)`,
+      `✅ Scalable: ${scalable} (${metrics.scalability.performanceAtScale.toFixed(2)} ms for 50 ops)`
     );
 
     const overallScore = [
@@ -309,7 +309,7 @@ export async function quickPerformanceCheck(): Promise<boolean> {
       totalTime < 6000 && health.isHealthy && stats.trackingAccuracy > 50;
 
     console.log(
-      `Performance: ${isPerformant ? "✅ Good" : "⚠️ Issues detected"}`,
+      `Performance: ${isPerformant ? "✅ Good" : "⚠️ Issues detected"}`
     );
 
     return isPerformant;

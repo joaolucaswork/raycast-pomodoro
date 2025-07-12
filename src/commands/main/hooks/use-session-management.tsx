@@ -3,15 +3,21 @@ import { Icon } from "@raycast/api";
 import { useTimer } from "../../../hooks/useTimer";
 import { useTimerStore } from "../../../store/timer-store";
 import { backgroundTimerService } from "../../../services/background-timer-service";
-import { MoodType } from "../../../types/timer";
-import { parseSearchTextAndStore, validateTaskName, PREDEFINED_TAGS } from "../utils";
+import { MoodType, TimerState, SessionType } from "../../../types/timer";
+import {
+  parseSearchTextAndStore,
+  validateTaskName,
+  PREDEFINED_TAGS,
+} from "../utils";
 
 /**
  * Custom hook for managing timer sessions in the main command
  */
 export function useSessionManagement() {
   const [searchText, setSearchText] = useState<string>("");
-  const [selectedTaskIcon, setSelectedTaskIcon] = useState<Icon | undefined>(undefined);
+  const [selectedTaskIcon, setSelectedTaskIcon] = useState<Icon | undefined>(
+    undefined
+  );
   const [targetRounds, setTargetRounds] = useState("1");
   const [preSessionMood, setPreSessionMood] = useState<MoodType | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
@@ -52,6 +58,26 @@ export function useSessionManagement() {
     const initializeTimer = async () => {
       try {
         await backgroundTimerService.updateTimerState();
+
+        // After updating timer state, check if we need to restart application tracking
+        // This handles the case where the extension was reloaded during an active work session
+        const currentState = useTimerStore.getState();
+        if (
+          currentState.state === TimerState.RUNNING &&
+          currentState.currentSession?.type === SessionType.WORK &&
+          currentState.config.enableApplicationTracking
+        ) {
+          console.log(
+            "[useSessionManagement] Detected running work session, ensuring app tracking is active"
+          );
+          const { applicationTrackingService } = await import(
+            "../../../services/application-tracking"
+          );
+          applicationTrackingService.ensureTrackingActive(
+            currentState.config.trackingInterval
+          );
+        }
+
         setIsInitialized(true);
       } catch (error) {
         console.error("Failed to initialize timer state:", error);

@@ -31,6 +31,154 @@
   "platforms": [
     "Windows"
   ],
+  "preferences": [
+    {
+      "name": "workDuration",
+      "title": "Work Duration",
+      "description": "Duration of work sessions in minutes",
+      "type": "textfield",
+      "default": "25",
+      "required": false
+    },
+    {
+      "name": "shortBreakDuration",
+      "title": "Short Break Duration",
+      "description": "Duration of short breaks in minutes",
+      "type": "textfield",
+      "default": "5",
+      "required": false
+    },
+    {
+      "name": "longBreakDuration",
+      "title": "Long Break Duration",
+      "description": "Duration of long breaks in minutes",
+      "type": "textfield",
+      "default": "15",
+      "required": false
+    },
+    {
+      "name": "longBreakInterval",
+      "title": "Long Break Interval",
+      "description": "Number of work sessions before a long break",
+      "type": "textfield",
+      "default": "4",
+      "required": false
+    },
+    {
+      "name": "enableNotifications",
+      "title": "Enable Notifications",
+      "description": "Show system notifications for timer events",
+      "type": "checkbox",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "autoStartBreaks",
+      "title": "Auto-start Breaks",
+      "description": "Automatically start break sessions after work sessions",
+      "type": "checkbox",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "autoStartWork",
+      "title": "Auto-start Work Sessions",
+      "description": "Automatically start work sessions after breaks",
+      "type": "checkbox",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "enableApplicationTracking",
+      "title": "Enable Application Tracking",
+      "description": "Track active applications during focus sessions",
+      "type": "checkbox",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "trackingInterval",
+      "title": "Tracking Interval",
+      "description": "How often to check active application (in seconds)",
+      "type": "textfield",
+      "default": "5",
+      "required": false
+    }
+  ],
+  "preferences": [
+    {
+      "name": "workDuration",
+      "title": "Work Duration",
+      "description": "Duration of work sessions in minutes",
+      "type": "textfield",
+      "default": "25",
+      "required": false
+    },
+    {
+      "name": "shortBreakDuration",
+      "title": "Short Break Duration",
+      "description": "Duration of short breaks in minutes",
+      "type": "textfield",
+      "default": "5",
+      "required": false
+    },
+    {
+      "name": "longBreakDuration",
+      "title": "Long Break Duration",
+      "description": "Duration of long breaks in minutes",
+      "type": "textfield",
+      "default": "15",
+      "required": false
+    },
+    {
+      "name": "longBreakInterval",
+      "title": "Long Break Interval",
+      "description": "Number of work sessions before a long break",
+      "type": "textfield",
+      "default": "4",
+      "required": false
+    },
+    {
+      "name": "enableNotifications",
+      "title": "Enable Notifications",
+      "description": "Show system notifications for timer events",
+      "type": "checkbox",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "autoStartBreaks",
+      "title": "Auto-start Breaks",
+      "description": "Automatically start break sessions after work sessions",
+      "type": "checkbox",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "autoStartWork",
+      "title": "Auto-start Work Sessions",
+      "description": "Automatically start work sessions after breaks",
+      "type": "checkbox",
+      "default": false,
+      "required": false
+    },
+    {
+      "name": "enableApplicationTracking",
+      "title": "Enable Application Tracking",
+      "description": "Track active applications during focus sessions",
+      "type": "checkbox",
+      "default": true,
+      "required": false
+    },
+    {
+      "name": "trackingInterval",
+      "title": "Tracking Interval",
+      "description": "How often to check active application (in seconds)",
+      "type": "textfield",
+      "default": "5",
+      "required": false
+    }
+  ],
   "commands": [
     {
       "name": "main-command",
@@ -63,15 +211,14 @@
     {
       "name": "profile-command",
       "title": "Statistics & Profile",
-      "description": "View your statistics, achievements, and configure settings",
+      "description": "View your statistics, achievements, and mood tracking",
       "mode": "view",
       "keywords": [
         "profile",
         "stats",
         "statistics",
         "achievements",
-        "settings",
-        "config"
+        "mood"
       ]
     }
   ],

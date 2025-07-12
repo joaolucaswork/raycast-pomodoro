@@ -15,6 +15,7 @@ export default function FocusTimer() {
     searchText,
     setSearchText,
     selectedTaskIcon,
+    setSelectedTaskIcon,
     targetRounds,
     setTargetRounds,
     preSessionMood,
@@ -119,6 +120,7 @@ export default function FocusTimer() {
             currentTaskName={currentTaskName}
             currentTags={currentTags}
             selectedTaskIcon={selectedTaskIcon}
+            setSelectedTaskIcon={setSelectedTaskIcon}
             targetRounds={targetRounds}
             preSessionMood={preSessionMood}
             config={config}

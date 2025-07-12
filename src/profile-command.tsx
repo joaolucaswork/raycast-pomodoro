@@ -1,16 +1,9 @@
-import {
-  Action,
-  ActionPanel,
-  Icon,
-  List,
-  getPreferenceValues,
-} from "@raycast/api";
+import { Action, ActionPanel, Icon, List } from "@raycast/api";
 import { useState, useMemo } from "react";
 import { useTimerStore } from "./store/timer-store";
 import { dataService } from "./services/data-service";
 import {
   ProfileOverview,
-  ProfileSettings,
   ProfileStatistics,
   ProfileAchievements,
   ProfileMood,
@@ -18,27 +11,14 @@ import {
 import { calculateProfileMetrics } from "./commands/profile/utils";
 import { STATUS_COLORS } from "./constants/design-tokens";
 
-type ViewMode =
-  | "overview"
-  | "settings"
-  | "statistics"
-  | "achievements"
-  | "mood";
-
-interface Preferences {
-  enableApplicationTracking: boolean;
-}
+type ViewMode = "overview" | "statistics" | "achievements" | "mood";
 
 export default function ProfileCommand() {
-  const preferences: Preferences = getPreferenceValues();
   const [viewMode, setViewMode] = useState<ViewMode>("overview");
   const {
-    config,
-    updateConfig,
     stats,
     history,
     rewardSystem,
-    hyperfocusDetection,
     moodEntries,
     addMoodEntry,
     deleteMoodEntry,
@@ -59,8 +39,6 @@ export default function ProfileCommand() {
     switch (mode) {
       case "overview":
         return Icon.Person;
-      case "settings":
-        return Icon.Gear;
       case "statistics":
         return Icon.BarChart;
       case "achievements":
@@ -91,11 +69,6 @@ export default function ProfileCommand() {
             icon={Icon.Person}
           />
           <List.Dropdown.Item
-            title="Settings"
-            value="settings"
-            icon={Icon.Gear}
-          />
-          <List.Dropdown.Item
             title="Statistics"
             value="statistics"
             icon={Icon.BarChart}
@@ -123,14 +96,7 @@ export default function ProfileCommand() {
               }}
               onAction={() => setViewMode("overview")}
             />
-            <Action
-              title="Settings"
-              icon={{
-                source: getViewModeIcon("settings"),
-                tintColor: getViewModeColor("settings"),
-              }}
-              onAction={() => setViewMode("settings")}
-            />
+
             <Action
               title="Statistics"
               icon={{
@@ -165,12 +131,6 @@ export default function ProfileCommand() {
         moodEntries={moodEntries}
         history={history}
         profileMetrics={profileMetrics}
-        viewMode={viewMode}
-      />
-
-      <ProfileSettings
-        config={config}
-        updateConfig={updateConfig}
         viewMode={viewMode}
       />
 

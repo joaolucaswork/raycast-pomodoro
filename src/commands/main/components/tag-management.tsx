@@ -13,6 +13,7 @@ import {
   PREDEFINED_TAGS,
 } from "../utils/search-parsing";
 import { shouldShowTagSuggestions } from "../utils/timer-display-helpers";
+import { createTagIconSelectionActions } from "../../../components/inline-icon-selection";
 
 interface TagManagementProps {
   searchText: string;
@@ -62,30 +63,6 @@ export function TagManagement({
     ));
   };
 
-  const createTagIconActions = (tag: string) => {
-    const icons = [
-      Icon.Hammer,
-      Icon.Book,
-      Icon.Heart,
-      Icon.Star,
-      Icon.BullsEye,
-      Icon.Rocket,
-      Icon.LightBulb,
-      Icon.Trophy,
-      Icon.BullsEye,
-      Icon.Checkmark,
-    ];
-
-    return icons.map((icon) => (
-      <Action
-        key={icon}
-        title={icon}
-        icon={icon}
-        onAction={() => updateTagConfig(tag, { icon })}
-      />
-    ));
-  };
-
   const customTagsOnly = customTags.filter(
     (tag) => !PREDEFINED_TAGS.includes(tag)
   );
@@ -96,7 +73,7 @@ export function TagManagement({
       {/* Custom Tags Section - Higher Priority */}
       {customTagsOnly.length > 0 && (
         <List.Section title="Custom Tags">
-          {customTagsOnly.map((tag) => (
+          {customTagsOnly.map((tag, index) => (
             <List.Item
               key={`custom-${tag}`}
               icon={getTagIcon(tag, getTagConfig)}
@@ -127,12 +104,11 @@ export function TagManagement({
                       {createTagColorActions(tag)}
                     </ActionPanel.Submenu>
 
-                    <ActionPanel.Submenu
-                      title="Change Icon"
-                      icon={Icon.AppWindowSidebarLeft}
-                    >
-                      {createTagIconActions(tag)}
-                    </ActionPanel.Submenu>
+                    {createTagIconSelectionActions(
+                      tag,
+                      updateTagConfig,
+                      getTagConfig(tag)?.icon
+                    )}
                   </ActionPanel.Section>
 
                   <ActionPanel.Section title="Management">
@@ -154,6 +130,29 @@ export function TagManagement({
                         }
                       }}
                     />
+
+                    {/* Show "Clear All Custom Tags" action only on the first custom tag */}
+                    {index === 0 && customTagsOnly.length > 1 && (
+                      <Action
+                        title="Clear All Custom Tags"
+                        icon={Icon.Trash}
+                        style={Action.Style.Destructive}
+                        onAction={async () => {
+                          const confirmed = await confirmAlert({
+                            title: "Clear All Custom Tags",
+                            message:
+                              "Are you sure you want to delete all custom tags? This action cannot be undone.",
+                            primaryAction: {
+                              title: "Delete All Tags",
+                              style: Alert.ActionStyle.Destructive,
+                            },
+                          });
+                          if (confirmed) {
+                            clearAllTags();
+                          }
+                        }}
+                      />
+                    )}
                   </ActionPanel.Section>
                 </ActionPanel>
               }
@@ -199,12 +198,11 @@ export function TagManagement({
                       {createTagColorActions(tag)}
                     </ActionPanel.Submenu>
 
-                    <ActionPanel.Submenu
-                      title="Change Icon"
-                      icon={Icon.AppWindowSidebarLeft}
-                    >
-                      {createTagIconActions(tag)}
-                    </ActionPanel.Submenu>
+                    {createTagIconSelectionActions(
+                      tag,
+                      updateTagConfig,
+                      getTagConfig(tag)?.icon
+                    )}
                   </ActionPanel.Section>
 
                   {/* Built-in tags cannot be deleted */}
@@ -212,40 +210,6 @@ export function TagManagement({
               }
             />
           ))}
-        </List.Section>
-      )}
-
-      {/* Management Actions */}
-      {customTagsOnly.length > 0 && (
-        <List.Section title="Tag Management">
-          <List.Item
-            icon={Icon.Trash}
-            title="Clear All Custom Tags"
-            subtitle="Remove all user-created tags"
-            actions={
-              <ActionPanel>
-                <Action
-                  title="Clear All Custom Tags"
-                  icon={Icon.Trash}
-                  style={Action.Style.Destructive}
-                  onAction={async () => {
-                    const confirmed = await confirmAlert({
-                      title: "Clear All Custom Tags",
-                      message:
-                        "Are you sure you want to delete all custom tags? This action cannot be undone.",
-                      primaryAction: {
-                        title: "Delete All Tags",
-                        style: Alert.ActionStyle.Destructive,
-                      },
-                    });
-                    if (confirmed) {
-                      clearAllTags();
-                    }
-                  }}
-                />
-              </ActionPanel>
-            }
-          />
         </List.Section>
       )}
     </>
