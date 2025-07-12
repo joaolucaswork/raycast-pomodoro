@@ -56,6 +56,12 @@
       "description": "Persistent focus timer in the menu bar",
       "mode": "menu-bar",
       "interval": "1s"
+    },
+    {
+      "name": "fix-sessions-command",
+      "title": "Fix Existing Sessions",
+      "description": "Retroactively process completed sessions to award missing points and achievements",
+      "mode": "view"
     }
   ],
   "preferences": [

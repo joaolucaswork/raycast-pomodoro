@@ -1,4 +1,11 @@
-import { Action, ActionPanel, Icon, List, Color } from "@raycast/api";
+import {
+  Action,
+  ActionPanel,
+  Icon,
+  List,
+  Color,
+  useNavigation,
+} from "@raycast/api";
 import { useState, useMemo } from "react";
 import { useTimerStore } from "./store/timer-store";
 import {
@@ -15,6 +22,11 @@ import {
   isThisWeek,
   isThisMonth,
 } from "date-fns";
+import {
+  SessionNotesForm,
+  SessionIconForm,
+  SessionNameForm,
+} from "./components/session-editing";
 
 import {
   getSessionColor,
@@ -34,6 +46,7 @@ type FilterType = "all" | "work" | "short_break" | "long_break";
 type CompletionFilter = "all" | "completed" | "incomplete";
 
 export default function TimerHistory() {
+  const { push } = useNavigation();
   const [selectedSession, setSelectedSession] = useState<TimerSession | null>(
     null
   );
@@ -131,6 +144,32 @@ export default function TimerHistory() {
               onAction={() => setSelectedSession(null)}
               shortcut={SHORTCUTS.BACK}
             />
+            <ActionPanel.Section title="Edit">
+              <Action
+                title="Edit Icon"
+                icon={Icon.Pencil}
+                onAction={() =>
+                  push(<SessionIconForm session={selectedSession} />)
+                }
+                shortcut={{ modifiers: ["cmd"], key: "i" }}
+              />
+              <Action
+                title="Edit Notes"
+                icon={Icon.Document}
+                onAction={() =>
+                  push(<SessionNotesForm session={selectedSession} />)
+                }
+                shortcut={{ modifiers: ["cmd"], key: "n" }}
+              />
+              <Action
+                title="Edit Name"
+                icon={Icon.Text}
+                onAction={() =>
+                  push(<SessionNameForm session={selectedSession} />)
+                }
+                shortcut={{ modifiers: ["cmd"], key: "r" }}
+              />
+            </ActionPanel.Section>
             <ActionPanel.Section title="Manage">
               <Action
                 title="Delete Session"
@@ -366,6 +405,32 @@ export default function TimerHistory() {
                       onAction={() => setSelectedSession(session)}
                       shortcut={SHORTCUTS.PRIMARY_ACTION}
                     />
+                    <ActionPanel.Section title="Edit">
+                      <Action
+                        title="Edit Icon"
+                        icon={Icon.Pencil}
+                        onAction={() =>
+                          push(<SessionIconForm session={session} />)
+                        }
+                        shortcut={{ modifiers: ["cmd"], key: "i" }}
+                      />
+                      <Action
+                        title="Edit Notes"
+                        icon={Icon.Document}
+                        onAction={() =>
+                          push(<SessionNotesForm session={session} />)
+                        }
+                        shortcut={{ modifiers: ["cmd"], key: "n" }}
+                      />
+                      <Action
+                        title="Edit Name"
+                        icon={Icon.Text}
+                        onAction={() =>
+                          push(<SessionNameForm session={session} />)
+                        }
+                        shortcut={{ modifiers: ["cmd"], key: "r" }}
+                      />
+                    </ActionPanel.Section>
                     <ActionPanel.Section title="Manage">
                       <Action
                         title="Delete Session"
@@ -515,6 +580,26 @@ function SessionDetailView({ session }: { session: TimerSession }) {
               icon={{ source: Icon.Folder, tintColor: STATUS_COLORS.ACCENT }}
             />
           )}
+        </List.Section>
+      )}
+
+      {/* Notes Section */}
+      {session.notes && (
+        <List.Section title="Session Notes">
+          <List.Item
+            title="Notes"
+            subtitle={session.notes}
+            icon={{ source: Icon.Document, tintColor: STATUS_COLORS.INFO }}
+            accessories={[
+              {
+                icon: {
+                  source: Icon.Pencil,
+                  tintColor: STATUS_COLORS.NEUTRAL,
+                },
+                tooltip: "Click to edit notes",
+              },
+            ]}
+          />
         </List.Section>
       )}
 

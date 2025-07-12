@@ -40,6 +40,8 @@ declare namespace Preferences {
   export type TimerHistory = ExtensionPreferences & {}
   /** Preferences accessible in the `menu-bar-timer` command */
   export type MenuBarTimer = ExtensionPreferences & {}
+  /** Preferences accessible in the `fix-sessions-command` command */
+  export type FixSessionsCommand = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
@@ -51,5 +53,7 @@ declare namespace Arguments {
   export type TimerHistory = {}
   /** Arguments passed to the `menu-bar-timer` command */
   export type MenuBarTimer = {}
+  /** Arguments passed to the `fix-sessions-command` command */
+  export type FixSessionsCommand = {}
 }
 

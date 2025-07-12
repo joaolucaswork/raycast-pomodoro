@@ -89,6 +89,7 @@ export interface TimerSession {
   projectName?: string;
   tags?: string[]; // Task tags for categorization
   taskIcon?: import("@raycast/api").Icon; // Custom icon for the task
+  notes?: string; // User notes/reflections about the session
   applicationUsage?: ApplicationUsage[]; // Track app usage during session
   // ADHD-specific fields
   energyLevel?: 1 | 2 | 3 | 4 | 5; // User-reported energy at start
@@ -244,6 +245,13 @@ export interface TimerActions {
   ) => void;
   getNextSessionType: () => SessionType;
   deleteSession: (sessionId: string) => void;
+  // Historical session editing methods
+  updateSessionIcon: (
+    sessionId: string,
+    taskIcon?: import("@raycast/api").Icon
+  ) => void;
+  updateSessionNotes: (sessionId: string, notes?: string) => void;
+  updateSessionName: (sessionId: string, taskName?: string) => void;
   addCustomTag: (tag: string) => void;
   getCustomTags: () => string[];
   markCustomTagCreated: () => void;

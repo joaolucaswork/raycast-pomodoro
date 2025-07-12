@@ -6,6 +6,7 @@ import {
 } from "../types/timer";
 import { useTimerStore } from "../store/timer-store";
 import { storageAdapter } from "../utils/storage-adapter";
+import { getSessionTypeLabel } from "../utils/helpers";
 import { adhdSupportService } from "./adhd-support-service";
 import { applicationTrackingService } from "./application-tracking-service";
 
@@ -351,6 +352,28 @@ export class BackgroundTimerService {
       isPostSessionMoodPromptVisible: false,
       lastCompletedSession: null,
     });
+
+    // ADHD-specific features - Award points and check achievements
+    const updatedState = useTimerStore.getState();
+    if (updatedState.config.enableRewardSystem) {
+      // Calculate and award points
+      const points = adhdSupportService.calculateSessionPoints(
+        completedSession.duration,
+        true,
+        completedSession.energyLevel,
+        completedSession.moodState
+      );
+
+      updatedState.awardPoints(
+        points,
+        `Completed ${getSessionTypeLabel(completedSession.type)} session`
+      );
+    }
+
+    // Check for hyperfocus if enabled
+    if (updatedState.config.enableHyperfocusDetection) {
+      updatedState.checkHyperfocus();
+    }
 
     // Auto-transition to idle after a short delay
     setTimeout(() => {

@@ -323,7 +323,7 @@ export function testRoundCountDisplay() {
 }
 
 // Export for manual testing
-if (typeof window === "undefined") {
+if (typeof (globalThis as any).window === "undefined") {
   console.log("Post-Session Mood Logging Test Suite Ready");
   console.log("Run runAllPostSessionMoodTests() to execute all tests");
 }

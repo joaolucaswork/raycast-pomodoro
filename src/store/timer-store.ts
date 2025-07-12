@@ -427,6 +427,46 @@ export const useTimerStore = create<PomodoroStore>()(
         });
       },
 
+      // Historical session editing methods
+      updateSessionIcon: (
+        sessionId: string,
+        taskIcon?: import("@raycast/api").Icon
+      ) => {
+        const { history } = get();
+        const newHistory = history.map((session) =>
+          session.id === sessionId ? { ...session, taskIcon } : session
+        );
+
+        set({
+          history: newHistory,
+          stats: calculateStats(newHistory),
+        });
+      },
+
+      updateSessionNotes: (sessionId: string, notes?: string) => {
+        const { history } = get();
+        const newHistory = history.map((session) =>
+          session.id === sessionId ? { ...session, notes } : session
+        );
+
+        set({
+          history: newHistory,
+          stats: calculateStats(newHistory),
+        });
+      },
+
+      updateSessionName: (sessionId: string, taskName?: string) => {
+        const { history } = get();
+        const newHistory = history.map((session) =>
+          session.id === sessionId ? { ...session, taskName } : session
+        );
+
+        set({
+          history: newHistory,
+          stats: calculateStats(newHistory),
+        });
+      },
+
       clearAllHistory: () => {
         set({
           history: [],

@@ -86,64 +86,19 @@ export function useTimer() {
   const handleTimerComplete = async () => {
     if (!currentSession) return;
 
-    // Complete the current session
-    const completedSession = {
-      ...currentSession,
-      endTime: new Date(),
-      completed: true,
-    };
+    // Store current session info before completion for notifications and auto-start
+    const currentSessionType = currentSession.type;
+    const currentSessionCount = sessionCount;
 
-    // Update history and stats
-    const newHistory = [...history, completedSession];
-    const newSessionCount =
-      currentSession.type === SessionType.WORK
-        ? sessionCount + 1
-        : sessionCount;
+    // Use the store's completeSession method to ensure proper stats calculation
+    // and achievement processing
+    completeSession();
 
-    // Calculate new stats
-    const completedSessions = newHistory.filter((s) => s.completed);
-    const workSessions = completedSessions.filter(
-      (s) => s.type === SessionType.WORK
-    );
-    const breakSessions = completedSessions.filter(
-      (s) => s.type !== SessionType.WORK
-    );
-    const totalWorkTime = workSessions.reduce(
-      (acc, session) => acc + session.duration,
-      0
-    );
-    const totalBreakTime = breakSessions.reduce(
-      (acc, session) => acc + session.duration,
-      0
-    );
-
-    const newStats = {
-      totalSessions: newHistory.length,
-      completedSessions: completedSessions.length,
-      totalWorkTime,
-      totalBreakTime,
-      streakCount: 0, // Will be calculated properly in the store
-      todaysSessions: completedSessions.filter(
-        (s) =>
-          new Date(s.startTime).toDateString() === new Date().toDateString()
-      ).length,
-      weekSessions: 0, // Will be calculated properly in the store
-      monthSessions: 0, // Will be calculated properly in the store
-    };
-
-    // Update store
-    useTimerStore.setState({
-      currentSession: null,
-      state: TimerState.IDLE,
-      timeRemaining: 0,
-      history: newHistory,
-      sessionCount: newSessionCount,
-      stats: newStats,
-    });
-
-    // ADHD-specific features
+    // ADHD-specific features - get fresh state after completion
     const store = useTimerStore.getState();
-    if (store.config.enableRewardSystem) {
+    const completedSession = store.history[store.history.length - 1]; // Get the just-completed session
+
+    if (completedSession && store.config.enableRewardSystem) {
       // Calculate and award points
       const points = adhdSupportService.calculateSessionPoints(
         completedSession.duration,
@@ -154,7 +109,7 @@ export function useTimer() {
 
       store.awardPoints(
         points,
-        `Completed ${getSessionTypeLabel(currentSession.type)} session`
+        `Completed ${getSessionTypeLabel(completedSession.type)} session`
       );
     }
 
@@ -165,14 +120,14 @@ export function useTimer() {
 
     // Show completion notification using notification service
     await notificationService.notifySessionComplete(
-      currentSession.type,
+      currentSessionType,
       config.enableNotifications
     );
 
     // Auto-start next session if enabled
-    if (shouldAutoStartNext(currentSession.type)) {
+    if (shouldAutoStartNext(currentSessionType)) {
       const nextSessionType =
-        currentSession.type === SessionType.WORK
+        currentSessionType === SessionType.WORK
           ? getNextSessionType()
           : SessionType.WORK;
 
@@ -182,7 +137,7 @@ export function useTimer() {
         // showToast({
         //   style: Toast.Style.Success,
         //   title: "Auto-starting next session",
-        //   message: getMotivationalMessage(nextSessionType, newSessionCount),
+        //   message: getMotivationalMessage(nextSessionType, currentSessionCount + 1),
         // });
       }, 2000); // 2 second delay before auto-start
     }
