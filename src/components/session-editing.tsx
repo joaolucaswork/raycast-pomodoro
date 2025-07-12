@@ -19,6 +19,7 @@ import {
   getMoodContextIcon,
   STATUS_COLORS,
 } from "../constants/design-tokens";
+import { createTaskIconSelectionActions } from "./inline-icon-selection";
 
 interface SessionNotesFormProps {
   session: TimerSession;
@@ -137,210 +138,7 @@ export function SessionIconForm({
       navigationTitle="Edit Session Icon"
       actions={
         <ActionPanel>
-          <ActionPanel.Section title="Icon Categories">
-            {/* Work & Productivity Icons */}
-            <ActionPanel.Submenu title="Work & Productivity" icon={Icon.Folder}>
-              <Action
-                title="Folder"
-                icon={Icon.Folder}
-                onAction={() => handleIconSelect(Icon.Folder)}
-              />
-              <Action
-                title="Hammer"
-                icon={Icon.Hammer}
-                onAction={() => handleIconSelect(Icon.Hammer)}
-              />
-              <Action
-                title="Tools"
-                icon={Icon.Gear}
-                onAction={() => handleIconSelect(Icon.Gear)}
-              />
-              <Action
-                title="Gear"
-                icon={Icon.Gear}
-                onAction={() => handleIconSelect(Icon.Gear)}
-              />
-              <Action
-                title="Terminal"
-                icon={Icon.Terminal}
-                onAction={() => handleIconSelect(Icon.Terminal)}
-              />
-              <Action
-                title="Code"
-                icon={Icon.Code}
-                onAction={() => handleIconSelect(Icon.Code)}
-              />
-              <Action
-                title="Desktop"
-                icon={Icon.Desktop}
-                onAction={() => handleIconSelect(Icon.Desktop)}
-              />
-              <Action
-                title="Computer"
-                icon={Icon.ComputerChip}
-                onAction={() => handleIconSelect(Icon.ComputerChip)}
-              />
-            </ActionPanel.Submenu>
-
-            {/* Learning & Study Icons */}
-            <ActionPanel.Submenu title="Learning & Study" icon={Icon.Book}>
-              <Action
-                title="Book"
-                icon={Icon.Book}
-                onAction={() => handleIconSelect(Icon.Book)}
-              />
-              <Action
-                title="Bookmark"
-                icon={Icon.Bookmark}
-                onAction={() => handleIconSelect(Icon.Bookmark)}
-              />
-              <Action
-                title="Academy"
-                icon={Icon.Book}
-                onAction={() => handleIconSelect(Icon.Book)}
-              />
-              <Action
-                title="Pencil"
-                icon={Icon.Pencil}
-                onAction={() => handleIconSelect(Icon.Pencil)}
-              />
-              <Action
-                title="Document"
-                icon={Icon.Document}
-                onAction={() => handleIconSelect(Icon.Document)}
-              />
-              <Action
-                title="Text"
-                icon={Icon.Text}
-                onAction={() => handleIconSelect(Icon.Text)}
-              />
-              <Action
-                title="Questionmark"
-                icon={Icon.QuestionMark}
-                onAction={() => handleIconSelect(Icon.QuestionMark)}
-              />
-            </ActionPanel.Submenu>
-
-            {/* Creative Icons */}
-            <ActionPanel.Submenu title="Creative" icon={Icon.Brush}>
-              <Action
-                title="Brush"
-                icon={Icon.Brush}
-                onAction={() => handleIconSelect(Icon.Brush)}
-              />
-              <Action
-                title="Image"
-                icon={Icon.Image}
-                onAction={() => handleIconSelect(Icon.Image)}
-              />
-              <Action
-                title="Video"
-                icon={Icon.Video}
-                onAction={() => handleIconSelect(Icon.Video)}
-              />
-              <Action
-                title="Music"
-                icon={Icon.Music}
-                onAction={() => handleIconSelect(Icon.Music)}
-              />
-              <Action
-                title="Camera"
-                icon={Icon.Camera}
-                onAction={() => handleIconSelect(Icon.Camera)}
-              />
-              <Action
-                title="Microphone"
-                icon={Icon.Microphone}
-                onAction={() => handleIconSelect(Icon.Microphone)}
-              />
-              <Action
-                title="Colors"
-                icon={Icon.EyeDropper}
-                onAction={() => handleIconSelect(Icon.EyeDropper)}
-              />
-            </ActionPanel.Submenu>
-
-            {/* Planning & Organization Icons */}
-            <ActionPanel.Submenu
-              title="Planning & Organization"
-              icon={Icon.Calendar}
-            >
-              <Action
-                title="Calendar"
-                icon={Icon.Calendar}
-                onAction={() => handleIconSelect(Icon.Calendar)}
-              />
-              <Action
-                title="Clock"
-                icon={Icon.Clock}
-                onAction={() => handleIconSelect(Icon.Clock)}
-              />
-              <Action
-                title="List"
-                icon={Icon.List}
-                onAction={() => handleIconSelect(Icon.List)}
-              />
-              <Action
-                title="Checklist"
-                icon={Icon.CheckList}
-                onAction={() => handleIconSelect(Icon.CheckList)}
-              />
-              <Action
-                title="Target"
-                icon={Icon.BullsEye}
-                onAction={() => handleIconSelect(Icon.BullsEye)}
-              />
-              <Action
-                title="Bullseye"
-                icon={Icon.BullsEye}
-                onAction={() => handleIconSelect(Icon.BullsEye)}
-              />
-              <Action
-                title="Flag"
-                icon={Icon.Flag}
-                onAction={() => handleIconSelect(Icon.Flag)}
-              />
-            </ActionPanel.Submenu>
-
-            {/* Personal Icons */}
-            <ActionPanel.Submenu title="Personal" icon={Icon.Heart}>
-              <Action
-                title="Heart"
-                icon={Icon.Heart}
-                onAction={() => handleIconSelect(Icon.Heart)}
-              />
-              <Action
-                title="Person"
-                icon={Icon.Person}
-                onAction={() => handleIconSelect(Icon.Person)}
-              />
-              <Action
-                title="House"
-                icon={Icon.House}
-                onAction={() => handleIconSelect(Icon.House)}
-              />
-              <Action
-                title="Leaf"
-                icon={Icon.Leaf}
-                onAction={() => handleIconSelect(Icon.Leaf)}
-              />
-              <Action
-                title="Heartbeat"
-                icon={Icon.Heartbeat}
-                onAction={() => handleIconSelect(Icon.Heartbeat)}
-              />
-              <Action
-                title="Sun"
-                icon={Icon.Sun}
-                onAction={() => handleIconSelect(Icon.Sun)}
-              />
-              <Action
-                title="Moon"
-                icon={Icon.Moon}
-                onAction={() => handleIconSelect(Icon.Moon)}
-              />
-            </ActionPanel.Submenu>
-          </ActionPanel.Section>
+          {createTaskIconSelectionActions(handleIconSelect, selectedIcon)}
 
           <ActionPanel.Section title="Actions">
             <Action
@@ -609,84 +407,6 @@ export function SessionManagementForm({
     },
   ];
 
-  const iconCategories = [
-    {
-      title: "Work & Productivity",
-      icons: [
-        Icon.Hammer,
-        Icon.Cog,
-        Icon.Gear,
-        Icon.Desktop,
-        Icon.Terminal,
-        Icon.Code,
-        Icon.Document,
-        Icon.Folder,
-        Icon.Clipboard,
-        Icon.Calculator,
-      ],
-    },
-    {
-      title: "Learning & Study",
-      icons: [
-        Icon.Book,
-        Icon.Book,
-        Icon.LightBulb,
-        Icon.Eye,
-        Icon.Pencil,
-        Icon.QuestionMark,
-        Icon.BullsEye,
-        Icon.Trophy,
-        Icon.Star,
-        Icon.Bookmark,
-      ],
-    },
-    {
-      title: "Creative & Design",
-      icons: [
-        Icon.Brush,
-        Icon.Swatch,
-        Icon.Camera,
-        Icon.Image,
-        Icon.Video,
-        Icon.Music,
-        Icon.Microphone,
-        Icon.Wand,
-        Icon.Stars,
-        Icon.CircleFilled,
-      ],
-    },
-    {
-      title: "Communication",
-      icons: [
-        Icon.Message,
-        Icon.Phone,
-        Icon.Envelope,
-        Icon.SpeechBubble,
-        Icon.Megaphone,
-        Icon.Bell,
-        Icon.AtSymbol,
-        Icon.Globe,
-        Icon.Network,
-        Icon.Wifi,
-      ],
-    },
-    {
-      title: "Personal & Health",
-      icons: [
-        Icon.Heart,
-        Icon.Person,
-        Icon.House,
-        Icon.Car,
-        Icon.Airplane,
-        Icon.GameController,
-        Icon.Gift,
-        Icon.Cart,
-        Icon.CreditCard,
-        Icon.Calendar,
-      ],
-    },
-  ];
-
   return (
     <Form
       navigationTitle="Manage Session"
@@ -698,24 +418,10 @@ export function SessionManagementForm({
             onSubmit={handleSubmit}
           />
 
-          <ActionPanel.Section title="Icon Selection">
-            {iconCategories.map((category) => (
-              <ActionPanel.Submenu
-                key={category.title}
-                title={category.title}
-                icon={Icon.AppWindowGrid3x3}
-              >
-                {category.icons.map((icon) => (
-                  <Action
-                    key={icon}
-                    title={`Select ${icon}`}
-                    icon={icon}
-                    onAction={() => setSelectedIcon(icon)}
-                  />
-                ))}
-              </ActionPanel.Submenu>
-            ))}
-          </ActionPanel.Section>
+          {createTaskIconSelectionActions(
+            (icon) => setSelectedIcon(icon),
+            selectedIcon
+          )}
 
           <ActionPanel.Section title="Actions">
             <Action

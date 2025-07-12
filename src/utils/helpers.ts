@@ -3,7 +3,7 @@ import { SESSION_ICONS } from "../constants/design-tokens";
 import { Icon } from "@raycast/api";
 
 export function generateId(): string {
-  return Math.random().toString(36).substr(2, 9) + Date.now().toString(36);
+  return Math.random().toString(36).substring(2, 11) + Date.now().toString(36);
 }
 
 export function formatTime(seconds: number): string {
@@ -76,10 +76,7 @@ export function getTimeOfDay(): "morning" | "afternoon" | "evening" {
   return "evening";
 }
 
-export function getMotivationalMessage(
-  sessionType: SessionType,
-  sessionCount: number
-): string {
+export function getMotivationalMessage(sessionType: SessionType): string {
   const messages = {
     [SessionType.WORK]: [
       "Time to focus!",
@@ -148,7 +145,7 @@ export const MIN_SESSION_DURATION_FOR_HISTORY = 40;
 /**
  * Ensures a value is a valid Date object
  */
-function ensureDate(value: any): Date {
+function ensureDate(value: string | number | Date | undefined): Date {
   if (value instanceof Date) return value;
   if (typeof value === "string" || typeof value === "number") {
     const date = new Date(value);
@@ -208,48 +205,4 @@ export function sanitizeSessionDates(
     startTime: ensureDate(session.startTime),
     endTime: session.endTime ? ensureDate(session.endTime) : undefined,
   };
-}
-
-/**
- * Test function to verify the minimum duration logic
- */
-export function testMinimumDurationLogic(): void {
-  const now = new Date();
-
-  // Test session with 30 seconds (should NOT be saved)
-  const shortSession = {
-    id: "test-1",
-    type: "work" as any,
-    duration: 1500,
-    startTime: new Date(now.getTime() - 30000), // 30 seconds ago
-    endTime: now,
-    completed: true,
-  };
-
-  // Test session with 50 seconds (should be saved)
-  const longSession = {
-    id: "test-2",
-    type: "work" as any,
-    duration: 1500,
-    startTime: new Date(now.getTime() - 50000), // 50 seconds ago
-    endTime: now,
-    completed: true,
-  };
-
-  console.log(
-    "Short session (30s) should be saved:",
-    shouldSaveSessionToHistory(shortSession)
-  );
-  console.log(
-    "Long session (50s) should be saved:",
-    shouldSaveSessionToHistory(longSession)
-  );
-  console.log(
-    "Short session actual duration:",
-    getActualSessionDuration(shortSession)
-  );
-  console.log(
-    "Long session actual duration:",
-    getActualSessionDuration(longSession)
-  );
 }

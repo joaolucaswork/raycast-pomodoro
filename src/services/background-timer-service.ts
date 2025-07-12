@@ -19,6 +19,7 @@ import { notificationService } from "./notification-service";
 export class BackgroundTimerService {
   private static instance: BackgroundTimerService;
   private readonly STORAGE_KEY = "background-timer-state";
+  private isInitializing = false;
 
   private constructor() {}
 
@@ -27,6 +28,14 @@ export class BackgroundTimerService {
       BackgroundTimerService.instance = new BackgroundTimerService();
     }
     return BackgroundTimerService.instance;
+  }
+
+  /**
+   * Check if the service is currently initializing
+   * Useful for debugging and preventing unwanted auto-starts
+   */
+  public isCurrentlyInitializing(): boolean {
+    return this.isInitializing;
   }
 
   /**
@@ -39,6 +48,14 @@ export class BackgroundTimerService {
     tags?: string[],
     taskIcon?: import("@raycast/api").Icon
   ): Promise<void> {
+    // Prevent starting sessions during initialization to avoid unexpected auto-starts
+    if (this.isInitializing) {
+      console.warn(
+        "[BackgroundTimerService] Attempted to start timer during initialization - ignoring"
+      );
+      return;
+    }
+
     const { config } = useTimerStore.getState();
 
     let duration: number;
@@ -208,53 +225,216 @@ export class BackgroundTimerService {
    * This should be called periodically to sync the timer
    */
   public async updateTimerState(): Promise<void> {
-    const backgroundState = await this.loadBackgroundState();
+    // Mark as initializing to prevent auto-starts during state restoration
+    this.isInitializing = true;
 
-    if (!backgroundState) {
-      // No active timer
-      useTimerStore.setState({
-        currentSession: null,
-        state: TimerState.IDLE,
-        timeRemaining: 0,
-      });
-      return;
-    }
+    try {
+      const backgroundState = await this.loadBackgroundState();
 
-    const now = Date.now();
+      if (!backgroundState) {
+        // No active timer
+        useTimerStore.setState({
+          currentSession: null,
+          state: TimerState.IDLE,
+          timeRemaining: 0,
+        });
+        return;
+      }
 
-    if (backgroundState.state === TimerState.PAUSED) {
-      // Timer is paused, use stored remaining time
-      const timeRemaining = backgroundState.timeRemainingWhenPaused || 0;
-      useTimerStore.setState({
-        currentSession: backgroundState.session,
-        state: TimerState.PAUSED,
-        timeRemaining,
-      });
-      return;
-    }
+      const now = Date.now();
 
-    if (backgroundState.state === TimerState.RUNNING) {
-      const timeRemaining = Math.max(
-        0,
-        Math.floor((backgroundState.endTimestamp - now) / 1000)
-      );
-
-      if (timeRemaining <= 0) {
-        // Timer completed
-        await this.handleTimerCompletion(backgroundState.session);
-      } else {
-        // Timer still running
+      if (backgroundState.state === TimerState.PAUSED) {
+        // Timer is paused, use stored remaining time
+        const timeRemaining = backgroundState.timeRemainingWhenPaused || 0;
         useTimerStore.setState({
           currentSession: backgroundState.session,
-          state: TimerState.RUNNING,
+          state: TimerState.PAUSED,
           timeRemaining,
         });
+        return;
       }
+
+      if (backgroundState.state === TimerState.RUNNING) {
+        const timeRemaining = Math.max(
+          0,
+          Math.floor((backgroundState.endTimestamp - now) / 1000)
+        );
+
+        if (timeRemaining <= 0) {
+          // Timer completed during background - handle completion WITHOUT auto-start
+          await this.handleTimerCompletionDuringRestore(
+            backgroundState.session
+          );
+        } else {
+          // Timer still running
+          useTimerStore.setState({
+            currentSession: backgroundState.session,
+            state: TimerState.RUNNING,
+            timeRemaining,
+          });
+        }
+      }
+    } finally {
+      // Clear initialization flag after state restoration is complete
+      this.isInitializing = false;
     }
   }
 
   /**
-   * Handles timer completion
+   * Handles timer completion during state restoration (no auto-start)
+   * This prevents unexpected session starts when opening the extension
+   */
+  private async handleTimerCompletionDuringRestore(
+    session: TimerSession
+  ): Promise<void> {
+    const { history, sessionCount, currentFocusPeriodSessionCount } =
+      useTimerStore.getState();
+
+    // Stop application tracking and capture usage data if it was a work session
+    let applicationUsage = undefined;
+    if (
+      session.type === SessionType.WORK &&
+      applicationTrackingService.isCurrentlyTracking()
+    ) {
+      applicationUsage = applicationTrackingService.stopTracking();
+    }
+
+    const completedSession: TimerSession = {
+      ...session,
+      endTime: new Date(),
+      completed: true,
+      endReason: SessionEndReason.COMPLETED,
+      applicationUsage,
+    };
+
+    // Check if session should be saved to history based on duration
+    const {
+      shouldSaveSessionToHistory,
+      getActualSessionDuration,
+    } = require("../utils/helpers");
+    const shouldSave = shouldSaveSessionToHistory(completedSession);
+    const actualDuration = getActualSessionDuration(completedSession);
+
+    // Only add to history if session meets minimum duration requirement
+    const newHistory = shouldSave ? [...history, completedSession] : history;
+    const newSessionCount =
+      shouldSave && session.type === SessionType.WORK
+        ? sessionCount + 1
+        : sessionCount;
+
+    // Update focus period session count for work sessions (only if saved to history)
+    const newFocusPeriodSessionCount =
+      shouldSave && session.type === SessionType.WORK
+        ? currentFocusPeriodSessionCount + 1
+        : currentFocusPeriodSessionCount;
+
+    // Clear background state
+    await this.clearBackgroundState();
+
+    // Calculate updated stats (reuse the same logic)
+    const calculateStats = (history: TimerSession[]) => {
+      const completedSessions = history.filter((s) => s.completed);
+      const workSessions = completedSessions.filter(
+        (s) => s.type === SessionType.WORK
+      );
+      const breakSessions = completedSessions.filter(
+        (s) => s.type !== SessionType.WORK
+      );
+
+      const totalWorkTime = workSessions.reduce(
+        (acc, session) => acc + session.duration,
+        0
+      );
+      const totalBreakTime = breakSessions.reduce(
+        (acc, session) => acc + session.duration,
+        0
+      );
+
+      const todaysSessions = completedSessions.filter((s) => {
+        const sessionDate = new Date(s.startTime);
+        const today = new Date();
+        return sessionDate.toDateString() === today.toDateString();
+      }).length;
+
+      const thisWeek = new Date();
+      thisWeek.setDate(thisWeek.getDate() - thisWeek.getDay());
+      const weekSessions = completedSessions.filter((s) => {
+        const sessionDate = new Date(s.startTime);
+        return sessionDate >= thisWeek;
+      }).length;
+
+      const thisMonth = new Date();
+      thisMonth.setDate(1);
+      const monthSessions = completedSessions.filter((s) => {
+        const sessionDate = new Date(s.startTime);
+        return sessionDate >= thisMonth;
+      }).length;
+
+      return {
+        totalSessions: history.length,
+        completedSessions: completedSessions.length,
+        totalWorkTime,
+        totalBreakTime,
+        streakCount: 0, // Simplified for now
+        todaysSessions,
+        weekSessions,
+        monthSessions,
+      };
+    };
+
+    // Update store - go directly to IDLE state (no auto-start during restore)
+    useTimerStore.setState({
+      currentSession: null,
+      state: TimerState.IDLE, // Go directly to idle, not completed
+      timeRemaining: 0,
+      history: newHistory,
+      sessionCount: newSessionCount,
+      currentFocusPeriodSessionCount: newFocusPeriodSessionCount,
+      stats: calculateStats(newHistory),
+      isPostSessionMoodPromptVisible: false,
+      lastCompletedSession: shouldSave ? completedSession : null,
+    });
+
+    // Show notification if session was too short to be saved
+    if (!shouldSave) {
+      const { showToast, Toast } = require("@raycast/api");
+      showToast({
+        style: Toast.Style.Failure,
+        title: "Session Too Short",
+        message: `Session completed in ${actualDuration}s but won't be saved to history (minimum: 40s)`,
+      });
+    }
+
+    // ADHD-specific features - Award points and check achievements (but no auto-start)
+    const updatedState = useTimerStore.getState();
+    if (updatedState.config.enableRewardSystem) {
+      // Calculate and award points
+      const points = adhdSupportService.calculateSessionPoints(
+        completedSession.duration,
+        true,
+        completedSession.energyLevel,
+        completedSession.moodState
+      );
+
+      updatedState.awardPoints(
+        points,
+        `Completed ${getSessionTypeLabel(completedSession.type)} session`
+      );
+    }
+
+    // Check for hyperfocus if enabled
+    if (updatedState.config.enableHyperfocusDetection) {
+      updatedState.checkHyperfocus();
+    }
+
+    // NO AUTO-START during restore - always go to idle state
+    console.log(
+      "[BackgroundTimerService] Session completed during restore, going to idle state (no auto-start)"
+    );
+  }
+
+  /**
+   * Handles timer completion (with auto-start logic for real-time completions)
    */
   private async handleTimerCompletion(session: TimerSession): Promise<void> {
     const { history, sessionCount, currentFocusPeriodSessionCount, config } =
@@ -401,16 +581,21 @@ export class BackgroundTimerService {
       updatedState.checkHyperfocus();
     }
 
-    // Auto-start next session if enabled
+    // Auto-start next session if enabled AND not during initialization
     const shouldAutoStart = this.shouldAutoStartNext(
       completedSessionType,
       config
     );
-    if (shouldAutoStart) {
+
+    if (shouldAutoStart && !this.isInitializing) {
       const nextSessionType = this.getNextSessionType(
         completedSessionType,
         currentFocusPeriodSessionCount,
         config
+      );
+
+      console.log(
+        `[BackgroundTimerService] Auto-starting ${nextSessionType} session after completion`
       );
 
       setTimeout(async () => {
@@ -420,6 +605,12 @@ export class BackgroundTimerService {
       }, 2000); // 2 second delay before auto-start
     } else {
       // Auto-transition to idle after a short delay if not auto-starting
+      if (this.isInitializing) {
+        console.log(
+          "[BackgroundTimerService] Skipping auto-start during initialization"
+        );
+      }
+
       setTimeout(() => {
         useTimerStore.setState({
           state: TimerState.IDLE,

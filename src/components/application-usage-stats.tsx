@@ -4,7 +4,8 @@ import { formatTime } from "../utils/helpers";
 import {
   applicationTrackingService,
   ApplicationTrackingStats,
-} from "../services/application-tracking-service";
+} from "../services/application-tracking";
+import { jsonApplicationIconService } from "../services/json-app-icon-service";
 
 interface ApplicationUsageStatsProps {
   applicationUsage: ApplicationUsage[];
@@ -35,7 +36,7 @@ export function ApplicationUsageStats({
           const isTopApp = index === 0;
           const isTopThree = index < 3;
           const usagePercentage = Math.round(
-            (app.timeSpent / totalSessionTime) * 100,
+            (app.timeSpent / totalSessionTime) * 100
           );
 
           // Determine icon color based on ranking
@@ -50,7 +51,7 @@ export function ApplicationUsageStats({
               title={app.name}
               subtitle={`${formatTime(app.timeSpent)} • ${app.percentage}% of session`}
               icon={{
-                source: Icon.Desktop,
+                source: app.raycastIcon || Icon.Desktop,
                 tintColor: iconColor,
               }}
               accessories={[
@@ -111,7 +112,7 @@ export function ApplicationUsageSummary({
   const totalApps = applicationUsage.length;
   const totalTime = applicationUsage.reduce(
     (sum, app) => sum + app.timeSpent,
-    0,
+    0
   );
   const focusScore = mostUsedApp.percentage;
 
@@ -225,7 +226,10 @@ export function ApplicationAnalytics({
           <List.Item
             title={stats.mostUsedApplication.name}
             subtitle={`${stats.mostUsedApplication.percentage}% of session time`}
-            icon={{ source: Icon.Desktop, tintColor: Color.Green }}
+            icon={{
+              source: stats.mostUsedApplication.raycastIcon || Icon.Desktop,
+              tintColor: Color.Green,
+            }}
             accessories={[
               {
                 text: formatTime(stats.mostUsedApplication.timeSpent),
@@ -373,13 +377,13 @@ export function ApplicationAnalytics({
           ]}
         />
         <List.Item
-          title="Uptime"
-          subtitle={formatTime(Math.floor(health.uptime / 1000))}
+          title="Success Rate"
+          subtitle={`${health.successRate}%`}
           icon={{ source: Icon.Clock, tintColor: Color.Blue }}
           accessories={[
             {
-              text: formatTime(Math.floor(health.uptime / 1000)),
-              tooltip: "How long tracking has been active",
+              text: `${health.successRate}%`,
+              tooltip: "Percentage of successful tracking attempts",
             },
           ]}
         />
@@ -449,11 +453,17 @@ export function CurrentApplicationDisplay({
     return displayText;
   }
 
+  // Get appropriate icon for the current application
+  const appIcon =
+    jsonApplicationIconService.getIconByBundleId(
+      currentApp.bundleId || currentApp.name
+    ) || jsonApplicationIconService.getIconByName(currentApp.name);
+
   return (
     <List.Item
       title="Currently Active Application"
       subtitle={`${currentApp.name} • Tracking ${health.isHealthy ? "healthy" : "issues detected"}`}
-      icon={{ source: Icon.Desktop, tintColor: Color.Green }}
+      icon={{ source: appIcon, tintColor: Color.Green }}
       accessories={[
         {
           text: "Live",

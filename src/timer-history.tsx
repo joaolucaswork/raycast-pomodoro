@@ -5,17 +5,11 @@ import {
   List,
   Color,
   useNavigation,
-  Detail,
 } from "@raycast/api";
 import { useState, useMemo } from "react";
 import { useTimerStore } from "./store/timer-store";
-import {
-  formatTime,
-  formatDuration,
-  getSessionTypeLabel,
-  getSessionTypeIcon,
-} from "./utils/helpers";
-import { SessionType, TimerSession } from "./types/timer";
+import { formatTime } from "./utils/helpers";
+import { TimerSession } from "./types/timer";
 import {
   format,
   isToday,
@@ -23,16 +17,9 @@ import {
   isThisWeek,
   isThisMonth,
 } from "date-fns";
+import { SessionManagementForm } from "./components/session-editing";
+import { SessionListItem } from "./components/history";
 import {
-  SessionNotesForm,
-  SessionIconForm,
-  SessionNameForm,
-  SessionManagementForm,
-} from "./components/session-editing";
-
-import {
-  getSessionColor,
-  getSessionStateDot,
   getAppRankingColor,
   SESSION_ICONS,
   STATUS_COLORS,
@@ -40,7 +27,6 @@ import {
   SHORTCUTS,
   getMoodIcon,
   getMoodColor,
-  MOOD_ICONS,
 } from "./constants/design-tokens";
 
 type SortOption = "newest" | "oldest" | "longest" | "shortest";
@@ -51,17 +37,16 @@ export default function TimerHistory() {
   const { push } = useNavigation();
   // Default to hidden details, but preserve user preference during session
   const [isShowingDetail, setIsShowingDetail] = useState(false);
-  const [hasUserToggledDetail, setHasUserToggledDetail] = useState(false);
+
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [completionFilter, setCompletionFilter] =
     useState<CompletionFilter>("all");
-  const { history, deleteSession, getTagConfig } = useTimerStore();
+  const { history, deleteSession, getTagConfig, moodEntries } = useTimerStore();
 
-  // Handle detail toggle with session persistence
+  // Handle detail toggle
   const handleDetailToggle = () => {
     setIsShowingDetail(!isShowingDetail);
-    setHasUserToggledDetail(true);
   };
 
   // Get tag color based on tag name (with custom config support)
@@ -219,115 +204,53 @@ export default function TimerHistory() {
         )
       ).map(([dateGroup, sessions]) => (
         <List.Section key={dateGroup} title={dateGroup}>
-          {sessions.map((session) => {
-            const hasAppData =
-              session.applicationUsage && session.applicationUsage.length > 0;
-            const sessionIcon = getSessionTypeIcon(session.type);
-            const sessionColor = getSessionColor(
-              session.type,
-              session.completed
-            );
-            const statusDot = getSessionStateDot(
-              session.type,
-              session.completed,
-              false,
-              false,
-              session.endReason
-            );
+          {sessions.map((session) => (
+            <SessionListItem
+              key={session.id}
+              session={session}
+              moodEntries={moodEntries}
+              showDetail={isShowingDetail}
+              detailComponent={<SessionDetailView session={session} />}
+              getTagColor={getTagColor}
+              actions={
+                <ActionPanel>
+                  {/* Primary action: View Details */}
+                  <Action
+                    title={isShowingDetail ? "Hide Details" : "Show Details"}
+                    icon={
+                      isShowingDetail
+                        ? Icon.EyeDisabled
+                        : ACTION_ICONS.VIEW_DETAILS
+                    }
+                    onAction={handleDetailToggle}
+                    shortcut={SHORTCUTS.PRIMARY_ACTION}
+                  />
 
-            return (
-              <List.Item
-                key={session.id}
-                title={getSessionTypeLabel(session.type)}
-                subtitle={getSessionSubtitle(session)}
-                icon={{
-                  source:
-                    session.type === SessionType.WORK && session.taskIcon
-                      ? session.taskIcon
-                      : sessionIcon,
-                  tintColor: sessionColor,
-                }}
-                accessories={[
-                  // Show tags if available
-                  ...(session.tags && session.tags.length > 0
-                    ? session.tags.map((tag) => ({
-                        tag: { value: tag, color: getTagColor(tag) },
-                      }))
-                    : []),
-                  {
-                    text: formatTime(session.duration),
-                    tooltip: `Session duration: ${formatTime(session.duration)}`,
-                  },
-                  ...(hasAppData
-                    ? [
-                        {
-                          icon: {
-                            source: Icon.Desktop,
-                            tintColor: STATUS_COLORS.INFO,
-                          },
-                          tooltip: "Application usage tracked",
-                        },
-                      ]
-                    : []),
-                  {
-                    icon: {
-                      source: statusDot.icon,
-                      tintColor: statusDot.tintColor,
-                    },
-                    tooltip: session.completed
-                      ? "Session completed"
-                      : session.endReason === "stopped"
-                        ? "Session stopped early"
-                        : session.endReason === "skipped"
-                          ? "Session skipped"
-                          : "Session incomplete",
-                  },
-                ]}
-                detail={
-                  isShowingDetail ? (
-                    <SessionDetailView session={session} />
-                  ) : undefined
-                }
-                actions={
-                  <ActionPanel>
-                    {/* Primary action: View Details */}
+                  {/* Secondary action: Manage Session */}
+                  <Action
+                    title="Manage Session"
+                    icon={Icon.Gear}
+                    onAction={() =>
+                      push(<SessionManagementForm session={session} />)
+                    }
+                    shortcut={{ modifiers: ["cmd"], key: "m" }}
+                  />
+                  <ActionPanel.Section title="Actions">
                     <Action
-                      title={isShowingDetail ? "Hide Details" : "Show Details"}
-                      icon={
-                        isShowingDetail
-                          ? Icon.EyeDisabled
-                          : ACTION_ICONS.VIEW_DETAILS
-                      }
-                      onAction={handleDetailToggle}
-                      shortcut={SHORTCUTS.PRIMARY_ACTION}
+                      title="Delete Session"
+                      icon={Icon.Trash}
+                      style={Action.Style.Destructive}
+                      onAction={async () => {
+                        deleteSession(session.id);
+                        // Toast disabled for Windows compatibility
+                      }}
+                      shortcut={{ modifiers: ["cmd"], key: "delete" }}
                     />
-
-                    {/* Secondary action: Manage Session */}
-                    <Action
-                      title="Manage Session"
-                      icon={Icon.Gear}
-                      onAction={() =>
-                        push(<SessionManagementForm session={session} />)
-                      }
-                      shortcut={{ modifiers: ["cmd"], key: "m" }}
-                    />
-                    <ActionPanel.Section title="Actions">
-                      <Action
-                        title="Delete Session"
-                        icon={Icon.Trash}
-                        style={Action.Style.Destructive}
-                        onAction={async () => {
-                          deleteSession(session.id);
-                          // Toast disabled for Windows compatibility
-                        }}
-                        shortcut={{ modifiers: ["cmd"], key: "delete" }}
-                      />
-                    </ActionPanel.Section>
-                  </ActionPanel>
-                }
-              />
-            );
-          })}
+                  </ActionPanel.Section>
+                </ActionPanel>
+              }
+            />
+          ))}
         </List.Section>
       ))}
 
@@ -537,25 +460,4 @@ function SessionDetailView({ session }: SessionDetailViewProps) {
       }
     />
   );
-}
-
-function getSessionSubtitle(session: TimerSession): string {
-  const startTime = format(new Date(session.startTime), "HH:mm");
-  const endTime = session.endTime
-    ? format(new Date(session.endTime), "HH:mm")
-    : null;
-
-  let subtitle = endTime
-    ? `${startTime} - ${endTime}`
-    : `${startTime} (ongoing)`;
-
-  if (session.taskName) {
-    subtitle += ` • ${session.taskName}`;
-  }
-
-  if (session.projectName) {
-    subtitle += ` (${session.projectName})`;
-  }
-
-  return subtitle;
 }
