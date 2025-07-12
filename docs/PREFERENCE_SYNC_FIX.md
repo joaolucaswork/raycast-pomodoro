@@ -86,23 +86,24 @@ useEffect(() => {
 ### Preference Refresh Triggers
 
 1. **Extension Launch**: Preferences are refreshed when any command is first opened
-2. **Window Focus**: Preferences are refreshed when the user returns to the extension window
-3. **Tab Visibility**: Preferences are refreshed when the extension tab becomes visible
+2. **Component Mount**: Preferences are refreshed each time the main command component mounts
+3. **Command Navigation**: Preferences are refreshed when switching between commands (history, profile)
 4. **Session Start**: Preferences are refreshed immediately before starting a new focus session
 
 ### User Workflow
 
 1. User opens Raycast extension preferences (Cmd+,)
 2. User changes work duration from 25 minutes to 45 minutes
-3. User returns to the extension
-4. Extension automatically detects the focus/visibility change and refreshes preferences
+3. User returns to the extension (reopens the command)
+4. Extension automatically refreshes preferences on component mount
 5. Session setup now shows "45 min" instead of "25 min"
 6. When user starts a session, it uses the new 45-minute duration
 
 ### Fallback Mechanisms
 
-- If window focus events don't fire, preferences are still refreshed before each session start
-- If user navigates between commands, each command refreshes preferences on mount
+- Preferences are refreshed before each session start as a primary safeguard
+- Each command (main, history, profile) refreshes preferences on mount
+- Multiple refresh points ensure preferences are always current
 - Console logging provides debugging information for troubleshooting
 
 ## Testing
