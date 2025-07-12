@@ -1,13 +1,14 @@
 import { Icon, List } from "@raycast/api";
+import React from "react";
 import {
   TimerDisplay,
   SessionSetup,
   TagManagement,
   AppTrackingDisplay,
-} from "./commands/main/components";
-import { useSessionManagement, useAppTracking } from "./commands/main/hooks";
-import { parseSearchTextOnly } from "./commands/main/utils";
-import { ROUND_OPTIONS } from "./commands/main/utils/timer-display-helpers";
+} from "./components";
+import { useSessionManagement, useAppTracking } from "./hooks";
+import { parseSearchTextOnly } from "./utils";
+import { ROUND_OPTIONS } from "./utils/timer-display-helpers";
 
 export default function FocusTimer() {
   const {
@@ -15,6 +16,7 @@ export default function FocusTimer() {
     searchText,
     setSearchText,
     selectedTaskIcon,
+    setSelectedTaskIcon,
     targetRounds,
     setTargetRounds,
     preSessionMood,
@@ -34,6 +36,8 @@ export default function FocusTimer() {
     resume,
     stop,
     complete,
+    updateCurrentSessionIcon,
+    addTagToCurrentSession,
 
     // Session management
     handleStartWork,
@@ -46,8 +50,11 @@ export default function FocusTimer() {
     getTagConfig,
     updateTagConfig,
     deleteCustomTag,
+    addCustomTag,
     clearAllTags,
+    clearAllHistory,
     moodEntries,
+    addMoodEntry,
   } = useSessionManagement();
 
   const { currentAppName, isAppTrackingActive } = useAppTracking(

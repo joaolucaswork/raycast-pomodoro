@@ -6,17 +6,17 @@ import {
   getPreferenceValues,
 } from "@raycast/api";
 import { useState, useMemo } from "react";
-import { useTimerStore } from "./store/timer-store";
-import { dataService } from "./services/data-service";
+import { useTimerStore } from "../../store/timer-store";
+import { dataService } from "../../services/data-service";
 import {
   ProfileOverview,
   ProfileSettings,
   ProfileStatistics,
   ProfileAchievements,
   ProfileMood,
-} from "./commands/profile/components";
-import { calculateProfileMetrics } from "./commands/profile/utils";
-import { STATUS_COLORS } from "./constants/design-tokens";
+} from "./components";
+import { calculateProfileMetrics } from "./utils";
+import { ACTION_ICONS, STATUS_COLORS } from "../../constants/design-tokens";
 
 type ViewMode =
   | "overview"
