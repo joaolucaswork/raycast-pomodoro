@@ -3,12 +3,14 @@ import {
   SessionType,
   TimerSession,
   SessionEndReason,
+  TimerConfig,
 } from "../types/timer";
 import { useTimerStore } from "../store/timer-store";
 import { storageAdapter } from "../utils/storage-adapter";
 import { getSessionTypeLabel } from "../utils/helpers";
 import { adhdSupportService } from "./adhd-support-service";
 import { applicationTrackingService } from "./application-tracking-service";
+import { notificationService } from "./notification-service";
 
 /**
  * Background timer service that manages timer state persistence
@@ -255,8 +257,11 @@ export class BackgroundTimerService {
    * Handles timer completion
    */
   private async handleTimerCompletion(session: TimerSession): Promise<void> {
-    const { history, sessionCount, currentFocusPeriodSessionCount } =
+    const { history, sessionCount, currentFocusPeriodSessionCount, config } =
       useTimerStore.getState();
+
+    // Store session type for auto-start logic
+    const completedSessionType = session.type;
 
     // Stop application tracking and capture usage data if it was a work session
     let applicationUsage = undefined;
@@ -275,13 +280,24 @@ export class BackgroundTimerService {
       applicationUsage,
     };
 
-    const newHistory = [...history, completedSession];
-    const newSessionCount =
-      session.type === SessionType.WORK ? sessionCount + 1 : sessionCount;
+    // Check if session should be saved to history based on duration
+    const {
+      shouldSaveSessionToHistory,
+      getActualSessionDuration,
+    } = require("../utils/helpers");
+    const shouldSave = shouldSaveSessionToHistory(completedSession);
+    const actualDuration = getActualSessionDuration(completedSession);
 
-    // Update focus period session count for work sessions
+    // Only add to history if session meets minimum duration requirement
+    const newHistory = shouldSave ? [...history, completedSession] : history;
+    const newSessionCount =
+      shouldSave && session.type === SessionType.WORK
+        ? sessionCount + 1
+        : sessionCount;
+
+    // Update focus period session count for work sessions (only if saved to history)
     const newFocusPeriodSessionCount =
-      session.type === SessionType.WORK
+      shouldSave && session.type === SessionType.WORK
         ? currentFocusPeriodSessionCount + 1
         : currentFocusPeriodSessionCount;
 
@@ -350,8 +366,18 @@ export class BackgroundTimerService {
       stats: calculateStats(newHistory),
       // Remove mood prompt to fix timer stop bug
       isPostSessionMoodPromptVisible: false,
-      lastCompletedSession: null,
+      lastCompletedSession: shouldSave ? completedSession : null,
     });
+
+    // Show notification if session was too short to be saved
+    if (!shouldSave) {
+      const { showToast, Toast } = require("@raycast/api");
+      showToast({
+        style: Toast.Style.Failure,
+        title: "Session Too Short",
+        message: `Session completed in ${actualDuration}s but won't be saved to history (minimum: 40s)`,
+      });
+    }
 
     // ADHD-specific features - Award points and check achievements
     const updatedState = useTimerStore.getState();
@@ -375,12 +401,64 @@ export class BackgroundTimerService {
       updatedState.checkHyperfocus();
     }
 
-    // Auto-transition to idle after a short delay
-    setTimeout(() => {
-      useTimerStore.setState({
-        state: TimerState.IDLE,
-      });
-    }, 5000); // 5 seconds to show completion state
+    // Auto-start next session if enabled
+    const shouldAutoStart = this.shouldAutoStartNext(
+      completedSessionType,
+      config
+    );
+    if (shouldAutoStart) {
+      const nextSessionType = this.getNextSessionType(
+        completedSessionType,
+        currentFocusPeriodSessionCount,
+        config
+      );
+
+      setTimeout(async () => {
+        await this.startTimer(nextSessionType);
+        // Notify about auto-start
+        await notificationService.notifySessionStart(nextSessionType);
+      }, 2000); // 2 second delay before auto-start
+    } else {
+      // Auto-transition to idle after a short delay if not auto-starting
+      setTimeout(() => {
+        useTimerStore.setState({
+          state: TimerState.IDLE,
+        });
+      }, 5000); // 5 seconds to show completion state
+    }
+  }
+
+  /**
+   * Determines if the next session should auto-start
+   */
+  private shouldAutoStartNext(
+    completedType: SessionType,
+    config: TimerConfig
+  ): boolean {
+    if (completedType === SessionType.WORK) {
+      return config.autoStartBreaks;
+    } else {
+      return config.autoStartWork;
+    }
+  }
+
+  /**
+   * Gets the next session type based on the completed session
+   */
+  private getNextSessionType(
+    completedType: SessionType,
+    currentFocusPeriodSessionCount: number,
+    config: TimerConfig
+  ): SessionType {
+    if (completedType === SessionType.WORK) {
+      // Determine if it should be a long break or short break
+      const isLongBreakTime =
+        (currentFocusPeriodSessionCount + 1) % config.longBreakInterval === 0;
+      return isLongBreakTime ? SessionType.LONG_BREAK : SessionType.SHORT_BREAK;
+    } else {
+      // After any break, return to work
+      return SessionType.WORK;
+    }
   }
 
   /**

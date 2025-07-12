@@ -134,6 +134,30 @@ export const TRACKING_COLORS = {
   FOCUS_POOR: Color.Red,
 } as const;
 
+// Achievement Rarity Colors - Enhanced visual hierarchy for achievements
+export const ACHIEVEMENT_COLORS = {
+  COMMON: Color.SecondaryText,
+  RARE: Color.Green,
+  EPIC: Color.Blue,
+  LEGENDARY: Color.Purple,
+  // Special achievement states
+  UNLOCKED: Color.Yellow, // Golden glow for unlocked achievements
+  LOCKED: Color.SecondaryText,
+  RECENT: Color.Orange, // Highlight for recently unlocked
+} as const;
+
+// Achievement Icons - Distinctive icons for different rarity levels
+export const ACHIEVEMENT_ICONS = {
+  COMMON: Icon.Circle,
+  RARE: Icon.Trophy,
+  EPIC: Icon.Star,
+  LEGENDARY: Icon.Crown,
+  // Special states
+  UNLOCKED: Icon.CheckCircle,
+  LOCKED: Icon.Circle,
+  RECENT: Icon.Star, // For recently unlocked achievements
+} as const;
+
 // Mood Tracking Colors - Semantic colors for different mood states
 export const MOOD_COLORS = {
   // Positive moods

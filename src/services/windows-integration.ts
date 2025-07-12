@@ -53,7 +53,7 @@ export class WindowsIntegration {
 
   public async updateSystemTrayIcon(
     state: TimerState,
-    timeRemaining?: number
+    timeRemaining?: number,
   ): Promise<void> {
     if (!this.isWindows) return;
 
@@ -88,7 +88,7 @@ export class WindowsIntegration {
 
   // Windows Toast Notifications
   public async showWindowsToast(
-    options: WindowsNotificationOptions
+    options: WindowsNotificationOptions,
   ): Promise<boolean> {
     if (!this.isWindows) return false;
 
@@ -119,7 +119,7 @@ export class WindowsIntegration {
   // Windows Taskbar Progress
   public async setTaskbarProgress(
     progress: number,
-    state: "normal" | "paused" | "error" = "normal"
+    state: "normal" | "paused" | "error" = "normal",
   ): Promise<void> {
     if (!this.isWindows) return;
 
@@ -135,7 +135,7 @@ export class WindowsIntegration {
   // Windows Action Center Integration
   public async sendActionCenterNotification(
     sessionType: SessionType,
-    isComplete: boolean
+    isComplete: boolean,
   ): Promise<void> {
     if (!this.isWindows) return;
 

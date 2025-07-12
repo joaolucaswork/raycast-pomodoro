@@ -35,7 +35,7 @@ export function ApplicationUsageStats({
           const isTopApp = index === 0;
           const isTopThree = index < 3;
           const usagePercentage = Math.round(
-            (app.timeSpent / totalSessionTime) * 100
+            (app.timeSpent / totalSessionTime) * 100,
           );
 
           // Determine icon color based on ranking
@@ -111,7 +111,7 @@ export function ApplicationUsageSummary({
   const totalApps = applicationUsage.length;
   const totalTime = applicationUsage.reduce(
     (sum, app) => sum + app.timeSpent,
-    0
+    0,
   );
   const focusScore = mostUsedApp.percentage;
 

@@ -6,7 +6,7 @@ import { STATUS_COLORS, ACTION_ICONS } from "../constants/design-tokens";
 interface ADHDQuickSetupProps {
   onEnergyLevelChange: (level: 1 | 2 | 3 | 4 | 5) => void;
   onMoodStateChange: (
-    mood: "motivated" | "neutral" | "struggling" | "hyperfocus"
+    mood: "motivated" | "neutral" | "struggling" | "hyperfocus",
   ) => void;
   currentEnergyLevel: 1 | 2 | 3 | 4 | 5;
   currentMoodState: "motivated" | "neutral" | "struggling" | "hyperfocus";
@@ -197,13 +197,13 @@ export function RewardSystemDisplay({
   todaysSessions,
 }: RewardSystemDisplayProps) {
   const pointsForNextLevel = adhdSupportService.getPointsForNextLevel(
-    rewardSystem.points
+    rewardSystem.points,
   );
   const progressToNextLevel = Math.round(
     ((rewardSystem.points - Math.pow(rewardSystem.level - 1, 2) * 50) /
       (Math.pow(rewardSystem.level, 2) * 50 -
         Math.pow(rewardSystem.level - 1, 2) * 50)) *
-      100
+      100,
   );
 
   const getRarityColor = (rarity: string): Color => {
@@ -223,7 +223,7 @@ export function RewardSystemDisplay({
     .filter((a) => a.unlockedAt)
     .sort(
       (a, b) =>
-        new Date(b.unlockedAt!).getTime() - new Date(a.unlockedAt!).getTime()
+        new Date(b.unlockedAt!).getTime() - new Date(a.unlockedAt!).getTime(),
     )
     .slice(0, 3);
 
@@ -317,7 +317,7 @@ export function BreakActivitySuggestion({
 }: BreakActivitySuggestionProps) {
   const suggestedActivity = adhdSupportService.suggestBreakActivity(
     energyLevel as 1 | 2 | 3 | 4 | 5,
-    moodState as "motivated" | "neutral" | "struggling" | "hyperfocus"
+    moodState as "motivated" | "neutral" | "struggling" | "hyperfocus",
   );
 
   const getTypeColor = (type: string): Color => {

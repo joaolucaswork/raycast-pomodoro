@@ -19,7 +19,7 @@ interface BrowserNotification {
 interface NotificationConstructor {
   new (
     title: string,
-    options?: BrowserNotificationOptions
+    options?: BrowserNotificationOptions,
   ): BrowserNotification;
   permission: "default" | "granted" | "denied";
   requestPermission(): Promise<"default" | "granted" | "denied">;
@@ -67,7 +67,7 @@ export class NotificationService {
     options?: {
       requireInteraction?: boolean;
       silent?: boolean;
-    }
+    },
   ): Toast.Style {
     if (title.includes("Error") || title.includes("Failed")) {
       return Toast.Style.Failure;
@@ -96,7 +96,7 @@ export class NotificationService {
       this.notificationStatus.browserAPIAvailable = !!NotificationAPI;
       this.debugLog(
         "Browser Notification API available:",
-        this.notificationStatus.browserAPIAvailable
+        this.notificationStatus.browserAPIAvailable,
       );
 
       if (NotificationAPI) {
@@ -119,12 +119,12 @@ export class NotificationService {
         !!electronAPI?.showNotification;
       this.debugLog(
         "Electron API available:",
-        this.notificationStatus.electronAPIAvailable
+        this.notificationStatus.electronAPIAvailable,
       );
 
       this.debugLog(
         "Notification initialization complete:",
-        this.notificationStatus
+        this.notificationStatus,
       );
     } catch (error) {
       this.notificationStatus.lastError =
@@ -148,7 +148,7 @@ export class NotificationService {
   // Audio functionality removed for Raycast compatibility
 
   public async showToastNotification(
-    options: NotificationOptions
+    options: NotificationOptions,
   ): Promise<void> {
     await showToast({
       style: Toast.Style.Success,
@@ -165,7 +165,7 @@ export class NotificationService {
       tag?: string;
       requireInteraction?: boolean;
       silent?: boolean;
-    }
+    },
   ): Promise<void> {
     this.debugLog(`Attempting to show system notification: "${title}"`, {
       body,
@@ -223,7 +223,7 @@ export class NotificationService {
         } else {
           this.debugLog(
             "Browser notification permission not granted:",
-            NotificationAPI.permission
+            NotificationAPI.permission,
           );
         }
       } else {
@@ -289,10 +289,10 @@ export class NotificationService {
 
   public async notifySessionComplete(
     sessionType: SessionType,
-    enableSound: boolean = true
+    enableSound: boolean = true,
   ): Promise<void> {
     this.debugLog(
-      `Session completion notification triggered for: ${sessionType}`
+      `Session completion notification triggered for: ${sessionType}`,
     );
 
     const sessionLabel = getSessionTypeLabel(sessionType);
@@ -339,12 +339,12 @@ export class NotificationService {
 
     this.debugLog(
       "Showing system notification with options:",
-      systemNotificationOptions
+      systemNotificationOptions,
     );
     await this.showSystemNotification(
       title,
       message,
-      systemNotificationOptions
+      systemNotificationOptions,
     );
     this.debugLog("Session completion notification process completed");
   }
@@ -394,7 +394,7 @@ export class NotificationService {
   }
 
   public async testNotification(
-    type: "basic" | "session-complete" | "achievement" | "hyperfocus" = "basic"
+    type: "basic" | "session-complete" | "achievement" | "hyperfocus" = "basic",
   ): Promise<void> {
     this.debugLog(`Testing notification type: ${type}`);
 
@@ -407,7 +407,7 @@ export class NotificationService {
             tag: "test-notification",
             requireInteraction: false,
             silent: false,
-          }
+          },
         );
         break;
 
@@ -452,7 +452,7 @@ export class NotificationService {
       !this.notificationStatus.electronAPIAvailable
     ) {
       suggestions.push(
-        "System notifications are not available in this environment"
+        "System notifications are not available in this environment",
       );
       suggestions.push("Using enhanced Raycast notifications instead:");
       suggestions.push("• HUD notifications for important events");
@@ -476,7 +476,7 @@ export class NotificationService {
   public async showEnhancedRaycastNotification(
     title: string,
     message: string,
-    type: "success" | "warning" | "error" | "info" = "info"
+    type: "success" | "warning" | "error" | "info" = "info",
   ): Promise<void> {
     this.debugLog(`Showing enhanced Raycast notification: ${type}`, {
       title,
@@ -506,7 +506,7 @@ export class NotificationService {
    */
   public async notifyTransitionWarning(
     minutesRemaining: number,
-    sessionType: SessionType
+    sessionType: SessionType,
   ): Promise<void> {
     const config = useTimerStore.getState().config;
     if (!config.enableTransitionWarnings) return;
@@ -531,7 +531,7 @@ export class NotificationService {
         {
           tag: `transition-warning-${minutesRemaining}min`,
           silent: true, // Keep transition warnings subtle
-        }
+        },
       );
     }
   }
@@ -541,7 +541,7 @@ export class NotificationService {
    */
   public async notifyHyperfocusDetected(
     consecutiveSessions: number,
-    totalHours: number
+    totalHours: number,
   ): Promise<void> {
     const config = useTimerStore.getState().config;
     if (!config.enableHyperfocusDetection) return;
@@ -564,7 +564,7 @@ export class NotificationService {
           tag: "hyperfocus-warning",
           requireInteraction: true, // Hyperfocus warnings require user attention
           silent: false,
-        }
+        },
       );
     }
   }
@@ -574,7 +574,7 @@ export class NotificationService {
    */
   public async notifyAchievementUnlocked(
     achievementName: string,
-    points: number
+    points: number,
   ): Promise<void> {
     const config = useTimerStore.getState().config;
     if (!config.enableRewardSystem) return;
@@ -589,7 +589,7 @@ export class NotificationService {
         tag: `achievement-${achievementName.toLowerCase().replace(/\s+/g, "-")}`,
         requireInteraction: false,
         silent: false,
-      }
+      },
     );
   }
 
@@ -598,7 +598,7 @@ export class NotificationService {
    */
   public async notifyPointsEarned(
     points: number,
-    reason: string
+    reason: string,
   ): Promise<void> {
     const config = useTimerStore.getState().config;
     if (!config.enableRewardSystem) return;
@@ -613,7 +613,7 @@ export class NotificationService {
         {
           tag: "points-earned",
           silent: true, // Keep points notifications subtle
-        }
+        },
       );
     }
   }

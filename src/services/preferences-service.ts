@@ -156,15 +156,15 @@ export class PreferencesService {
         workDuration: this.parseIntWithDefault(preferences.workDuration, 25),
         shortBreakDuration: this.parseIntWithDefault(
           preferences.shortBreakDuration,
-          5
+          5,
         ),
         longBreakDuration: this.parseIntWithDefault(
           preferences.longBreakDuration,
-          15
+          15,
         ),
         longBreakInterval: this.parseIntWithDefault(
           preferences.longBreakInterval,
-          4
+          4,
         ),
         enableNotifications: preferences.enableNotifications ?? true,
         autoStartBreaks: preferences.autoStartBreaks ?? false,
@@ -173,7 +173,7 @@ export class PreferencesService {
           preferences.enableApplicationTracking ?? true,
         trackingInterval: this.parseIntWithDefault(
           preferences.trackingInterval,
-          5
+          5,
         ),
         ...getDefaultADHDConfig(),
       };
@@ -220,7 +220,7 @@ export class PreferencesService {
 
   public getRecommendedPresetForUser(
     completedSessions: number,
-    averageSessionLength: number
+    averageSessionLength: number,
   ): TimerPreset {
     // Recommend presets based on user behavior
     if (completedSessions < 5) {
@@ -241,7 +241,7 @@ export class PreferencesService {
   public createCustomPreset(
     name: string,
     description: string,
-    config: TimerConfig
+    config: TimerConfig,
   ): TimerPreset {
     const customPreset: TimerPreset = {
       id: `custom-${Date.now()}`,
@@ -264,31 +264,31 @@ export class PreferencesService {
 
     if (config.workDuration >= 45) {
       tips.push(
-        "💡 Long work sessions are great for deep work, but make sure to take proper breaks"
+        "💡 Long work sessions are great for deep work, but make sure to take proper breaks",
       );
     }
 
     if (config.workDuration <= 15) {
       tips.push(
-        "⚡ Short sessions help maintain high energy - perfect for tackling difficult tasks"
+        "⚡ Short sessions help maintain high energy - perfect for tackling difficult tasks",
       );
     }
 
     if (config.autoStartBreaks && config.autoStartWork) {
       tips.push(
-        "🔄 Auto-start mode keeps you in the flow - great for maintaining momentum"
+        "🔄 Auto-start mode keeps you in the flow - great for maintaining momentum",
       );
     }
 
     if (!config.enableNotifications) {
       tips.push(
-        "🔕 Silent mode is active - remember to check your timer regularly"
+        "🔕 Silent mode is active - remember to check your timer regularly",
       );
     }
 
     if (config.longBreakInterval <= 2) {
       tips.push(
-        "🌴 Frequent long breaks help prevent burnout and maintain creativity"
+        "🌴 Frequent long breaks help prevent burnout and maintain creativity",
       );
     }
 

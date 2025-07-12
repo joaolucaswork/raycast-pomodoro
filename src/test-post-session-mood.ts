@@ -94,7 +94,7 @@ export function testPostSessionMoodEntry() {
     4,
     "post-session",
     mockSession.id,
-    "Great session! Felt very productive and maintained good focus throughout."
+    "Great session! Felt very productive and maintained good focus throughout.",
   );
 
   const state = useTimerStore.getState();
@@ -251,7 +251,7 @@ export function runAllPostSessionMoodTests() {
  */
 export function testRoundCountDisplay() {
   console.log(
-    "🧪 Testing round count display logic (completed/target format)..."
+    "🧪 Testing round count display logic (completed/target format)...",
   );
 
   const store = useTimerStore.getState();

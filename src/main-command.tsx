@@ -2,7 +2,6 @@ import {
   Action,
   ActionPanel,
   Icon,
-  getPreferenceValues,
   List,
   Color,
   confirmAlert,
@@ -23,21 +22,12 @@ import { ACTION_ICONS, SHORTCUTS } from "./constants/design-tokens";
 
 import { formatDistanceToNow } from "date-fns";
 import { getMoodIcon, getMoodColor } from "./constants/design-tokens";
-
-interface Preferences {
-  workDuration: string;
-  shortBreakDuration: string;
-  longBreakDuration: string;
-  longBreakInterval: string;
-  enableNotifications: boolean;
-  autoStartBreaks: boolean;
-  autoStartWork: boolean;
-  enableApplicationTracking: boolean;
-  trackingInterval: string;
-}
+import {
+  createTagIconSelectionActions,
+  createTaskIconSelectionActions,
+} from "./components/inline-icon-selection";
 
 export default function FocusTimer() {
-  const preferences: Preferences = getPreferenceValues();
   const [searchText, setSearchText] = useState<string>("");
   const [selectedTaskIcon, setSelectedTaskIcon] = useState<Icon | undefined>(
     undefined
@@ -64,11 +54,10 @@ export default function FocusTimer() {
     addTagToCurrentSession,
   } = useTimer();
 
-  const { currentFocusPeriodSessionCount, startNewFocusPeriod } =
-    useTimerStore();
-
   const {
-    updateConfig,
+    currentFocusPeriodSessionCount,
+    startNewFocusPeriod,
+    config,
     addCustomTag,
     customTags,
     updateTagConfig,
@@ -79,49 +68,6 @@ export default function FocusTimer() {
     moodEntries,
     addMoodEntry,
   } = useTimerStore();
-
-  // Memoize config to prevent unnecessary updates
-  const configFromPreferences = React.useMemo(
-    (): TimerConfig => ({
-      workDuration: parseInt(preferences.workDuration) || 25,
-      shortBreakDuration: parseInt(preferences.shortBreakDuration) || 5,
-      longBreakDuration: parseInt(preferences.longBreakDuration) || 15,
-      longBreakInterval: parseInt(preferences.longBreakInterval) || 4,
-      enableNotifications: preferences.enableNotifications ?? true,
-      autoStartBreaks: preferences.autoStartBreaks ?? false,
-      autoStartWork: preferences.autoStartWork ?? false,
-      enableApplicationTracking: preferences.enableApplicationTracking ?? true,
-      trackingInterval: parseInt(preferences.trackingInterval) || 5,
-      // ADHD-friendly defaults (will be configurable via preferences later)
-      enableAdaptiveTimers: false,
-      adaptiveMode: "energy-based",
-      minWorkDuration: 10,
-      maxWorkDuration: 60,
-      adaptiveBreakRatio: 0.2,
-      enableRewardSystem: true,
-      enableTransitionWarnings: true,
-      warningIntervals: [300, 120, 60],
-      enableHyperfocusDetection: true,
-      maxConsecutiveSessions: 3,
-      forcedBreakAfterHours: 2.5,
-    }),
-    [
-      preferences.workDuration,
-      preferences.shortBreakDuration,
-      preferences.longBreakDuration,
-      preferences.longBreakInterval,
-      preferences.enableNotifications,
-      preferences.autoStartBreaks,
-      preferences.autoStartWork,
-      preferences.enableApplicationTracking,
-      preferences.trackingInterval,
-    ]
-  );
-
-  // Update config from preferences on load
-  React.useEffect(() => {
-    updateConfig(configFromPreferences);
-  }, [configFromPreferences]);
 
   // Sync timer state on component mount only
   React.useEffect(() => {
@@ -167,6 +113,10 @@ export default function FocusTimer() {
 
   // Extract tags from search text (words starting with #)
   const extractTags = (text: string): string[] => {
+    // Don't extract tags if text is just "#" (incomplete tag)
+    if (text.trim() === "#") {
+      return [];
+    }
     const tagMatches = text.match(/#\w+/g);
     return tagMatches ? tagMatches.map((tag) => tag.substring(1)) : [];
   };
@@ -689,7 +639,7 @@ export default function FocusTimer() {
                             return !currentTags.includes(tag.toLowerCase());
                           }).length === 0 && (
                             <Action
-                              title="All tags already added"
+                              title="All Tags Already Added"
                               icon={Icon.CheckCircle}
                               onAction={() => {}}
                             />
@@ -698,146 +648,10 @@ export default function FocusTimer() {
                       )}
 
                       {/* Change Task Icon */}
-                      <ActionPanel.Submenu
-                        title="Change Task Icon"
-                        icon={Icon.AppWindowSidebarLeft}
-                      >
-                        {/* Work & Productivity */}
-                        <Action
-                          title="Work (Default)"
-                          icon={Icon.Hammer}
-                          onAction={() => updateCurrentSessionIcon(Icon.Hammer)}
-                        />
-                        <Action
-                          title="Business"
-                          icon={Icon.Building}
-                          onAction={() =>
-                            updateCurrentSessionIcon(Icon.Building)
-                          }
-                        />
-                        <Action
-                          title="Meeting"
-                          icon={Icon.Person}
-                          onAction={() => updateCurrentSessionIcon(Icon.Person)}
-                        />
-                        <Action
-                          title="Calendar"
-                          icon={Icon.Calendar}
-                          onAction={() =>
-                            updateCurrentSessionIcon(Icon.Calendar)
-                          }
-                        />
-                        <Action
-                          title="Email"
-                          icon={Icon.Envelope}
-                          onAction={() =>
-                            updateCurrentSessionIcon(Icon.Envelope)
-                          }
-                        />
-                        <Action
-                          title="Phone Call"
-                          icon={Icon.Phone}
-                          onAction={() => updateCurrentSessionIcon(Icon.Phone)}
-                        />
-
-                        {/* Learning & Development */}
-                        <Action
-                          title="Study"
-                          icon={Icon.Book}
-                          onAction={() => updateCurrentSessionIcon(Icon.Book)}
-                        />
-                        <Action
-                          title="Research"
-                          icon={Icon.MagnifyingGlass}
-                          onAction={() =>
-                            updateCurrentSessionIcon(Icon.MagnifyingGlass)
-                          }
-                        />
-                        <Action
-                          title="Writing"
-                          icon={Icon.Pencil}
-                          onAction={() => updateCurrentSessionIcon(Icon.Pencil)}
-                        />
-                        <Action
-                          title="Code"
-                          icon={Icon.Code}
-                          onAction={() => updateCurrentSessionIcon(Icon.Code)}
-                        />
-
-                        {/* Creative & Design */}
-                        <Action
-                          title="Design"
-                          icon={Icon.Brush}
-                          onAction={() => updateCurrentSessionIcon(Icon.Brush)}
-                        />
-                        <Action
-                          title="Photo"
-                          icon={Icon.Camera}
-                          onAction={() => updateCurrentSessionIcon(Icon.Camera)}
-                        />
-                        <Action
-                          title="Video"
-                          icon={Icon.Video}
-                          onAction={() => updateCurrentSessionIcon(Icon.Video)}
-                        />
-                        <Action
-                          title="Music"
-                          icon={Icon.Music}
-                          onAction={() => updateCurrentSessionIcon(Icon.Music)}
-                        />
-
-                        {/* Planning & Organization */}
-                        <Action
-                          title="Planning"
-                          icon={Icon.List}
-                          onAction={() => updateCurrentSessionIcon(Icon.List)}
-                        />
-                        <Action
-                          title="Goal"
-                          icon={Icon.BullsEye}
-                          onAction={() =>
-                            updateCurrentSessionIcon(Icon.BullsEye)
-                          }
-                        />
-                        <Action
-                          title="Document"
-                          icon={Icon.Document}
-                          onAction={() =>
-                            updateCurrentSessionIcon(Icon.Document)
-                          }
-                        />
-                        <Action
-                          title="Folder"
-                          icon={Icon.Folder}
-                          onAction={() => updateCurrentSessionIcon(Icon.Folder)}
-                        />
-
-                        {/* Personal & Health */}
-                        <Action
-                          title="Heart"
-                          icon={Icon.Heart}
-                          onAction={() => updateCurrentSessionIcon(Icon.Heart)}
-                        />
-                        <Action
-                          title="Health"
-                          icon={Icon.Heartbeat}
-                          onAction={() =>
-                            updateCurrentSessionIcon(Icon.Heartbeat)
-                          }
-                        />
-                        <Action
-                          title="Leaf"
-                          icon={Icon.Leaf}
-                          onAction={() => updateCurrentSessionIcon(Icon.Leaf)}
-                        />
-
-                        {/* Clear Selection */}
-                        <Action
-                          title="Clear Icon"
-                          icon={Icon.XMarkCircle}
-                          onAction={() => updateCurrentSessionIcon(Icon.Hammer)}
-                        />
-                      </ActionPanel.Submenu>
+                      {createTaskIconSelectionActions(
+                        updateCurrentSessionIcon,
+                        currentSession?.taskIcon
+                      )}
                     </ActionPanel.Section>
                   </ActionPanel>
                 }
@@ -851,7 +665,7 @@ export default function FocusTimer() {
           <List.Item
             icon={selectedTaskIcon || Icon.Play}
             title={currentTaskName || "Focus Session"}
-            subtitle="Ready to start"
+            subtitle={`${config.workDuration} min`}
             accessories={[
               ...(currentTags.length > 0
                 ? currentTags.map((tag) => ({
@@ -902,7 +716,7 @@ export default function FocusTimer() {
                   )}
 
                   <ActionPanel.Submenu
-                    title="Set Pre-Session Mood"
+                    title="Set Pre-session Mood"
                     icon={Icon.Heart}
                   >
                     {moodOptions.map((mood) => (
@@ -925,142 +739,15 @@ export default function FocusTimer() {
                     )}
                   </ActionPanel.Submenu>
 
-                  <ActionPanel.Submenu
-                    title="Select Task Icon"
-                    icon={Icon.AppWindowSidebarLeft}
-                  >
-                    {/* Work & Productivity */}
-                    <Action
-                      title="Work (Default)"
-                      icon={Icon.Hammer}
-                      onAction={() => setSelectedTaskIcon(Icon.Hammer)}
-                    />
-                    <Action
-                      title="Business"
-                      icon={Icon.Building}
-                      onAction={() => setSelectedTaskIcon(Icon.Building)}
-                    />
-                    <Action
-                      title="Meeting"
-                      icon={Icon.Person}
-                      onAction={() => setSelectedTaskIcon(Icon.Person)}
-                    />
-                    <Action
-                      title="Calendar"
-                      icon={Icon.Calendar}
-                      onAction={() => setSelectedTaskIcon(Icon.Calendar)}
-                    />
-                    <Action
-                      title="Email"
-                      icon={Icon.Envelope}
-                      onAction={() => setSelectedTaskIcon(Icon.Envelope)}
-                    />
-                    <Action
-                      title="Phone Call"
-                      icon={Icon.Phone}
-                      onAction={() => setSelectedTaskIcon(Icon.Phone)}
-                    />
-
-                    {/* Learning & Research */}
-                    <Action
-                      title="Study"
-                      icon={Icon.Book}
-                      onAction={() => setSelectedTaskIcon(Icon.Book)}
-                    />
-                    <Action
-                      title="Research"
-                      icon={Icon.MagnifyingGlass}
-                      onAction={() => setSelectedTaskIcon(Icon.MagnifyingGlass)}
-                    />
-                    <Action
-                      title="Document"
-                      icon={Icon.Document}
-                      onAction={() => setSelectedTaskIcon(Icon.Document)}
-                    />
-                    <Action
-                      title="Presentation"
-                      icon={Icon.Monitor}
-                      onAction={() => setSelectedTaskIcon(Icon.Monitor)}
-                    />
-
-                    {/* Creative & Technical */}
-                    <Action
-                      title="Code"
-                      icon={Icon.Code}
-                      onAction={() => setSelectedTaskIcon(Icon.Code)}
-                    />
-                    <Action
-                      title="Design"
-                      icon={Icon.Brush}
-                      onAction={() => setSelectedTaskIcon(Icon.Brush)}
-                    />
-                    <Action
-                      title="Writing"
-                      icon={Icon.Pencil}
-                      onAction={() => setSelectedTaskIcon(Icon.Pencil)}
-                    />
-                    <Action
-                      title="Video"
-                      icon={Icon.Video}
-                      onAction={() => setSelectedTaskIcon(Icon.Video)}
-                    />
-                    <Action
-                      title="Music"
-                      icon={Icon.Music}
-                      onAction={() => setSelectedTaskIcon(Icon.Music)}
-                    />
-                    <Action
-                      title="Photo"
-                      icon={Icon.Camera}
-                      onAction={() => setSelectedTaskIcon(Icon.Camera)}
-                    />
-
-                    {/* Planning & Organization */}
-                    <Action
-                      title="Planning"
-                      icon={Icon.List}
-                      onAction={() => setSelectedTaskIcon(Icon.List)}
-                    />
-                    <Action
-                      title="Goal"
-                      icon={Icon.BullsEye}
-                      onAction={() => setSelectedTaskIcon(Icon.BullsEye)}
-                    />
-                    <Action
-                      title="Analytics"
-                      icon={Icon.BarChart}
-                      onAction={() => setSelectedTaskIcon(Icon.BarChart)}
-                    />
-                    <Action
-                      title="Settings"
-                      icon={Icon.Gear}
-                      onAction={() => setSelectedTaskIcon(Icon.Gear)}
-                    />
-
-                    {/* Health & Personal */}
-                    <Action
-                      title="Exercise"
-                      icon={Icon.Heart}
-                      onAction={() => setSelectedTaskIcon(Icon.Heart)}
-                    />
-                    <Action
-                      title="Health"
-                      icon={Icon.Heartbeat}
-                      onAction={() => setSelectedTaskIcon(Icon.Heartbeat)}
-                    />
-                    <Action
-                      title="Food"
-                      icon={Icon.Leaf}
-                      onAction={() => setSelectedTaskIcon(Icon.Leaf)}
-                    />
-
-                    {/* Clear Selection */}
-                    <Action
-                      title="Clear Icon"
-                      icon={Icon.XMarkCircle}
-                      onAction={() => setSelectedTaskIcon(undefined)}
-                    />
-                  </ActionPanel.Submenu>
+                  {createTaskIconSelectionActions(
+                    setSelectedTaskIcon,
+                    selectedTaskIcon
+                  )}
+                  <Action
+                    title="Clear Task Icon"
+                    icon={Icon.XMarkCircle}
+                    onAction={() => setSelectedTaskIcon(undefined)}
+                  />
                 </ActionPanel.Section>
 
                 <ActionPanel.Section title="Management">
@@ -1110,7 +797,7 @@ export default function FocusTimer() {
           />
 
           {/* Tag Suggestions - Separate built-in and custom tags */}
-          {currentTags.length === 0 && (
+          {(currentTags.length === 0 || searchText.trim() === "#") && (
             <>
               {/* Custom Tags Section - Higher Priority */}
               {customTags.filter((tag) => !predefinedTags.includes(tag))
@@ -1208,166 +895,11 @@ export default function FocusTimer() {
                             </ActionPanel.Section>
 
                             <ActionPanel.Section title="Change Icon">
-                              {/* Work & Productivity */}
-                              <Action
-                                title="Hammer"
-                                icon={Icon.Hammer}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Hammer })
-                                }
-                              />
-                              <Action
-                                title="Building"
-                                icon={Icon.Building}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Building })
-                                }
-                              />
-                              <Action
-                                title="Calendar"
-                                icon={Icon.Calendar}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Calendar })
-                                }
-                              />
-                              <Action
-                                title="Envelope"
-                                icon={Icon.Envelope}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Envelope })
-                                }
-                              />
-                              <Action
-                                title="Phone"
-                                icon={Icon.Phone}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Phone })
-                                }
-                              />
-
-                              {/* Learning & Research */}
-                              <Action
-                                title="Book"
-                                icon={Icon.Book}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Book })
-                                }
-                              />
-                              <Action
-                                title="Search"
-                                icon={Icon.MagnifyingGlass}
-                                onAction={() =>
-                                  updateTagConfig(tag, {
-                                    icon: Icon.MagnifyingGlass,
-                                  })
-                                }
-                              />
-                              <Action
-                                title="Document"
-                                icon={Icon.Document}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Document })
-                                }
-                              />
-                              <Action
-                                title="Monitor"
-                                icon={Icon.Monitor}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Monitor })
-                                }
-                              />
-
-                              {/* Creative & Technical */}
-                              <Action
-                                title="Code"
-                                icon={Icon.Code}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Code })
-                                }
-                              />
-                              <Action
-                                title="Brush"
-                                icon={Icon.Brush}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Brush })
-                                }
-                              />
-                              <Action
-                                title="Pencil"
-                                icon={Icon.Pencil}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Pencil })
-                                }
-                              />
-                              <Action
-                                title="Video"
-                                icon={Icon.Video}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Video })
-                                }
-                              />
-                              <Action
-                                title="Camera"
-                                icon={Icon.Camera}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Camera })
-                                }
-                              />
-
-                              {/* Planning & Organization */}
-                              <Action
-                                title="List"
-                                icon={Icon.List}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.List })
-                                }
-                              />
-                              <Action
-                                title="Target"
-                                icon={Icon.BullsEye}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.BullsEye })
-                                }
-                              />
-                              <Action
-                                title="Chart"
-                                icon={Icon.BarChart}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.BarChart })
-                                }
-                              />
-                              <Action
-                                title="Settings"
-                                icon={Icon.Gear}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Gear })
-                                }
-                              />
-
-                              {/* Personal & Health */}
-                              <Action
-                                title="Heart"
-                                icon={Icon.Heart}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Heart })
-                                }
-                              />
-                              <Action
-                                title="Health"
-                                icon={Icon.Heartbeat}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Heartbeat })
-                                }
-                              />
-                              <Action
-                                title="Leaf"
-                                icon={Icon.Leaf}
-                                onAction={() =>
-                                  updateTagConfig(tag, { icon: Icon.Leaf })
-                                }
-                              />
-
-                              {/* Clear Custom Icon */}
+                              {createTagIconSelectionActions(
+                                tag,
+                                updateTagConfig,
+                                getTagIcon(tag)
+                              )}
                               <Action
                                 title="Clear Custom Icon"
                                 icon={Icon.XMarkCircle}

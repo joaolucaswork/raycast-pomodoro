@@ -104,7 +104,7 @@ export function testMoodAnalytics() {
 
   const analytics = moodTrackingService.calculateMoodAnalytics(
     mockMoodEntries,
-    mockSessions
+    mockSessions,
   );
 
   console.log("📊 Analytics Results:");
@@ -112,10 +112,10 @@ export function testMoodAnalytics() {
   console.log(`Average Intensity: ${analytics.averageIntensity}`);
   console.log(`Most Common Mood: ${analytics.mostCommonMood}`);
   console.log(
-    `Best Performance Moods: ${analytics.bestPerformanceMoods.join(", ")}`
+    `Best Performance Moods: ${analytics.bestPerformanceMoods.join(", ")}`,
   );
   console.log(
-    `Improvement Suggestions: ${analytics.improvementSuggestions.length} suggestions`
+    `Improvement Suggestions: ${analytics.improvementSuggestions.length} suggestions`,
   );
 
   return analytics;
@@ -127,17 +127,17 @@ export function testMoodValidation() {
   const validMood = moodTrackingService.validateMoodEntry(
     "focused",
     4,
-    "pre-session"
+    "pre-session",
   );
   const invalidMood = moodTrackingService.validateMoodEntry(
     "invalid" as MoodType,
     6,
-    "invalid-context"
+    "invalid-context",
   );
 
   console.log(`Valid mood entry: ${validMood.isValid}`);
   console.log(
-    `Invalid mood entry: ${invalidMood.isValid}, errors: ${invalidMood.errors.join(", ")}`
+    `Invalid mood entry: ${invalidMood.isValid}, errors: ${invalidMood.errors.join(", ")}`,
   );
 
   return { validMood, invalidMood };
@@ -149,11 +149,11 @@ export function testMoodRecommendations() {
   const recommendations = moodTrackingService.getMoodRecommendations(
     "stressed",
     4,
-    mockMoodEntries.slice(-5)
+    mockMoodEntries.slice(-5),
   );
 
   console.log(
-    `Recommendations for stressed mood: ${recommendations.length} suggestions`
+    `Recommendations for stressed mood: ${recommendations.length} suggestions`,
   );
   recommendations.forEach((rec, index) => {
     console.log(`${index + 1}. ${rec}`);
@@ -167,21 +167,21 @@ export function testProductivityInsights() {
 
   const insights = moodTrackingService.getMoodProductivityInsights(
     mockMoodEntries,
-    mockSessions
+    mockSessions,
   );
 
   console.log("🎯 Productivity Insights:");
   console.log(
-    `Optimal mood times: ${insights.optimalMoodTimes.length} entries`
+    `Optimal mood times: ${insights.optimalMoodTimes.length} entries`,
   );
   console.log(
-    `Mood-session correlations: ${insights.moodSessionCorrelation.length} correlations`
+    `Mood-session correlations: ${insights.moodSessionCorrelation.length} correlations`,
   );
   console.log(
-    `Energy level impacts: ${insights.energyLevelImpact.length} impacts`
+    `Energy level impacts: ${insights.energyLevelImpact.length} impacts`,
   );
   console.log(
-    `Contextual insights: ${insights.contextualInsights.length} insights`
+    `Contextual insights: ${insights.contextualInsights.length} insights`,
   );
 
   return insights;
@@ -195,18 +195,18 @@ export function testSessionRecommendations() {
     4,
     10, // 10 AM
     mockMoodEntries.slice(-3),
-    { moodEntries: mockMoodEntries, sessions: mockSessions }
+    { moodEntries: mockMoodEntries, sessions: mockSessions },
   );
 
   console.log("💡 Session Recommendations:");
   console.log(
-    `Recommended Duration: ${recommendations.recommendedDuration} minutes`
+    `Recommended Duration: ${recommendations.recommendedDuration} minutes`,
   );
   console.log(`Session Type: ${recommendations.sessionType}`);
   console.log(`Break Recommendation: ${recommendations.breakRecommendation}`);
   console.log(`Focus Strategy: ${recommendations.focusStrategy}`);
   console.log(
-    `Confidence Score: ${Math.round(recommendations.confidenceScore * 100)}%`
+    `Confidence Score: ${Math.round(recommendations.confidenceScore * 100)}%`,
   );
 
   return recommendations;
@@ -264,7 +264,7 @@ export function validateADHDFriendlyDesign() {
   console.log("✅ ADHD-Friendly Design Validation:");
   Object.entries(principles).forEach(([principle, implemented]) => {
     console.log(
-      `${implemented ? "✅" : "❌"} ${principle}: ${implemented ? "Implemented" : "Missing"}`
+      `${implemented ? "✅" : "❌"} ${principle}: ${implemented ? "Implemented" : "Missing"}`,
     );
   });
 
