@@ -96,14 +96,11 @@ export const getTagIcon = (
 
 /**
  * Pre-defined custom tags with their default configurations
+ * Now empty - no predefined tags
  */
-export const PREDEFINED_TAGS = ["work", "study", "personal"];
+export const PREDEFINED_TAGS: string[] = [];
 
-export const PREDEFINED_TAG_CONFIGS = [
-  { name: "work", icon: Icon.Hammer, color: Color.Blue },
-  { name: "study", icon: Icon.Book, color: Color.Yellow },
-  { name: "personal", icon: Icon.Heart, color: Color.Green },
-];
+export const PREDEFINED_TAG_CONFIGS: any[] = [];
 
 /**
  * Validate and limit task name length

@@ -18,7 +18,6 @@ export function useSessionManagement() {
   const [selectedTaskIcon, setSelectedTaskIcon] = useState<Icon | undefined>(
     undefined
   );
-  const [targetRounds, setTargetRounds] = useState("1");
   const [preSessionMood, setPreSessionMood] = useState<MoodType | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
@@ -51,7 +50,32 @@ export function useSessionManagement() {
     clearAllHistory,
     moodEntries,
     addMoodEntry,
+    targetRounds: storeTargetRounds,
+    setTargetRounds: setStoreTargetRounds,
+    updateCurrentSessionName,
   } = useTimerStore();
+
+  // Convert store's number targetRounds to string for UI compatibility
+  const targetRounds = storeTargetRounds.toString();
+
+  // Track if this is the initial render to prevent dropdown from overriding persisted values
+  const [hasInitialized, setHasInitialized] = useState(false);
+
+  // Wrapper function to convert string to number and update store
+  const setTargetRounds = useCallback(
+    (value: string) => {
+      // Prevent dropdown from overriding persisted values during initial load
+      if (!hasInitialized) {
+        return;
+      }
+
+      const numValue = parseInt(value, 10);
+      if (!isNaN(numValue) && numValue > 0) {
+        setStoreTargetRounds(numValue);
+      }
+    },
+    [setStoreTargetRounds, hasInitialized]
+  );
 
   // Initialize timer state on component mount
   useEffect(() => {
@@ -84,9 +108,15 @@ export function useSessionManagement() {
         }
 
         setIsInitialized(true);
+
+        // Allow dropdown interactions after initialization is complete
+        setTimeout(() => {
+          setHasInitialized(true);
+        }, 100); // Small delay to ensure persistence has loaded
       } catch (error) {
         console.error("Failed to initialize timer state:", error);
         setIsInitialized(true); // Still mark as initialized to show the UI
+        setHasInitialized(true); // Allow interactions even on error
       }
     };
 
@@ -101,23 +131,7 @@ export function useSessionManagement() {
     console.log("[useSessionManagement] Additional config refresh on mount");
   }, []);
 
-  // Initialize predefined tags with their icons and colors on first load
-  useEffect(() => {
-    const predefinedTagConfigs = [
-      { name: "work", icon: Icon.Hammer, color: "#007AFF" },
-      { name: "study", icon: Icon.Book, color: "#FFD60A" },
-      { name: "personal", icon: Icon.Heart, color: "#30D158" },
-    ];
-
-    predefinedTagConfigs.forEach(({ name, icon, color }) => {
-      // Only add if not already in custom tags
-      if (!customTags.includes(name)) {
-        addCustomTag(name);
-      }
-      // Always ensure the icon and color are configured
-      updateTagConfig(name, { icon, color: color as any });
-    });
-  }, []); // Run only once on mount
+  // No predefined tags initialization - removed
 
   // Handle starting a work session
   const handleStartWork = useCallback(async () => {
@@ -129,9 +143,8 @@ export function useSessionManagement() {
     );
 
     // Start new focus period if not already started or if starting fresh
-    const targetRoundsNum = parseInt(targetRounds);
     if (currentFocusPeriodSessionCount === 0 || !currentSession) {
-      startNewFocusPeriod(targetRoundsNum);
+      startNewFocusPeriod(storeTargetRounds);
     }
 
     // Parse task name and tags from search text AND store new tags
@@ -172,7 +185,7 @@ export function useSessionManagement() {
 
     // Note: We don't reset form state to maintain user's setup for next round
   }, [
-    targetRounds,
+    storeTargetRounds,
     currentFocusPeriodSessionCount,
     currentSession,
     startNewFocusPeriod,
@@ -224,6 +237,7 @@ export function useSessionManagement() {
     stop,
     complete,
     updateCurrentSessionIcon,
+    updateCurrentSessionName,
     addTagToCurrentSession,
 
     // Session management

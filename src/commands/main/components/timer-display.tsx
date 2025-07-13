@@ -1,11 +1,26 @@
-import { Action, ActionPanel, Icon, List } from "@raycast/api";
+import { useState, useEffect } from "react";
+import {
+  Action,
+  ActionPanel,
+  Icon,
+  List,
+  Form,
+  showToast,
+  Toast,
+} from "@raycast/api";
+import { createTaskIconSelectionActions } from "../../../components/inline-icon-selection";
 import { formatDistanceToNow } from "date-fns";
 import {
   formatTime,
   getSessionTypeLabel,
   getProgressPercentage,
 } from "../../../utils/helpers";
-import { SessionType, TimerSession, MoodEntry } from "../../../types/timer";
+import {
+  SessionType,
+  TimerSession,
+  MoodEntry,
+  MoodType,
+} from "../../../types/timer";
 import {
   ACTION_ICONS,
   SHORTCUTS,
@@ -30,6 +45,15 @@ interface TimerDisplayProps {
   onComplete: () => void;
   onStop: () => void;
   onStartNewSession: () => Promise<void>;
+  updateCurrentSessionName: (taskName: string) => void;
+  updateCurrentSessionIcon: (taskIcon: Icon) => void;
+  addMoodEntry: (
+    mood: MoodType,
+    intensity: 1 | 2 | 3 | 4 | 5,
+    context: "pre-session" | "during-session" | "post-session" | "standalone",
+    sessionId?: string,
+    notes?: string
+  ) => void;
 }
 
 export function TimerDisplay({
@@ -47,7 +71,96 @@ export function TimerDisplay({
   onComplete,
   onStop,
   onStartNewSession,
+  updateCurrentSessionName,
+  updateCurrentSessionIcon,
+  addMoodEntry,
 }: TimerDisplayProps) {
+  // Task configuration state
+  const [isConfiguring, setIsConfiguring] = useState(false);
+  const [wasRunningBeforeConfig, setWasRunningBeforeConfig] = useState(false);
+
+  // Handle entering configuration mode
+  const enterConfigMode = () => {
+    if (isRunning) {
+      setWasRunningBeforeConfig(true);
+      onPause();
+    }
+    setIsConfiguring(true);
+  };
+
+  // Handle exiting configuration mode
+  const exitConfigMode = async () => {
+    setIsConfiguring(false);
+    if (wasRunningBeforeConfig) {
+      await onResume();
+      setWasRunningBeforeConfig(false);
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Configuration saved",
+        message: "Timer resumed",
+      });
+    }
+  };
+
+  // Handle icon selection with toast feedback
+  const handleIconSelection = async (icon: Icon) => {
+    try {
+      updateCurrentSessionIcon(icon);
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Task icon updated",
+        message: `Changed to ${icon}`,
+      });
+    } catch (error) {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Failed to update icon",
+        message: "Please try again",
+      });
+    }
+  };
+
+  // Handle mood logging
+  const handleMoodLogging = async (
+    mood: MoodType,
+    intensity: 1 | 2 | 3 | 4 | 5
+  ) => {
+    try {
+      addMoodEntry(
+        mood,
+        intensity,
+        "during-session",
+        currentSession.id,
+        `Logged during ${currentSession.taskName || "focus session"}`
+      );
+      await showToast({
+        style: Toast.Style.Success,
+        title: "Mood logged",
+        message: `${mood} (${intensity}/5) recorded`,
+      });
+    } catch (error) {
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Failed to log mood",
+        message: "Please try again",
+      });
+    }
+  };
+
+  // Mood options for quick logging
+  const moodOptions = [
+    { mood: "happy" as MoodType, icon: Icon.Heart, intensity: 4 as const },
+    { mood: "focused" as MoodType, icon: Icon.BullsEye, intensity: 4 as const },
+    { mood: "calm" as MoodType, icon: Icon.Cloud, intensity: 3 as const },
+    { mood: "energetic" as MoodType, icon: Icon.Bolt, intensity: 5 as const },
+    {
+      mood: "stressed" as MoodType,
+      icon: Icon.ExclamationMark,
+      intensity: 2 as const,
+    },
+    { mood: "tired" as MoodType, icon: Icon.Moon, intensity: 2 as const },
+  ];
+
   const getTimerDisplay = () => {
     const progress = getProgressPercentage(
       timeRemaining,
@@ -86,19 +199,32 @@ export function TimerDisplay({
         title={timerDisplay.timeDisplay}
         subtitle={
           currentSession.type === SessionType.WORK
-            ? `${currentSession.taskName ? `${currentSession.taskName} - ` : ""}${currentFocusPeriodSessionCount + 1}/${targetRounds}`
+            ? currentSession.taskName
+              ? `${currentSession.taskName} - ${currentFocusPeriodSessionCount + 1}/${targetRounds}`
+              : searchText.trim().length > 0
+                ? `${currentFocusPeriodSessionCount + 1}/${targetRounds}`
+                : `define a task name • ${currentFocusPeriodSessionCount + 1}/${targetRounds}`
             : `${timerDisplay.title}${currentSession.taskName ? ` • ${currentSession.taskName}` : ""}`
         }
         accessories={[
+          // Show mood indicator first if available
+          ...(recentMood
+            ? [
+                {
+                  icon: {
+                    source: getMoodIcon(recentMood.mood),
+                    tintColor: getMoodColor(recentMood.mood),
+                  },
+                  tooltip: `Current mood: ${recentMood.mood} (${recentMood.intensity}/5)`,
+                },
+              ]
+            : []),
+          // Show tags
           ...(currentSession.tags && currentSession.tags.length > 0
             ? currentSession.tags.map((tag) => ({
                 tag: { value: tag, color: getTagColor(tag, getTagConfig) },
               }))
             : []),
-          {
-            text: `${Math.round(timerDisplay.progress)}%`,
-            icon: Icon.BarChart,
-          },
         ]}
         actions={
           <ActionPanel>
@@ -147,24 +273,6 @@ export function TimerDisplay({
 
       {/* Session Details */}
       <List.Section title="Session Info">
-        {/* Recent Mood Entry Display */}
-        {recentMood && (
-          <List.Item
-            icon={{
-              source: getMoodIcon(recentMood.mood),
-              tintColor: getMoodColor(recentMood.mood),
-            }}
-            title="Recent Mood"
-            subtitle={`${recentMood.mood.charAt(0).toUpperCase() + recentMood.mood.slice(1)} • ${formatDistanceToNow(new Date(recentMood.timestamp), { addSuffix: true })}`}
-            accessories={[
-              {
-                text: `${recentMood.intensity}/5`,
-                tooltip: `Intensity: ${recentMood.intensity}/5`,
-              },
-            ]}
-          />
-        )}
-
         {timerDisplay.nextBreakTime && (
           <List.Item
             icon={Icon.Clock}
@@ -179,14 +287,60 @@ export function TimerDisplay({
 
         {currentSession.taskName && (
           <List.Item
-            icon={Icon.Document}
-            title="Current Task"
-            subtitle={currentSession.taskName}
+            icon={currentSession.taskIcon || Icon.Document}
+            title="Task Configuration"
+            subtitle={
+              isConfiguring
+                ? "Editing task details..."
+                : currentSession.taskName
+            }
             accessories={[
               ...(currentSession.projectName
                 ? [{ text: currentSession.projectName }]
                 : []),
+              ...(isConfiguring
+                ? [{ text: "Timer Paused", icon: Icon.Pause }]
+                : []),
             ]}
+            actions={
+              <ActionPanel>
+                <Action
+                  title={
+                    isConfiguring ? "Finish Configuration" : "Configure Task"
+                  }
+                  icon={isConfiguring ? Icon.Check : Icon.Pencil}
+                  onAction={isConfiguring ? exitConfigMode : enterConfigMode}
+                />
+                {isConfiguring && (
+                  <>
+                    <ActionPanel.Section title="Task Configuration">
+                      {/* Universal Icon Selection Component */}
+                      {createTaskIconSelectionActions(
+                        handleIconSelection,
+                        currentSession.taskIcon
+                      )}
+                    </ActionPanel.Section>
+
+                    {/* Quick Mood Logging */}
+                    <ActionPanel.Section title="Log Current Mood">
+                      {moodOptions.map((moodOption) => (
+                        <Action
+                          key={moodOption.mood}
+                          title={`${moodOption.mood.charAt(0).toUpperCase() + moodOption.mood.slice(1)} (${moodOption.intensity}/5)`}
+                          icon={moodOption.icon}
+                          onAction={() =>
+                            handleMoodLogging(
+                              moodOption.mood,
+                              moodOption.intensity
+                            )
+                          }
+                        />
+                      ))}
+                    </ActionPanel.Section>
+                  </>
+                )}
+              </ActionPanel>
+            }
           />
         )}
 
@@ -200,18 +354,6 @@ export function TimerDisplay({
             }))}
           />
         )}
-
-        <List.Item
-          icon={Icon.BullsEye}
-          title="Progress"
-          subtitle={`Round ${currentFocusPeriodSessionCount + 1} of ${targetRounds}`}
-          accessories={[
-            {
-              text: `${Math.round(timerDisplay.progress)}%`,
-              icon: Icon.BarChart,
-            },
-          ]}
-        />
       </List.Section>
     </>
   );

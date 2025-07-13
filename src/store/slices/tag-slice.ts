@@ -4,14 +4,11 @@ import { CustomTagConfig, PomodoroStore } from "../../types/timer";
 
 /**
  * Predefined tags with their default configurations
+ * Now empty - no predefined tags
  */
-export const PREDEFINED_TAGS = ["work", "study", "personal"];
+export const PREDEFINED_TAGS: string[] = [];
 
-export const PREDEFINED_TAG_CONFIGS: CustomTagConfig[] = [
-  { name: "work", icon: Icon.Hammer, color: Color.Blue },
-  { name: "study", icon: Icon.Book, color: Color.Yellow },
-  { name: "personal", icon: Icon.Heart, color: Color.Green },
-];
+export const PREDEFINED_TAG_CONFIGS: CustomTagConfig[] = [];
 
 /**
  * Tag slice interface - defines tag management-related state and actions
@@ -48,12 +45,10 @@ export interface TagSlice {
 /**
  * Create tag slice with all tag management-related functionality
  */
-export const createTagSlice: StateCreator<
-  PomodoroStore,
-  [],
-  [],
-  TagSlice
-> = (set, get) => ({
+export const createTagSlice: StateCreator<PomodoroStore, [], [], TagSlice> = (
+  set,
+  get
+) => ({
   // Initial state
   customTags: [],
   customTagConfigs: [],
@@ -80,10 +75,7 @@ export const createTagSlice: StateCreator<
     set({ hasCreatedCustomTag: true });
   },
 
-  updateTagConfig: (
-    tagName: string,
-    config: Partial<CustomTagConfig>
-  ) => {
+  updateTagConfig: (tagName: string, config: Partial<CustomTagConfig>) => {
     const { customTagConfigs } = get();
     const existingIndex = customTagConfigs.findIndex(
       (tc) => tc.name === tagName
@@ -112,9 +104,7 @@ export const createTagSlice: StateCreator<
     const { customTags, customTagConfigs } = get();
     set({
       customTags: customTags.filter((tag) => tag !== tagName),
-      customTagConfigs: customTagConfigs.filter(
-        (tc) => tc.name !== tagName
-      ),
+      customTagConfigs: customTagConfigs.filter((tc) => tc.name !== tagName),
     });
   },
 
@@ -124,20 +114,11 @@ export const createTagSlice: StateCreator<
   },
 
   clearAllTags: () => {
-    const { customTags, customTagConfigs } = get();
-
-    // Keep only built-in tags
-    const filteredCustomTags = customTags.filter((tag) =>
-      PREDEFINED_TAGS.includes(tag)
-    );
-    const filteredCustomTagConfigs = customTagConfigs.filter((tc) =>
-      PREDEFINED_TAGS.includes(tc.name)
-    );
-
+    // Clear all tags since we have no predefined tags
     set({
-      customTags: filteredCustomTags,
-      customTagConfigs: filteredCustomTagConfigs,
-      hasCreatedCustomTag: filteredCustomTags.length > PREDEFINED_TAGS.length,
+      customTags: [],
+      customTagConfigs: [],
+      hasCreatedCustomTag: false,
     });
   },
 
@@ -178,70 +159,51 @@ export const createTagSlice: StateCreator<
   // Tag utilities
   getAllTags: () => {
     const { customTags } = get();
-    return [...PREDEFINED_TAGS, ...customTags.filter(tag => !PREDEFINED_TAGS.includes(tag))];
+    return customTags; // Only custom tags since no predefined tags exist
   },
 
   getTagsWithConfigs: () => {
     const { customTags, customTagConfigs } = get();
-    return customTags.map(tag => ({
+    return customTags.map((tag) => ({
       tag,
-      config: customTagConfigs.find(tc => tc.name === tag),
+      config: customTagConfigs.find((tc) => tc.name === tag),
     }));
   },
 
   isPredefinedTag: (tag: string) => {
-    return PREDEFINED_TAGS.includes(tag.toLowerCase());
+    return false; // No predefined tags exist
   },
 
   isCustomTag: (tag: string) => {
     const { customTags } = get();
-    return customTags.includes(tag.toLowerCase()) && !PREDEFINED_TAGS.includes(tag.toLowerCase());
+    return customTags.includes(tag.toLowerCase()); // All tags are custom now
   },
 
   getTagColor: (tag: string) => {
     const { customTagConfigs } = get();
     const config = customTagConfigs.find((tc) => tc.name === tag.toLowerCase());
-    
+
     if (config) {
       return config.color;
     }
 
-    // Fall back to default color mapping for predefined tags
-    const colorMap: Record<string, Color> = {
-      work: Color.Blue,
-      study: Color.Yellow,
-      personal: Color.Green,
-    };
-    return colorMap[tag.toLowerCase()] || Color.Blue;
+    // Default color for tags without custom configuration
+    return Color.Blue;
   },
 
   getTagIcon: (tag: string) => {
     const { customTagConfigs } = get();
     const config = customTagConfigs.find((tc) => tc.name === tag.toLowerCase());
-    
+
     if (config && config.icon) {
       return config.icon;
     }
 
-    // Fall back to default icon mapping for predefined tags
-    const iconMap: Record<string, Icon> = {
-      work: Icon.Hammer,
-      study: Icon.Book,
-      personal: Icon.Heart,
-    };
-    return iconMap[tag.toLowerCase()];
+    // Default icon for tags without custom configuration
+    return Icon.Tag;
   },
 
   initializePredefinedTags: () => {
-    const { customTags, addCustomTag, updateTagConfig } = get();
-
-    PREDEFINED_TAG_CONFIGS.forEach(({ name, icon, color }) => {
-      // Only add if not already in custom tags
-      if (!customTags.includes(name)) {
-        addCustomTag(name);
-      }
-      // Always ensure the icon and color are configured
-      updateTagConfig(name, { icon, color });
-    });
+    // No predefined tags to initialize
   },
 });

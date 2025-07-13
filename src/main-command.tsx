@@ -35,6 +35,8 @@ export default function FocusTimer() {
     resume,
     stop,
     complete,
+    updateCurrentSessionIcon,
+    updateCurrentSessionName,
 
     // Session management
     handleStartWork,
@@ -47,8 +49,10 @@ export default function FocusTimer() {
     getTagConfig,
     updateTagConfig,
     deleteCustomTag,
+    addCustomTag,
     clearAllTags,
     moodEntries,
+    addMoodEntry,
   } = useSessionManagement();
 
   const { currentAppName, currentAppBundleId, isAppTrackingActive } =
@@ -74,7 +78,7 @@ export default function FocusTimer() {
   return (
     <List
       navigationTitle="Focus Timer"
-      searchBarPlaceholder="Task name or # for assign/create a tag"
+      searchBarPlaceholder="Type something"
       searchText={searchText}
       onSearchTextChange={setSearchText}
       searchBarAccessory={
@@ -110,6 +114,9 @@ export default function FocusTimer() {
           onComplete={complete}
           onStop={stop}
           onStartNewSession={handleStartNewSession}
+          updateCurrentSessionName={updateCurrentSessionName}
+          updateCurrentSessionIcon={updateCurrentSessionIcon}
+          addMoodEntry={addMoodEntry}
         />
       ) : isIdle || isCompleted ? (
         // Setup Interface - Show when timer is idle or completed
@@ -123,7 +130,6 @@ export default function FocusTimer() {
             preSessionMood={preSessionMood}
             config={config}
             getTagConfig={getTagConfig}
-            updateTagConfig={updateTagConfig}
             onStartWork={handleStartWork}
             onSetPreSessionMood={setPreSessionMood}
           />
@@ -136,6 +142,7 @@ export default function FocusTimer() {
             getTagConfig={getTagConfig}
             updateTagConfig={updateTagConfig}
             deleteCustomTag={deleteCustomTag}
+            addCustomTag={addCustomTag}
             clearAllTags={clearAllTags}
             setSearchText={setSearchText}
           />

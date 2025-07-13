@@ -20,12 +20,13 @@ export const MOOD_OPTIONS: { value: MoodType; title: string }[] = [
 /**
  * Get the most recent mood entry
  */
-export const getMostRecentMoodEntry = (moodEntries: MoodEntry[]): MoodEntry | null => {
+export const getMostRecentMoodEntry = (
+  moodEntries: MoodEntry[]
+): MoodEntry | null => {
   if (moodEntries.length === 0) return null;
 
   const sortedEntries = [...moodEntries].sort(
-    (a, b) =>
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
   );
 
   return sortedEntries[0];
@@ -56,8 +57,15 @@ export const ROUND_OPTIONS = [
 /**
  * Check if search text should show tag suggestions
  */
-export const shouldShowTagSuggestions = (searchText: string, currentTags: string[]): boolean => {
-  return currentTags.length === 0 || searchText.trim() === "#";
+export const shouldShowTagSuggestions = (
+  searchText: string,
+  currentTags: string[]
+): boolean => {
+  const isTypingNewTag =
+    searchText.trim().startsWith("#") && searchText.trim().length > 1;
+  return (
+    currentTags.length === 0 || searchText.trim() === "#" || isTypingNewTag
+  );
 };
 
 /**

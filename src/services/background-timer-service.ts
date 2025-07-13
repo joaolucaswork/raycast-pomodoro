@@ -214,7 +214,8 @@ export class BackgroundTimerService {
     }
 
     // Complete the session using the background timer completion handler
-    await this.handleTimerCompletion(backgroundState.session);
+    // Pass true to indicate this is a manual completion (no auto-start)
+    await this.handleTimerCompletion(backgroundState.session, true);
 
     // Clear background state
     await this.clearBackgroundState();
@@ -436,7 +437,10 @@ export class BackgroundTimerService {
   /**
    * Handles timer completion (with auto-start logic for real-time completions)
    */
-  private async handleTimerCompletion(session: TimerSession): Promise<void> {
+  private async handleTimerCompletion(
+    session: TimerSession,
+    isManualCompletion: boolean = false
+  ): Promise<void> {
     const { history, sessionCount, currentFocusPeriodSessionCount, config } =
       useTimerStore.getState();
 
@@ -581,11 +585,10 @@ export class BackgroundTimerService {
       updatedState.checkHyperfocus();
     }
 
-    // Auto-start next session if enabled AND not during initialization
-    const shouldAutoStart = this.shouldAutoStartNext(
-      completedSessionType,
-      config
-    );
+    // Auto-start next session if enabled AND not during initialization AND not manual completion
+    const shouldAutoStart =
+      !isManualCompletion &&
+      this.shouldAutoStartNext(completedSessionType, config);
 
     if (shouldAutoStart && !this.isInitializing) {
       const nextSessionType = this.getNextSessionType(

@@ -67,6 +67,7 @@ export interface SessionSlice {
   // Focus period management
   startNewFocusPeriod: (targetRounds: number) => void;
   resetFocusPeriod: () => void;
+  setTargetRounds: (targetRounds: number) => void;
 }
 
 /**
@@ -434,6 +435,10 @@ export const createSessionSlice: StateCreator<
       currentFocusPeriodSessionCount: 0,
       targetRounds: 1,
     });
+  },
+
+  setTargetRounds: (targetRounds: number) => {
+    set({ targetRounds });
   },
 
   // Additional session utilities

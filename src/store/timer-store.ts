@@ -54,8 +54,7 @@ export const initializeTimerStore = () => {
   // Refresh config from native preferences
   store.refreshConfigFromPreferences();
 
-  // Initialize predefined tags
-  store.initializePredefinedTags();
+  // No predefined tags to initialize
 
   // Recalculate stats on initialization
   store.recalculateStats();

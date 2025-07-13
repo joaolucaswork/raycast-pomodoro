@@ -19,7 +19,6 @@ interface SessionSetupProps {
   preSessionMood: MoodType | null;
   config: TimerConfig;
   getTagConfig: (tag: string) => { icon?: Icon; color: any } | undefined;
-  updateTagConfig: (tag: string, config: { icon?: Icon; color?: any }) => void;
   onStartWork: () => void;
   onSetPreSessionMood: (mood: MoodType | null) => void;
 }
@@ -33,33 +32,9 @@ export function SessionSetup({
   preSessionMood,
   config,
   getTagConfig,
-  updateTagConfig,
   onStartWork,
   onSetPreSessionMood,
 }: SessionSetupProps) {
-  const createTagColorActions = (tag: string) => {
-    const colors = [
-      { name: "Blue", value: Color.Blue },
-      { name: "Green", value: Color.Green },
-      { name: "Red", value: Color.Red },
-      { name: "Orange", value: Color.Orange },
-      { name: "Purple", value: Color.Purple },
-      { name: "Yellow", value: Color.Yellow },
-    ];
-
-    return colors.map((color) => (
-      <Action
-        key={color.name}
-        title={color.name}
-        icon={{
-          source: Icon.Circle,
-          tintColor: color.value,
-        }}
-        onAction={() => updateTagConfig(tag, { color: color.value })}
-      />
-    ));
-  };
-
   return (
     <List.Item
       icon={selectedTaskIcon || Icon.Play}
@@ -103,21 +78,6 @@ export function SessionSetup({
             {createTaskIconSelectionActions(
               (icon) => setSelectedTaskIcon(icon),
               selectedTaskIcon
-            )}
-
-            {/* Dynamic Tag Color Selection - Only show if there are current tags */}
-            {currentTags.length > 0 && (
-              <>
-                {currentTags.map((tag) => (
-                  <ActionPanel.Submenu
-                    key={`color-${tag}`}
-                    title={`Change #${tag} Color`}
-                    icon={Icon.Brush}
-                  >
-                    {createTagColorActions(tag)}
-                  </ActionPanel.Submenu>
-                ))}
-              </>
             )}
 
             <ActionPanel.Submenu title="Set Pre-session Mood" icon={Icon.Heart}>

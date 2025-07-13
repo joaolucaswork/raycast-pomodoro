@@ -161,6 +161,14 @@ export class ApplicationTrackingAnalytics {
 
     const usageArray = Array.from(trackingData.applications.values());
 
+    // Calculate percentages based on total tracking time
+    const totalTime = trackingData.totalTrackingTime;
+    if (totalTime > 0) {
+      usageArray.forEach((app) => {
+        app.percentage = Math.round((app.timeSpent / totalTime) * 100);
+      });
+    }
+
     // Sort by time spent (descending)
     return usageArray.sort((a, b) => b.timeSpent - a.timeSpent);
   }

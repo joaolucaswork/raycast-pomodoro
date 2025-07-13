@@ -51,7 +51,11 @@ export function ApplicationUsageStats({
               title={app.name}
               subtitle={`${formatTime(app.timeSpent)} • ${app.percentage}% of session`}
               icon={{
-                source: app.raycastIcon || Icon.Desktop,
+                source:
+                  app.raycastIcon ||
+                  jsonApplicationIconService.getIconByBundleId(app.bundleId) ||
+                  jsonApplicationIconService.getIconByName(app.name) ||
+                  Icon.Desktop,
                 tintColor: iconColor,
               }}
               accessories={[
@@ -227,7 +231,15 @@ export function ApplicationAnalytics({
             title={stats.mostUsedApplication.name}
             subtitle={`${stats.mostUsedApplication.percentage}% of session time`}
             icon={{
-              source: stats.mostUsedApplication.raycastIcon || Icon.Desktop,
+              source:
+                stats.mostUsedApplication.raycastIcon ||
+                jsonApplicationIconService.getIconByBundleId(
+                  stats.mostUsedApplication.bundleId
+                ) ||
+                jsonApplicationIconService.getIconByName(
+                  stats.mostUsedApplication.name
+                ) ||
+                Icon.Desktop,
               tintColor: Color.Green,
             }}
             accessories={[

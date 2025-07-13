@@ -32,6 +32,7 @@ import {
   getMoodIcon,
   getMoodColor,
 } from "./constants/design-tokens";
+import { jsonApplicationIconService } from "./services/json-app-icon-service";
 
 type SortOption = "newest" | "oldest" | "longest" | "shortest";
 type FilterType = "all" | "work" | "short_break" | "long_break";
@@ -335,6 +336,23 @@ function SessionDetailView({ session }: SessionDetailViewProps) {
     (entry) => entry.sessionId === session.id
   );
 
+  // Fix percentage calculation for existing sessions that might have percentage: 0
+  const applicationUsageWithPercentages = session.applicationUsage?.map(
+    (app) => {
+      if (app.percentage === 0 && app.timeSpent > 0) {
+        // Calculate percentage based on session duration
+        const totalTime =
+          session.applicationUsage?.reduce((sum, a) => sum + a.timeSpent, 0) ||
+          1;
+        return {
+          ...app,
+          percentage: Math.round((app.timeSpent / totalTime) * 100),
+        };
+      }
+      return app;
+    }
+  );
+
   const getStatusText = () => {
     if (session.completed) return "Completed";
     switch (session.endReason) {
@@ -473,40 +491,54 @@ function SessionDetailView({ session }: SessionDetailViewProps) {
             </>
           )}
 
-          {session.applicationUsage && session.applicationUsage.length > 0 && (
-            <>
-              <List.Item.Detail.Metadata.Separator />
-              <List.Item.Detail.Metadata.Label
-                title="Application Usage"
-                text={`${session.applicationUsage.length} applications tracked`}
-                icon={{ source: Icon.Desktop, tintColor: STATUS_COLORS.INFO }}
-              />
-              {session.applicationUsage.slice(0, 5).map((app, index) => (
+          {applicationUsageWithPercentages &&
+            applicationUsageWithPercentages.length > 0 && (
+              <>
+                <List.Item.Detail.Metadata.Separator />
                 <List.Item.Detail.Metadata.Label
-                  key={app.bundleId}
-                  title={app.name}
-                  text={`${app.percentage}% (${formatTime(app.timeSpent)})`}
-                  icon={{
-                    source: Icon.Circle,
-                    tintColor:
-                      index < 3
-                        ? getAppRankingColor(index)
-                        : STATUS_COLORS.NEUTRAL,
-                  }}
+                  title="Application Usage"
+                  text={`${applicationUsageWithPercentages.length} applications tracked`}
+                  icon={{ source: Icon.Desktop, tintColor: STATUS_COLORS.INFO }}
                 />
-              ))}
-              {session.applicationUsage.length > 5 && (
-                <List.Item.Detail.Metadata.Label
-                  title="More Applications"
-                  text={`+${session.applicationUsage.length - 5} additional apps`}
-                  icon={{
-                    source: Icon.Ellipsis,
-                    tintColor: STATUS_COLORS.NEUTRAL,
-                  }}
-                />
-              )}
-            </>
-          )}
+                {applicationUsageWithPercentages
+                  .slice(0, 5)
+                  .map((app, index) => {
+                    // Get the appropriate icon for the application
+                    const appIcon =
+                      app.raycastIcon ||
+                      jsonApplicationIconService.getIconByBundleId(
+                        app.bundleId
+                      ) ||
+                      jsonApplicationIconService.getIconByName(app.name) ||
+                      Icon.Desktop;
+
+                    return (
+                      <List.Item.Detail.Metadata.Label
+                        key={app.bundleId}
+                        title={app.name}
+                        text={`${app.percentage}% (${formatTime(app.timeSpent)})`}
+                        icon={{
+                          source: appIcon,
+                          tintColor:
+                            index < 3
+                              ? getAppRankingColor(index)
+                              : STATUS_COLORS.NEUTRAL,
+                        }}
+                      />
+                    );
+                  })}
+                {applicationUsageWithPercentages.length > 5 && (
+                  <List.Item.Detail.Metadata.Label
+                    title="More Applications"
+                    text={`+${applicationUsageWithPercentages.length - 5} additional apps`}
+                    icon={{
+                      source: Icon.Ellipsis,
+                      tintColor: STATUS_COLORS.NEUTRAL,
+                    }}
+                  />
+                )}
+              </>
+            )}
         </List.Item.Detail.Metadata>
       }
     />
