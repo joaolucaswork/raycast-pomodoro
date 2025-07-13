@@ -6,7 +6,7 @@ import {
   Achievement,
   PomodoroStore,
 } from "../../types/timer";
-import { adhdSupportService } from "../../services/adhd-support-service";
+import { adhdSupportService } from "../../services/features/adhd-support-service";
 
 /**
  * Default reward system state

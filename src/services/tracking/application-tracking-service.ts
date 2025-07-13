@@ -1,5 +1,5 @@
 import { Application } from "@raycast/api";
-import { ApplicationUsage } from "../types/timer";
+import { ApplicationUsage } from "../../types/timer";
 import {
   ApplicationTrackingData,
   ApplicationTrackingStats,

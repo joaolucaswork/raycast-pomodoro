@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { applicationTrackingService } from "../../../services/application-tracking";
+import { applicationTrackingService } from "../../../services/tracking/application-tracking-service";
 import { SessionType } from "../../../types/timer";
 
 /**

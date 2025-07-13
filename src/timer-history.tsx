@@ -1,42 +1,49 @@
-import {
-  Action,
-  ActionPanel,
-  Icon,
-  List,
-  Color,
-  useNavigation,
-} from "@raycast/api";
+// Re-export all history components from the new modular structure
+export {
+  HistoryFilters,
+  useHistoryFilters,
+  filterAndSortSessions,
+  getFilterSummary,
+  getFilterOptions,
+  validateFilters,
+  HistoryDetail,
+  SessionStats,
+  HistoryActions,
+  BulkHistoryActions,
+  QuickActions,
+  ContextMenuActions,
+  HistoryList,
+  SessionGroup,
+  CompactHistoryList,
+  VirtualHistoryList,
+  useSessionGrouping,
+  getGroupStatistics,
+  SessionListItem,
+  SessionMoodIndicators,
+} from "./components/history";
+
+// Re-export types for backward compatibility
+export type {
+  SortOption,
+  FilterType,
+  CompletionFilter,
+  SessionListItemProps,
+  SessionMoodIndicatorsProps,
+} from "./components/history";
+
+// Keep the main TimerHistory component for backward compatibility
+import { List, useNavigation, Color } from "@raycast/api";
 import { useState, useMemo, useEffect } from "react";
 import { useTimerStore } from "./store/timer-store";
 import {
-  formatTime,
-  getSessionTypeLabel,
-  getSessionTypeIcon,
-} from "./utils/helpers";
-import { TimerSession } from "./types/timer";
-import {
-  format,
-  isToday,
-  isYesterday,
-  isThisWeek,
-  isThisMonth,
-} from "date-fns";
-import { SessionManagementForm } from "./components/session-editing";
-import { SessionListItem } from "./components/history";
-import {
-  getAppRankingColor,
-  SESSION_ICONS,
-  STATUS_COLORS,
-  ACTION_ICONS,
-  SHORTCUTS,
-  getMoodIcon,
-  getMoodColor,
-} from "./constants/design-tokens";
-import { jsonApplicationIconService } from "./services/json-app-icon-service";
-
-type SortOption = "newest" | "oldest" | "longest" | "shortest";
-type FilterType = "all" | "work" | "short_break" | "long_break";
-type CompletionFilter = "all" | "completed" | "incomplete";
+  HistoryFilters,
+  useHistoryFilters,
+  filterAndSortSessions,
+  HistoryList,
+  SortOption,
+  FilterType,
+  CompletionFilter,
+} from "./components/history";
 
 export default function TimerHistory() {
   const { push } = useNavigation();
@@ -47,17 +54,18 @@ export default function TimerHistory() {
     null
   );
 
-  const [sortBy, setSortBy] = useState<SortOption>("newest");
-  const [filterType, setFilterType] = useState<FilterType>("all");
-  const [completionFilter, setCompletionFilter] =
-    useState<CompletionFilter>("all");
+  // Use the new history filters hook
   const {
-    history,
-    deleteSession,
-    getTagConfig,
-    moodEntries,
-    refreshConfigFromPreferences,
-  } = useTimerStore();
+    sortBy,
+    setSortBy,
+    filterType,
+    setFilterType,
+    completionFilter,
+    setCompletionFilter,
+  } = useHistoryFilters();
+
+  const { history, getTagConfig, moodEntries, refreshConfigFromPreferences } =
+    useTimerStore();
 
   // Refresh preferences when the history command is opened
   useEffect(() => {
@@ -104,51 +112,33 @@ export default function TimerHistory() {
     return colorMap[tag.toLowerCase()] || Color.Blue;
   };
 
-  // Filter and sort sessions - moved before conditional returns
+  // Use the new filtering and sorting utility
   const filteredAndSortedSessions = useMemo(() => {
-    let filtered = history;
-
-    // Apply type filter
-    if (filterType !== "all") {
-      filtered = filtered.filter((session) => session.type === filterType);
-    }
-
-    // Apply completion filter
-    if (completionFilter !== "all") {
-      filtered = filtered.filter((session) =>
-        completionFilter === "completed"
-          ? session.completed
-          : !session.completed
-      );
-    }
-
-    // Apply sorting
-    const sorted = [...filtered].sort((a, b) => {
-      switch (sortBy) {
-        case "newest":
-          return (
-            new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-          );
-        case "oldest":
-          return (
-            new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-          );
-        case "longest":
-          return b.duration - a.duration;
-        case "shortest":
-          return a.duration - b.duration;
-        default:
-          return 0;
-      }
+    return filterAndSortSessions(history, {
+      sortBy,
+      filterType,
+      completionFilter,
     });
+  }, [history, sortBy, filterType, completionFilter]);
 
-    return sorted;
-  }, [history, filterType, completionFilter, sortBy]);
+  const handleDetailToggle = (sessionId?: string) => {
+    if (sessionId) {
+      setSelectedSessionId(sessionId);
+    }
+    setIsShowingDetail(!isShowingDetail);
+  };
 
-  // Find the currently selected session for detail view
-  const selectedSession = selectedSessionId
-    ? history.find((session) => session.id === selectedSessionId)
-    : null;
+  // Get the filters configuration
+  const filtersConfig = HistoryFilters({
+    sortBy,
+    setSortBy,
+    filterType,
+    setFilterType,
+    completionFilter,
+    setCompletionFilter,
+    isShowingDetail,
+    onDetailToggle: handleDetailToggle,
+  });
 
   return (
     <List
@@ -160,387 +150,18 @@ export default function TimerHistory() {
           setSelectedSessionId(id);
         }
       }}
-      searchBarAccessory={
-        <List.Dropdown
-          tooltip="Sort Rounds"
-          value={sortBy}
-          onChange={(value) => setSortBy(value as SortOption)}
-        >
-          <List.Dropdown.Item title="Newest First" value="newest" />
-          <List.Dropdown.Item title="Oldest First" value="oldest" />
-          <List.Dropdown.Item title="Longest Rounds" value="longest" />
-          <List.Dropdown.Item title="Shortest Rounds" value="shortest" />
-        </List.Dropdown>
-      }
-      actions={
-        <ActionPanel>
-          <ActionPanel.Section title="View">
-            <Action
-              title={isShowingDetail ? "Hide Details" : "Show Details"}
-              icon={
-                isShowingDetail ? Icon.EyeDisabled : ACTION_ICONS.VIEW_DETAILS
-              }
-              onAction={() => handleDetailToggle()}
-              shortcut={{ modifiers: ["cmd"], key: "d" }}
-            />
-          </ActionPanel.Section>
-          <ActionPanel.Section title="Filter">
-            <ActionPanel.Submenu title="Round Type" icon={Icon.Filter}>
-              <Action
-                title="All Rounds"
-                onAction={() => setFilterType("all")}
-              />
-              <Action
-                title="Focus Rounds"
-                onAction={() => setFilterType("work")}
-              />
-              <Action
-                title="Short Breaks"
-                onAction={() => setFilterType("short_break")}
-              />
-              <Action
-                title="Long Breaks"
-                onAction={() => setFilterType("long_break")}
-              />
-            </ActionPanel.Submenu>
-            <ActionPanel.Submenu
-              title="Completion Status"
-              icon={Icon.CheckCircle}
-            >
-              <Action
-                title="All Rounds"
-                onAction={() => setCompletionFilter("all")}
-              />
-              <Action
-                title="Completed Only"
-                onAction={() => setCompletionFilter("completed")}
-              />
-              <Action
-                title="Incomplete Only"
-                onAction={() => setCompletionFilter("incomplete")}
-              />
-            </ActionPanel.Submenu>
-          </ActionPanel.Section>
-        </ActionPanel>
-      }
+      searchBarAccessory={filtersConfig.searchBarAccessory}
+      actions={filtersConfig.actions}
     >
-      {Object.entries(
-        filteredAndSortedSessions.reduce(
-          (groups, session) => {
-            const startTime = new Date(session.startTime);
-            let groupKey: string;
-
-            if (isToday(startTime)) {
-              groupKey = "Today";
-            } else if (isYesterday(startTime)) {
-              groupKey = "Yesterday";
-            } else if (isThisWeek(startTime)) {
-              groupKey = format(startTime, "EEEE");
-            } else if (isThisMonth(startTime)) {
-              groupKey = format(startTime, "MMMM d");
-            } else {
-              groupKey = format(startTime, "MMMM yyyy");
-            }
-
-            if (!groups[groupKey]) {
-              groups[groupKey] = [];
-            }
-            groups[groupKey].push(session);
-            return groups;
-          },
-          {} as Record<string, TimerSession[]>
-        )
-      ).map(([dateGroup, sessions]) => (
-        <List.Section key={dateGroup} title={dateGroup}>
-          {sessions.map((session) => (
-            <SessionListItem
-              key={session.id}
-              session={session}
-              moodEntries={moodEntries}
-              showDetail={isShowingDetail}
-              detailComponent={<SessionDetailView session={session} />}
-              getTagColor={getTagColor}
-              actions={
-                <ActionPanel>
-                  {/* Primary action: View Details */}
-                  <Action
-                    title={isShowingDetail ? "Hide Details" : "Show Details"}
-                    icon={
-                      isShowingDetail
-                        ? Icon.EyeDisabled
-                        : ACTION_ICONS.VIEW_DETAILS
-                    }
-                    onAction={() => handleDetailToggle(session.id)}
-                    shortcut={SHORTCUTS.PRIMARY_ACTION}
-                  />
-
-                  {/* Secondary action: Manage Session */}
-                  <Action
-                    title="Manage Session"
-                    icon={Icon.Gear}
-                    onAction={() =>
-                      push(<SessionManagementForm session={session} />)
-                    }
-                    shortcut={{ modifiers: ["cmd"], key: "m" }}
-                  />
-                  <ActionPanel.Section title="Actions">
-                    <Action
-                      title="Delete Session"
-                      icon={Icon.Trash}
-                      style={Action.Style.Destructive}
-                      onAction={async () => {
-                        deleteSession(session.id);
-                        // Toast disabled for Windows compatibility
-                      }}
-                      shortcut={{ modifiers: ["cmd"], key: "delete" }}
-                    />
-                  </ActionPanel.Section>
-                </ActionPanel>
-              }
-            />
-          ))}
-        </List.Section>
-      ))}
-
-      {history.length === 0 && (
-        <List.EmptyView
-          title="No Focus Sessions"
-          description="Start your first focus round to see your session history here"
-          icon={{
-            source: SESSION_ICONS.IDLE,
-            tintColor: STATUS_COLORS.NEUTRAL,
-          }}
-        />
-      )}
+      <HistoryList
+        sessions={filteredAndSortedSessions}
+        moodEntries={moodEntries}
+        isShowingDetail={isShowingDetail}
+        selectedSessionId={selectedSessionId}
+        onSelectionChange={setSelectedSessionId}
+        onDetailToggle={handleDetailToggle}
+        getTagColor={getTagColor}
+      />
     </List>
-  );
-}
-
-interface SessionDetailViewProps {
-  session: TimerSession;
-}
-
-function SessionDetailView({ session }: SessionDetailViewProps) {
-  const { moodEntries } = useTimerStore();
-
-  // Ensure dates are Date objects (they might be strings when loaded from storage)
-  const startTime = new Date(session.startTime);
-  const endTime = session.endTime ? new Date(session.endTime) : null;
-
-  const duration = endTime
-    ? Math.floor((endTime.getTime() - startTime.getTime()) / 1000)
-    : session.duration;
-
-  // Find mood entries associated with this session
-  const associatedMoodEntries = moodEntries.filter(
-    (entry) => entry.sessionId === session.id
-  );
-
-  // Fix percentage calculation for existing sessions that might have percentage: 0
-  const applicationUsageWithPercentages = session.applicationUsage?.map(
-    (app) => {
-      if (app.percentage === 0 && app.timeSpent > 0) {
-        // Calculate percentage based on session duration
-        const totalTime =
-          session.applicationUsage?.reduce((sum, a) => sum + a.timeSpent, 0) ||
-          1;
-        return {
-          ...app,
-          percentage: Math.round((app.timeSpent / totalTime) * 100),
-        };
-      }
-      return app;
-    }
-  );
-
-  const getStatusText = () => {
-    if (session.completed) return "Completed";
-    switch (session.endReason) {
-      case "stopped":
-        return "Stopped Early";
-      case "skipped":
-        return "Skipped";
-      default:
-        return "Incomplete";
-    }
-  };
-
-  return (
-    <List.Item.Detail
-      metadata={
-        <List.Item.Detail.Metadata>
-          {/* Session Overview Section */}
-          <List.Item.Detail.Metadata.Label
-            title="Session Overview"
-            text={session.taskName || getSessionTypeLabel(session.type)}
-            icon={{
-              source: session.taskIcon || getSessionTypeIcon(session.type),
-              tintColor: STATUS_COLORS.PRIMARY,
-            }}
-          />
-
-          <List.Item.Detail.Metadata.Label
-            title="Duration"
-            text={formatTime(duration)}
-            icon={{ source: Icon.Clock, tintColor: STATUS_COLORS.INFO }}
-          />
-
-          <List.Item.Detail.Metadata.Label
-            title="Status"
-            text={getStatusText()}
-            icon={{
-              source: session.completed ? Icon.CheckCircle : Icon.XMarkCircle,
-              tintColor: session.completed
-                ? STATUS_COLORS.SUCCESS
-                : STATUS_COLORS.ERROR,
-            }}
-          />
-
-          {/* Time Information Section */}
-          <List.Item.Detail.Metadata.Separator />
-          <List.Item.Detail.Metadata.Label
-            title="Started"
-            text={format(startTime, "MMM d, yyyy 'at' h:mm a")}
-            icon={{ source: Icon.Calendar, tintColor: STATUS_COLORS.NEUTRAL }}
-          />
-          {endTime && (
-            <List.Item.Detail.Metadata.Label
-              title="Ended"
-              text={format(endTime, "MMM d, yyyy 'at' h:mm a")}
-              icon={{ source: Icon.Calendar, tintColor: STATUS_COLORS.NEUTRAL }}
-            />
-          )}
-
-          {/* Project Information Section */}
-          {session.projectName && (
-            <>
-              <List.Item.Detail.Metadata.Separator />
-              <List.Item.Detail.Metadata.Label
-                title="Project"
-                text={session.projectName}
-                icon={{ source: Icon.Folder, tintColor: STATUS_COLORS.ACCENT }}
-              />
-            </>
-          )}
-
-          {session.tags && session.tags.length > 0 && (
-            <>
-              <List.Item.Detail.Metadata.Separator />
-              <List.Item.Detail.Metadata.TagList title="Tags">
-                {session.tags.map((tag) => (
-                  <List.Item.Detail.Metadata.TagList.Item
-                    key={tag}
-                    text={tag}
-                  />
-                ))}
-              </List.Item.Detail.Metadata.TagList>
-            </>
-          )}
-
-          {session.notes && (
-            <>
-              <List.Item.Detail.Metadata.Separator />
-              <List.Item.Detail.Metadata.Label
-                title="Notes"
-                text={session.notes}
-                icon={{ source: Icon.Document, tintColor: STATUS_COLORS.INFO }}
-              />
-            </>
-          )}
-
-          {associatedMoodEntries.length > 0 && (
-            <>
-              <List.Item.Detail.Metadata.Separator />
-              <List.Item.Detail.Metadata.Label
-                title="Mood Entries"
-                text={`${associatedMoodEntries.length} ${associatedMoodEntries.length === 1 ? "entry" : "entries"}`}
-                icon={{ source: Icon.Heart, tintColor: STATUS_COLORS.ACCENT }}
-              />
-              {associatedMoodEntries.slice(0, 3).map((entry) => {
-                const contextText =
-                  entry.context === "pre-session"
-                    ? "Before session"
-                    : entry.context === "post-session"
-                      ? "After session"
-                      : entry.context === "during-session"
-                        ? "During session"
-                        : "Standalone";
-
-                return (
-                  <List.Item.Detail.Metadata.Label
-                    key={entry.id}
-                    title={`${entry.mood.charAt(0).toUpperCase() + entry.mood.slice(1)} (${entry.intensity}/5)`}
-                    text={`${contextText} - ${format(new Date(entry.timestamp), "h:mm a")}`}
-                    icon={{
-                      source: getMoodIcon(entry.mood),
-                      tintColor: getMoodColor(entry.mood),
-                    }}
-                  />
-                );
-              })}
-              {associatedMoodEntries.length > 3 && (
-                <List.Item.Detail.Metadata.Label
-                  title="More Mood Entries"
-                  text={`+${associatedMoodEntries.length - 3} additional entries`}
-                  icon={{
-                    source: Icon.Ellipsis,
-                    tintColor: STATUS_COLORS.NEUTRAL,
-                  }}
-                />
-              )}
-            </>
-          )}
-
-          {applicationUsageWithPercentages &&
-            applicationUsageWithPercentages.length > 0 && (
-              <>
-                <List.Item.Detail.Metadata.Separator />
-                <List.Item.Detail.Metadata.Label
-                  title="Application Usage"
-                  text={`${applicationUsageWithPercentages.length} applications tracked`}
-                  icon={{ source: Icon.Desktop, tintColor: STATUS_COLORS.INFO }}
-                />
-                {applicationUsageWithPercentages
-                  .slice(0, 5)
-                  .map((app, index) => {
-                    // Get the appropriate icon for the application
-                    const appIcon =
-                      app.raycastIcon ||
-                      jsonApplicationIconService.getIconByBundleId(
-                        app.bundleId
-                      ) ||
-                      jsonApplicationIconService.getIconByName(app.name) ||
-                      Icon.Desktop;
-
-                    return (
-                      <List.Item.Detail.Metadata.Label
-                        key={app.bundleId}
-                        title={app.name}
-                        text={`${app.percentage}% (${formatTime(app.timeSpent)})`}
-                        icon={{
-                          source: appIcon,
-                          tintColor:
-                            index < 3
-                              ? getAppRankingColor(index)
-                              : STATUS_COLORS.NEUTRAL,
-                        }}
-                      />
-                    );
-                  })}
-                {applicationUsageWithPercentages.length > 5 && (
-                  <List.Item.Detail.Metadata.Label
-                    title="More Applications"
-                    text={`+${applicationUsageWithPercentages.length - 5} additional apps`}
-                    icon={{
-                      source: Icon.Ellipsis,
-                      tintColor: STATUS_COLORS.NEUTRAL,
-                    }}
-                  />
-                )}
-              </>
-            )}
-        </List.Item.Detail.Metadata>
-      }
-    />
   );
 }

@@ -5,7 +5,7 @@
  * and various Windows applications to ensure proper functionality.
  */
 
-import { applicationTrackingService } from "../services/application-tracking";
+import { applicationTrackingService } from "../services/tracking/application-tracking-service";
 import { showToast, Toast, getFrontmostApplication } from "@raycast/api";
 
 interface WindowsCompatibilityReport {

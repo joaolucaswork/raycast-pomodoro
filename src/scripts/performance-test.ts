@@ -5,7 +5,7 @@
  * application tracking enabled, to ensure it doesn't impact system performance.
  */
 
-import { applicationTrackingService } from "../services/application-tracking";
+import { applicationTrackingService } from "../services/tracking/application-tracking-service";
 import { showToast, Toast } from "@raycast/api";
 
 interface PerformanceMetrics {

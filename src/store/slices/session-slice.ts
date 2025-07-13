@@ -12,7 +12,7 @@ import {
   shouldSaveSessionToHistory,
   getActualSessionDuration,
 } from "../../utils/helpers";
-import { applicationTrackingService } from "../../services/application-tracking";
+import { applicationTrackingService } from "../../services/tracking/application-tracking-service";
 import { calculateStats } from "./stats-slice";
 
 /**

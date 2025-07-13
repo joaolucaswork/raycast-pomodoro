@@ -1,11 +1,9 @@
 import { List, Icon, Color } from "@raycast/api";
-import { ApplicationUsage } from "../types/timer";
-import { formatTime } from "../utils/helpers";
-import {
-  applicationTrackingService,
-  ApplicationTrackingStats,
-} from "../services/application-tracking";
-import { jsonApplicationIconService } from "../services/json-app-icon-service";
+import { ApplicationUsage } from "../../types/timer";
+import { formatTime } from "../../utils/helpers";
+import { applicationTrackingService } from "../../services/tracking/application-tracking-service";
+import { ApplicationTrackingStats } from "../../services/tracking/application-tracking/application-tracking-types";
+import { jsonApplicationIconService } from "../../services/data/json-app-icon-service";
 
 interface ApplicationUsageStatsProps {
   applicationUsage: ApplicationUsage[];

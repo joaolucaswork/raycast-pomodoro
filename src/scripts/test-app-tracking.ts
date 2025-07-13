@@ -5,7 +5,7 @@
  * in a real Raycast environment.
  */
 
-import { applicationTrackingService } from "../services/application-tracking";
+import { applicationTrackingService } from "../services/tracking/application-tracking-service";
 import { showToast, Toast } from "@raycast/api";
 
 export async function testApplicationTracking() {

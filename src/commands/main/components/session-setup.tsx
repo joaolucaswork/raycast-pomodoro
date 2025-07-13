@@ -18,7 +18,7 @@ interface SessionSetupProps {
   targetRounds: string;
   preSessionMood: MoodType | null;
   config: TimerConfig;
-  getTagConfig: (tag: string) => { icon?: Icon; color: any } | undefined;
+  getTagConfig: (tag: string) => { icon?: Icon; color: Color } | undefined;
   onStartWork: () => void;
   onSetPreSessionMood: (mood: MoodType | null) => void;
 }

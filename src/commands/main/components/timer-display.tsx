@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import {
   Action,
   ActionPanel,
+  Color,
   Icon,
   List,
   Form,
   showToast,
   Toast,
 } from "@raycast/api";
-import { createTaskIconSelectionActions } from "../../../components/inline-icon-selection";
+import { createTaskIconSelectionActions } from "../../../components/icons/inline-icon-selection";
 import { formatDistanceToNow } from "date-fns";
 import {
   formatTime,
@@ -39,7 +40,7 @@ interface TimerDisplayProps {
   targetRounds: string;
   searchText: string;
   moodEntries: MoodEntry[];
-  getTagConfig: (tag: string) => { icon?: Icon; color: any } | undefined;
+  getTagConfig: (tag: string) => { icon?: Icon; color: Color } | undefined;
   onPause: () => void;
   onResume: () => void;
   onComplete: () => void;

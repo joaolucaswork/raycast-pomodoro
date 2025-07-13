@@ -10,7 +10,7 @@ import {
   MoodHistoryList,
 } from "../../../components/mood-tracking";
 import { MoodEntry, MoodAnalytics, MoodType } from "../../../types/timer";
-import { moodTrackingService } from "../../../services/mood-tracking-service";
+import { moodTrackingService } from "../../../services/mood/mood-tracking-service";
 
 interface ProfileMoodProps {
   moodEntries: MoodEntry[];
