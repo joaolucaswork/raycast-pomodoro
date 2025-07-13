@@ -3,7 +3,7 @@ import {
   MoodType,
   MoodAnalytics,
   TimerSession,
-} from "../types/timer";
+} from "../../types/timer";
 import {
   format,
   startOfDay,
@@ -16,7 +16,7 @@ import {
 
 /**
  * Service for mood analytics and trend calculations.
- * 
+ *
  * Handles:
  * - Mood analytics calculation
  * - Trend analysis and pattern recognition
@@ -40,7 +40,7 @@ export class MoodAnalyticsService {
    */
   public calculateMoodAnalytics(
     moodEntries: MoodEntry[],
-    sessions: TimerSession[] = [],
+    sessions: TimerSession[] = []
   ): MoodAnalytics {
     if (moodEntries.length === 0) {
       return this.getEmptyAnalytics();
@@ -85,14 +85,16 @@ export class MoodAnalyticsService {
     });
 
     return Object.entries(moodCounts).reduce((a, b) =>
-      moodCounts[a[0]] > moodCounts[b[0]] ? a : b,
+      moodCounts[a[0]] > moodCounts[b[0]] ? a : b
     )[0] as MoodType;
   }
 
   /**
    * Calculate mood distribution percentages
    */
-  public calculateMoodDistribution(moodEntries: MoodEntry[]): Record<MoodType, number> {
+  public calculateMoodDistribution(
+    moodEntries: MoodEntry[]
+  ): Record<MoodType, number> {
     const distribution: Record<string, number> = {};
     const total = moodEntries.length;
 
@@ -148,7 +150,7 @@ export class MoodAnalyticsService {
    */
   public calculateOptimalMoodTimes(
     moodEntries: MoodEntry[],
-    sessions: TimerSession[],
+    sessions: TimerSession[]
   ): { hour: number; mood: MoodType; productivity: number }[] {
     const hourlyData: Record<
       number,
@@ -162,9 +164,9 @@ export class MoodAnalyticsService {
           entry.sessionId === session.id ||
           Math.abs(
             new Date(entry.timestamp).getTime() -
-              new Date(session.startTime).getTime(),
+              new Date(session.startTime).getTime()
           ) <
-            30 * 60 * 1000,
+            30 * 60 * 1000
       );
 
       if (relatedMood) {
@@ -181,7 +183,7 @@ export class MoodAnalyticsService {
         const mostCommonMood = data.moods.reduce((a, b, _, arr) =>
           arr.filter((v) => v === a).length >= arr.filter((v) => v === b).length
             ? a
-            : b,
+            : b
         );
         const avgProductivity =
           data.productivity.reduce((a, b) => a + b, 0) /
@@ -201,7 +203,7 @@ export class MoodAnalyticsService {
    */
   public calculateEnergyLevelImpact(
     moodEntries: MoodEntry[],
-    sessions: TimerSession[],
+    sessions: TimerSession[]
   ): { level: number; avgFocusQuality: number; completionRate: number }[] {
     const energyLevels = [1, 2, 3, 4, 5];
 
@@ -210,7 +212,7 @@ export class MoodAnalyticsService {
         const levelSessions = sessions.filter((session) => {
           const relatedMood = moodEntries.find(
             (entry) =>
-              entry.sessionId === session.id && entry.intensity === level,
+              entry.sessionId === session.id && entry.intensity === level
           );
           return relatedMood;
         });

@@ -1,7 +1,7 @@
 import { Action, ActionPanel, Icon, List } from "@raycast/api";
 import { useState, useMemo, useEffect } from "react";
 import { useTimerStore } from "./store/timer-store";
-import { dataService } from "./services/data-service";
+import { dataService } from "./services/data/data-service";
 import {
   ProfileOverview,
   ProfileStatistics,

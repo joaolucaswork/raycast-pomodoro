@@ -20,7 +20,7 @@ import {
   getMoodContextIcon,
 } from "../../constants/design-tokens";
 import { formatDistanceToNow } from "date-fns";
-import { MoodEntryDetail } from "../mood-entry-detail";
+import { MoodEntryDetail } from "../ui/mood-entry-detail";
 import { MoodEntryForm } from "./MoodEntryForm";
 
 interface MoodHistoryProps {

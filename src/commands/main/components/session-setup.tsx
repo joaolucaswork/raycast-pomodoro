@@ -8,7 +8,7 @@ import {
 } from "../../../constants/design-tokens";
 import { getTagColor, getTagIcon } from "../utils/search-parsing";
 import { MOOD_OPTIONS } from "../utils/timer-display-helpers";
-import { createTaskIconSelectionActions } from "../../../components/inline-icon-selection";
+import { createTaskIconSelectionActions } from "../../../components/icons/inline-icon-selection";
 
 interface SessionSetupProps {
   currentTaskName: string;

@@ -1,5 +1,5 @@
-import { TimerSession, TimerStats } from "../types/timer";
-import { useTimerStore } from "../store/timer-store";
+import { TimerSession, TimerStats } from "../../types/timer";
+import { useTimerStore } from "../../store/timer-store";
 import {
   format,
   startOfDay,
@@ -36,7 +36,7 @@ export class DataService {
 
   public getSessionsInRange(
     sessions: TimerSession[],
-    range: DateRange,
+    range: DateRange
   ): TimerSession[] {
     return sessions.filter((session) => {
       const sessionDate = new Date(session.startTime);
@@ -81,7 +81,7 @@ export class DataService {
     // Basic stats
     const totalWorkTime = workSessions.reduce(
       (acc, session) => acc + session.duration,
-      0,
+      0
     );
     const totalBreakTime = completedSessions
       .filter((s) => s.type !== "work")
@@ -152,7 +152,7 @@ export class DataService {
 
     const sessionsByDate = this.groupSessionsByDate(sessions);
     const sortedDates = Object.keys(sessionsByDate).sort(
-      (a, b) => new Date(b).getTime() - new Date(a).getTime(),
+      (a, b) => new Date(b).getTime() - new Date(a).getTime()
     );
 
     let streak = 0;
@@ -161,7 +161,7 @@ export class DataService {
     for (const dateStr of sortedDates) {
       const date = new Date(dateStr);
       const daysDiff = Math.floor(
-        (new Date(today).getTime() - date.getTime()) / (1000 * 60 * 60 * 24),
+        (new Date(today).getTime() - date.getTime()) / (1000 * 60 * 60 * 24)
       );
 
       if (daysDiff === streak) {
@@ -179,7 +179,7 @@ export class DataService {
 
     const sessionsByDate = this.groupSessionsByDate(sessions);
     const sortedDates = Object.keys(sessionsByDate).sort(
-      (a, b) => new Date(a).getTime() - new Date(b).getTime(),
+      (a, b) => new Date(a).getTime() - new Date(b).getTime()
     );
 
     let longestStreak = 0;
@@ -193,7 +193,7 @@ export class DataService {
         currentStreak = 1;
       } else {
         const daysDiff = Math.floor(
-          (currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24),
+          (currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24)
         );
 
         if (daysDiff === 1) {
@@ -211,7 +211,7 @@ export class DataService {
   }
 
   private groupSessionsByDate(
-    sessions: TimerSession[],
+    sessions: TimerSession[]
   ): Record<string, TimerSession[]> {
     const groups: Record<string, TimerSession[]> = {};
 
@@ -287,7 +287,7 @@ export class DataService {
       const existingIds = new Set(currentState.history.map((s) => s.id));
 
       const newSessions = data.sessions.filter(
-        (session) => !existingIds.has(session.id),
+        (session) => !existingIds.has(session.id)
       );
       const mergedHistory = [...currentState.history, ...newSessions];
 
@@ -335,14 +335,14 @@ export class DataService {
     const oldestSession =
       sessions.length > 0
         ? new Date(
-            Math.min(...sessions.map((s) => new Date(s.startTime).getTime())),
+            Math.min(...sessions.map((s) => new Date(s.startTime).getTime()))
           )
         : null;
 
     const newestSession =
       sessions.length > 0
         ? new Date(
-            Math.max(...sessions.map((s) => new Date(s.startTime).getTime())),
+            Math.max(...sessions.map((s) => new Date(s.startTime).getTime()))
           )
         : null;
 

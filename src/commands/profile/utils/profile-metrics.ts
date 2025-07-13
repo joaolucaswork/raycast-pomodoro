@@ -1,4 +1,4 @@
-import { adhdSupportService } from "../../../services/adhd-support-service";
+import { adhdSupportService } from "../../../services/features/adhd-support-service";
 import { RewardSystem, TimerSession } from "../../../types/timer";
 
 /**
@@ -16,11 +16,13 @@ export interface ProfileMetrics {
 /**
  * Calculate comprehensive profile metrics
  */
-export const calculateProfileMetrics = (rewardSystem: RewardSystem): ProfileMetrics => {
+export const calculateProfileMetrics = (
+  rewardSystem: RewardSystem
+): ProfileMetrics => {
   const pointsForNextLevel = adhdSupportService.getPointsForNextLevel(
     rewardSystem.points
   );
-  
+
   const progressToNextLevel = Math.round(
     ((rewardSystem.points - Math.pow(rewardSystem.level - 1, 2) * 50) /
       (Math.pow(rewardSystem.level, 2) * 50 -
@@ -41,7 +43,8 @@ export const calculateProfileMetrics = (rewardSystem: RewardSystem): ProfileMetr
     pointsForNextLevel,
     progressToNextLevel,
     recentAchievements,
-    totalAchievements: rewardSystem.achievements.filter((a) => a.unlockedAt).length,
+    totalAchievements: rewardSystem.achievements.filter((a) => a.unlockedAt)
+      .length,
     availableAchievements: adhdSupportService.getDefaultAchievements().length,
   };
 };
@@ -85,7 +88,10 @@ export const getTodaysSessions = (history: TimerSession[]): number => {
 /**
  * Get recent achievements with specified limit
  */
-export const getRecentAchievements = (rewardSystem: RewardSystem, limit: number = 5) => {
+export const getRecentAchievements = (
+  rewardSystem: RewardSystem,
+  limit: number = 5
+) => {
   return rewardSystem.achievements
     .filter((a) => a.unlockedAt)
     .sort((a, b) => {

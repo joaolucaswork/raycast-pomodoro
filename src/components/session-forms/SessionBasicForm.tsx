@@ -11,7 +11,7 @@ import { useState } from "react";
 import { useTimerStore } from "../../store/timer-store";
 import { TimerSession } from "../../types/timer";
 import { ACTION_ICONS } from "../../constants/design-tokens";
-import { createTaskIconSelectionActions } from "../inline-icon-selection";
+import { createTaskIconSelectionActions } from "../icons/inline-icon-selection";
 
 interface SessionBasicFormProps {
   session: TimerSession;
@@ -22,7 +22,8 @@ export function SessionBasicForm({
   session,
   onSessionUpdated,
 }: SessionBasicFormProps) {
-  const { updateSessionName, updateSessionNotes, updateSessionIcon } = useTimerStore();
+  const { updateSessionName, updateSessionNotes, updateSessionIcon } =
+    useTimerStore();
   const { pop } = useNavigation();
 
   const [taskName, setTaskName] = useState(session.taskName || "");

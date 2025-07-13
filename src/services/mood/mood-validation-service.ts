@@ -1,12 +1,8 @@
-import {
-  MoodEntry,
-  MoodType,
-  TimerSession,
-} from "../types/timer";
+import { MoodEntry, MoodType, TimerSession } from "../../types/timer";
 
 /**
  * Service for mood data validation and recommendations.
- * 
+ *
  * Handles:
  * - Mood entry validation
  * - Recommendation generation
@@ -31,7 +27,7 @@ export class MoodValidationService {
   public validateMoodEntry(
     mood: MoodType,
     intensity: number,
-    context: string,
+    context: string
   ): { isValid: boolean; errors: string[] } {
     const errors: string[] = [];
 
@@ -79,7 +75,7 @@ export class MoodValidationService {
   public getMoodRecommendations(
     currentMood: MoodType,
     intensity: number,
-    recentEntries: MoodEntry[],
+    recentEntries: MoodEntry[]
   ): string[] {
     const recommendations: string[] = [];
 
@@ -87,21 +83,21 @@ export class MoodValidationService {
     if (currentMood === "stressed" || currentMood === "overwhelmed") {
       if (intensity >= 4) {
         recommendations.push(
-          "Consider taking a longer break before starting your next session",
+          "Consider taking a longer break before starting your next session"
         );
         recommendations.push(
-          "Try a 5-minute breathing exercise or mindfulness activity",
+          "Try a 5-minute breathing exercise or mindfulness activity"
         );
       }
       recommendations.push(
-        "Reduce session duration by 25-50% to prevent burnout",
+        "Reduce session duration by 25-50% to prevent burnout"
       );
     }
 
     // Low energy recommendations
     if (currentMood === "tired" && intensity >= 3) {
       recommendations.push(
-        "Consider shorter 15-minute sessions to maintain focus",
+        "Consider shorter 15-minute sessions to maintain focus"
       );
       recommendations.push("Take a 5-minute walk or do light stretching");
     }
@@ -109,7 +105,7 @@ export class MoodValidationService {
     // High energy optimization
     if (currentMood === "energized" && intensity >= 4) {
       recommendations.push(
-        "This is a great time for longer or more challenging tasks",
+        "This is a great time for longer or more challenging tasks"
       );
       recommendations.push("Consider extending your session by 10-15 minutes");
     }
@@ -121,7 +117,7 @@ export class MoodValidationService {
 
     if (recentStressfulMoods.length >= 3) {
       recommendations.push(
-        "You've been experiencing stress lately - consider adjusting your daily goals",
+        "You've been experiencing stress lately - consider adjusting your daily goals"
       );
     }
 
@@ -136,7 +132,7 @@ export class MoodValidationService {
     intensity: number,
     timeOfDay: number,
     recentEntries: MoodEntry[],
-    historicalData: { moodEntries: MoodEntry[]; sessions: TimerSession[] },
+    historicalData: { moodEntries: MoodEntry[]; sessions: TimerSession[] }
   ): {
     recommendedDuration: number;
     sessionType: "short" | "normal" | "extended";
@@ -147,7 +143,7 @@ export class MoodValidationService {
     // Find similar mood patterns in historical data
     const similarMoodSessions = historicalData.sessions.filter((session) => {
       const relatedMood = historicalData.moodEntries.find(
-        (entry) => entry.sessionId === session.id && entry.mood === currentMood,
+        (entry) => entry.sessionId === session.id && entry.mood === currentMood
       );
       return relatedMood && Math.abs(relatedMood.intensity - intensity) <= 1;
     });
@@ -199,8 +195,8 @@ export class MoodValidationService {
       Math.round(
         (similarMoodSessions.length / 5) * 50 + // Historical data confidence
           completionRate * 30 + // Success rate confidence
-          (intensity >= 3 ? 20 : 10), // Current state confidence
-      ),
+          (intensity >= 3 ? 20 : 10) // Current state confidence
+      )
     );
 
     return {
@@ -217,14 +213,14 @@ export class MoodValidationService {
    */
   public generateImprovementSuggestions(
     moodEntries: MoodEntry[],
-    sessions: TimerSession[],
+    sessions: TimerSession[]
   ): string[] {
     const suggestions: string[] = [];
     const recentEntries = moodEntries.slice(-10); // Last 10 entries
 
     // Check for stress patterns
     const stressfulEntries = recentEntries.filter((entry) =>
-      ["stressed", "overwhelmed"].includes(entry.mood),
+      ["stressed", "overwhelmed"].includes(entry.mood)
     );
     if (stressfulEntries.length >= 3) {
       suggestions.push("Consider shorter sessions when feeling stressed");
@@ -233,16 +229,18 @@ export class MoodValidationService {
 
     // Check for low energy patterns
     const lowEnergyEntries = recentEntries.filter(
-      (entry) => entry.mood === "tired" && entry.intensity >= 3,
+      (entry) => entry.mood === "tired" && entry.intensity >= 3
     );
     if (lowEnergyEntries.length >= 3) {
-      suggestions.push("Schedule demanding tasks during your peak energy hours");
+      suggestions.push(
+        "Schedule demanding tasks during your peak energy hours"
+      );
       suggestions.push("Consider adjusting your sleep schedule");
     }
 
     // Check for distraction patterns
     const distractedEntries = recentEntries.filter(
-      (entry) => entry.mood === "distracted",
+      (entry) => entry.mood === "distracted"
     );
     if (distractedEntries.length >= 2) {
       suggestions.push("Try using website blockers during focus sessions");
@@ -251,28 +249,38 @@ export class MoodValidationService {
 
     // Check for motivation patterns
     const motivatedEntries = recentEntries.filter(
-      (entry) => entry.mood === "motivated" && entry.intensity >= 4,
+      (entry) => entry.mood === "motivated" && entry.intensity >= 4
     );
     if (motivatedEntries.length >= 2) {
-      suggestions.push("Take advantage of high motivation with longer sessions");
-      suggestions.push("Schedule your most important tasks during motivated periods");
+      suggestions.push(
+        "Take advantage of high motivation with longer sessions"
+      );
+      suggestions.push(
+        "Schedule your most important tasks during motivated periods"
+      );
     }
 
     // Session completion analysis
     const recentSessions = sessions.slice(-10);
-    const completionRate = recentSessions.length > 0
-      ? recentSessions.filter(s => s.completed).length / recentSessions.length
-      : 0;
+    const completionRate =
+      recentSessions.length > 0
+        ? recentSessions.filter((s) => s.completed).length /
+          recentSessions.length
+        : 0;
 
     if (completionRate < 0.6) {
-      suggestions.push("Try shorter session durations to improve completion rate");
+      suggestions.push(
+        "Try shorter session durations to improve completion rate"
+      );
       suggestions.push("Break large tasks into smaller, manageable chunks");
     }
 
     // Default suggestions if no patterns found
     if (suggestions.length === 0) {
       suggestions.push("Continue tracking your mood to identify patterns");
-      suggestions.push("Experiment with different session lengths to find your optimal duration");
+      suggestions.push(
+        "Experiment with different session lengths to find your optimal duration"
+      );
     }
 
     return suggestions;
@@ -283,8 +291,16 @@ export class MoodValidationService {
    */
   public getTodaysMoodEntries(moodEntries: MoodEntry[]): MoodEntry[] {
     const today = new Date();
-    const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const endOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1);
+    const startOfToday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate()
+    );
+    const endOfToday = new Date(
+      today.getFullYear(),
+      today.getMonth(),
+      today.getDate() + 1
+    );
 
     return moodEntries.filter((entry) => {
       const entryDate = new Date(entry.timestamp);

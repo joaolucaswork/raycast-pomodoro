@@ -4,16 +4,21 @@ import {
   SessionType,
   TimerState,
   TimerConfig,
-} from "../types/timer";
-import { useTimerStore } from "../store/timer-store";
-import { getSessionTypeLabel } from "../utils/helpers";
-import { adhdSupportService } from "./adhd-support-service";
+} from "../../types/timer";
+import { useTimerStore } from "../../store/timer-store";
+import {
+  getSessionTypeLabel,
+  shouldSaveSessionToHistory,
+  getActualSessionDuration,
+} from "../../utils/helpers";
+import { calculateStats } from "../../store/slices/stats-slice";
+import { adhdSupportService } from "../features/adhd-support-service";
 import { timerCoreService } from "./timer-core-service";
 import { timerNotificationService } from "./timer-notification-service";
 
 /**
  * Timer completion service for handling session completion logic.
- * 
+ *
  * Handles:
  * - Session completion processing
  * - History management
@@ -36,9 +41,14 @@ export class TimerCompletionService {
   /**
    * Handles timer completion during state restoration (no auto-start)
    */
-  public async handleCompletionDuringRestore(session: TimerSession): Promise<void> {
-    const completedSession = await this.processSessionCompletion(session, false);
-    
+  public async handleCompletionDuringRestore(
+    session: TimerSession
+  ): Promise<void> {
+    const completedSession = await this.processSessionCompletion(
+      session,
+      false
+    );
+
     // Update store - go directly to IDLE state (no auto-start during restore)
     this.updateStoreAfterCompletion(completedSession, TimerState.IDLE, false);
 
@@ -58,9 +68,13 @@ export class TimerCompletionService {
     isManualCompletion: boolean = false
   ): Promise<void> {
     const completedSession = await this.processSessionCompletion(session, true);
-    
+
     // Update store to COMPLETED state initially
-    this.updateStoreAfterCompletion(completedSession, TimerState.COMPLETED, true);
+    this.updateStoreAfterCompletion(
+      completedSession,
+      TimerState.COMPLETED,
+      true
+    );
 
     // Process ADHD features
     await this.processAdhdFeatures(completedSession, true);
@@ -77,7 +91,9 @@ export class TimerCompletionService {
     shouldNotify: boolean
   ): Promise<TimerSession> {
     // Stop application tracking and capture usage data if it was a work session
-    const applicationUsage = timerCoreService.stopApplicationTracking(session.type);
+    const applicationUsage = timerCoreService.stopApplicationTracking(
+      session.type
+    );
 
     const completedSession: TimerSession = {
       ...session,
@@ -107,13 +123,8 @@ export class TimerCompletionService {
       useTimerStore.getState();
 
     // Check if session should be saved to history based on duration
-    const {
-      shouldSaveSessionToHistory,
-      getActualSessionDuration,
-      calculateStats,
-    } = require("../utils/helpers");
-    
-    const shouldSaveToHistory = shouldSave && shouldSaveSessionToHistory(completedSession);
+    const shouldSaveToHistory =
+      shouldSave && shouldSaveSessionToHistory(completedSession);
     const actualDuration = getActualSessionDuration(completedSession);
 
     // Show notification if session was too short to be saved
@@ -122,7 +133,9 @@ export class TimerCompletionService {
     }
 
     // Only add to history if session meets minimum duration requirement
-    const newHistory = shouldSaveToHistory ? [...history, completedSession] : history;
+    const newHistory = shouldSaveToHistory
+      ? [...history, completedSession]
+      : history;
     const newSessionCount =
       shouldSaveToHistory && completedSession.type === SessionType.WORK
         ? sessionCount + 1
@@ -155,7 +168,7 @@ export class TimerCompletionService {
     enableNotifications: boolean
   ): Promise<void> {
     const updatedState = useTimerStore.getState();
-    
+
     // Award points if reward system is enabled
     if (updatedState.config.enableRewardSystem) {
       const points = adhdSupportService.calculateSessionPoints(
@@ -176,7 +189,7 @@ export class TimerCompletionService {
     // Check for hyperfocus if enabled
     if (updatedState.config.enableHyperfocusDetection) {
       const hyperfocusResult = updatedState.checkHyperfocus();
-      
+
       if (hyperfocusResult && enableNotifications) {
         await timerNotificationService.notifyHyperfocusDetected(
           completedSession.duration,
@@ -194,7 +207,7 @@ export class TimerCompletionService {
     isManualCompletion: boolean
   ): Promise<void> {
     const { config, currentFocusPeriodSessionCount } = useTimerStore.getState();
-    
+
     // Determine if auto-start should happen
     const shouldAutoStart =
       !isManualCompletion &&
@@ -214,9 +227,11 @@ export class TimerCompletionService {
       // Schedule auto-start with delay
       setTimeout(async () => {
         // Import the background timer service to start the next session
-        const { backgroundTimerService } = require("./background-timer-service");
+        const {
+          backgroundTimerService,
+        } = require("./background-timer-service");
         await backgroundTimerService.startTimer(nextSessionType);
-        
+
         // Notify about auto-start
         await timerNotificationService.notifyAutoStart(nextSessionType);
       }, 2000); // 2 second delay before auto-start
@@ -234,7 +249,6 @@ export class TimerCompletionService {
    * Validates if a session should be saved to history
    */
   public shouldSaveSession(session: TimerSession): boolean {
-    const { shouldSaveSessionToHistory } = require("../utils/helpers");
     return shouldSaveSessionToHistory(session);
   }
 
@@ -242,7 +256,6 @@ export class TimerCompletionService {
    * Gets the actual duration of a session
    */
   public getSessionDuration(session: TimerSession): number {
-    const { getActualSessionDuration } = require("../utils/helpers");
     return getActualSessionDuration(session);
   }
 

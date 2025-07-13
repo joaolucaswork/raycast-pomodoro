@@ -8,7 +8,7 @@ import {
   getMoodColor,
   getMoodIntensityColor,
 } from "../../../constants/design-tokens";
-import { MoodEntryDetail } from "../../../components/mood-entry-detail";
+import { MoodEntryDetail } from "../../../components/ui/mood-entry-detail";
 import { MoodLoggingForm } from "../../../components/mood-tracking";
 import { RewardSystem, MoodEntry, TimerSession } from "../../../types/timer";
 import { getAchievementStyling, getSessionStatus } from "../utils";

@@ -16,7 +16,10 @@ interface ErrorBoundaryState {
 /**
  * Generic Error Boundary component for catching and handling React errors
  */
-export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+export class ErrorBoundary extends Component<
+  ErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -30,7 +33,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     // Log the error
     console.error("ErrorBoundary caught an error:", error, errorInfo);
-    
+
     // Update state with error info
     this.setState({ error, errorInfo });
 
@@ -91,7 +94,7 @@ export function withErrorBoundary<P extends object>(
 export function useErrorReporting() {
   const reportError = (error: Error, context?: string) => {
     console.error(`Error in ${context || "component"}:`, error);
-    
+
     // In a real implementation, this could send errors to a logging service
     // For now, we'll just log to console
   };
@@ -107,7 +110,10 @@ interface TimerErrorBoundaryProps {
   onTimerError?: (error: Error) => void;
 }
 
-export class TimerErrorBoundary extends Component<TimerErrorBoundaryProps, ErrorBoundaryState> {
+export class TimerErrorBoundary extends Component<
+  TimerErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: TimerErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -119,7 +125,7 @@ export class TimerErrorBoundary extends Component<TimerErrorBoundaryProps, Error
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Timer operation error:", error, errorInfo);
-    
+
     this.setState({ error, errorInfo });
 
     if (this.props.onTimerError) {
@@ -155,7 +161,10 @@ interface FormErrorBoundaryProps {
   onFormError?: (error: Error) => void;
 }
 
-export class FormErrorBoundary extends Component<FormErrorBoundaryProps, ErrorBoundaryState> {
+export class FormErrorBoundary extends Component<
+  FormErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: FormErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -167,7 +176,7 @@ export class FormErrorBoundary extends Component<FormErrorBoundaryProps, ErrorBo
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Form error:", error, errorInfo);
-    
+
     this.setState({ error, errorInfo });
 
     if (this.props.onFormError) {
@@ -203,7 +212,10 @@ interface DataErrorBoundaryProps {
   onDataError?: (error: Error) => void;
 }
 
-export class DataErrorBoundary extends Component<DataErrorBoundaryProps, ErrorBoundaryState> {
+export class DataErrorBoundary extends Component<
+  DataErrorBoundaryProps,
+  ErrorBoundaryState
+> {
   constructor(props: DataErrorBoundaryProps) {
     super(props);
     this.state = { hasError: false };
@@ -215,7 +227,7 @@ export class DataErrorBoundary extends Component<DataErrorBoundaryProps, ErrorBo
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("Data loading error:", error, errorInfo);
-    
+
     this.setState({ error, errorInfo });
 
     if (this.props.onDataError) {
@@ -231,7 +243,7 @@ export class DataErrorBoundary extends Component<DataErrorBoundaryProps, ErrorBo
             title="Data Loading Error"
             description="Unable to load data. Please check your connection and try again."
             icon={{
-              source: Icon.WiFiDisabled,
+              source: Icon.WifiDisabled,
               tintColor: Color.Red,
             }}
           />
@@ -267,7 +279,7 @@ export function createErrorBoundary(
 
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
       console.error(`Custom error boundary (${errorTitle}):`, error, errorInfo);
-      
+
       this.setState({ error, errorInfo });
 
       if (onError) {

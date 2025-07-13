@@ -1,8 +1,8 @@
-import { storageAdapter } from "../utils/storage-adapter";
+import { storageAdapter } from "../../utils/storage-adapter";
 
 /**
  * Timer persistence service for background state management.
- * 
+ *
  * Handles:
  * - Background timer state storage and retrieval
  * - State persistence across app restarts
@@ -45,7 +45,7 @@ export class TimerPersistenceService {
       }
 
       const state = JSON.parse(stateJson);
-      
+
       // Validate the loaded state
       if (!this.isValidBackgroundState(state)) {
         console.warn("Invalid background state found, clearing it");
@@ -113,7 +113,12 @@ export class TimerPersistenceService {
     }
 
     // Check required fields
-    const requiredFields = ["session", "startTimestamp", "endTimestamp", "state"];
+    const requiredFields = [
+      "session",
+      "startTimestamp",
+      "endTimestamp",
+      "state",
+    ];
     for (const field of requiredFields) {
       if (!(field in state)) {
         return false;

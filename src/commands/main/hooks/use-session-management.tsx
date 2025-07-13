@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Icon } from "@raycast/api";
 import { useTimer } from "../../../hooks/useTimer";
 import { useTimerStore } from "../../../store/timer-store";
-import { backgroundTimerService } from "../../../services/background-timer-service";
+import { backgroundTimerService } from "../../../services/timer/background-timer-service";
 import { MoodType, TimerState, SessionType } from "../../../types/timer";
 import {
   parseSearchTextAndStore,
@@ -100,7 +100,7 @@ export function useSessionManagement() {
             "[useSessionManagement] Detected running work session, ensuring app tracking is active"
           );
           const { applicationTrackingService } = await import(
-            "../../../services/application-tracking"
+            "../../../services/tracking/application-tracking"
           );
           applicationTrackingService.ensureTrackingActive(
             currentState.config.trackingInterval

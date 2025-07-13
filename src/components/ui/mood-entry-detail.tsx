@@ -6,15 +6,15 @@ import {
   Color,
   useNavigation,
 } from "@raycast/api";
-import { MoodEntry, TimerSession } from "../types/timer";
+import { MoodEntry, TimerSession } from "../../types/timer";
 import {
   getMoodIcon,
   getMoodColor,
   getMoodIntensityColor,
   ACTION_ICONS,
-} from "../constants/design-tokens";
+} from "../../constants/design-tokens";
 import { formatDistanceToNow, format } from "date-fns";
-import { useTimerStore } from "../store/timer-store";
+import { useTimerStore } from "../../store/timer-store";
 
 interface MoodEntryDetailProps {
   entry: MoodEntry;

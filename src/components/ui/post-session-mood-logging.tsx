@@ -9,13 +9,13 @@ import {
   Color,
 } from "@raycast/api";
 import { useState } from "react";
-import { useTimerStore } from "../store/timer-store";
-import { MoodType, MoodEntry, TimerSession } from "../types/timer";
+import { useTimerStore } from "../../store/timer-store";
+import { MoodType, MoodEntry, TimerSession } from "../../types/timer";
 import {
   ACTION_ICONS,
   getMoodIcon,
   getMoodColor,
-} from "../constants/design-tokens";
+} from "../../constants/design-tokens";
 
 interface PostSessionMoodLoggingProps {
   completedSession: TimerSession;
@@ -87,7 +87,7 @@ export function PostSessionMoodLogging({
       intensityNum,
       "post-session",
       completedSession.id,
-      notes || undefined,
+      notes || undefined
     );
 
     showToast({

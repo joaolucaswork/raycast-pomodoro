@@ -1,4 +1,4 @@
-import { storageAdapter } from "../../utils/storage-adapter";
+import { storageAdapter } from "../../../utils/storage-adapter";
 import {
   ApplicationTrackingData,
   PersistedTrackingState,
@@ -7,7 +7,7 @@ import {
 
 /**
  * State management module for application tracking persistence and restoration.
- * 
+ *
  * This module handles:
  * - Saving and restoring tracking state across extension reloads
  * - Managing state lifecycle and cleanup
@@ -60,7 +60,9 @@ export class ApplicationTrackingStateManager {
 
       // Validate the restored state
       if (!this.isValidPersistedState(state)) {
-        console.warn("[ApplicationTrackingState] Invalid stored state, clearing");
+        console.warn(
+          "[ApplicationTrackingState] Invalid stored state, clearing"
+        );
         await this.clearTrackingState();
         return null;
       }
@@ -68,7 +70,10 @@ export class ApplicationTrackingStateManager {
       console.log("[ApplicationTrackingState] State restored successfully");
       return state;
     } catch (error) {
-      console.error("[ApplicationTrackingState] Failed to restore state:", error);
+      console.error(
+        "[ApplicationTrackingState] Failed to restore state:",
+        error
+      );
       await this.clearTrackingState();
       return null;
     }
@@ -135,7 +140,7 @@ export class ApplicationTrackingStateManager {
    */
   resetTrackingData(trackingData: ApplicationTrackingData): void {
     const now = Date.now();
-    
+
     trackingData.applications.clear();
     trackingData.currentApplication = null;
     trackingData.lastUpdateTime = now;
@@ -144,7 +149,9 @@ export class ApplicationTrackingStateManager {
     trackingData.errorCount = 0;
     trackingData.lastError = undefined;
 
-    console.log("[ApplicationTrackingState] Tracking data reset to initial state");
+    console.log(
+      "[ApplicationTrackingState] Tracking data reset to initial state"
+    );
   }
 
   /**
@@ -172,9 +179,10 @@ export class ApplicationTrackingStateManager {
     applicationsTracked: number;
     errorCount: number;
   } {
-    const sessionDuration = trackingData.sessionStartTime > 0
-      ? Math.floor((Date.now() - trackingData.sessionStartTime) / 1000)
-      : 0;
+    const sessionDuration =
+      trackingData.sessionStartTime > 0
+        ? Math.floor((Date.now() - trackingData.sessionStartTime) / 1000)
+        : 0;
 
     return {
       isActive: trackingData.sessionStartTime > 0,
@@ -189,13 +197,14 @@ export class ApplicationTrackingStateManager {
    */
   isHealthySession(trackingData: ApplicationTrackingData): boolean {
     const summary = this.getStateSummary(trackingData);
-    
+
     // Consider unhealthy if:
     // - Too many errors relative to session duration
     // - No applications tracked after significant time
-    const errorRate = summary.sessionDuration > 0 
-      ? trackingData.errorCount / (summary.sessionDuration / 60) // errors per minute
-      : 0;
+    const errorRate =
+      summary.sessionDuration > 0
+        ? trackingData.errorCount / (summary.sessionDuration / 60) // errors per minute
+        : 0;
 
     const hasTrackedApps = summary.applicationsTracked > 0;
     const lowErrorRate = errorRate < 1; // Less than 1 error per minute
@@ -206,4 +215,5 @@ export class ApplicationTrackingStateManager {
 }
 
 // Export singleton instance
-export const applicationTrackingStateManager = new ApplicationTrackingStateManager();
+export const applicationTrackingStateManager =
+  new ApplicationTrackingStateManager();

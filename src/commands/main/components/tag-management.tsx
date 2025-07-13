@@ -17,7 +17,7 @@ import {
   PREDEFINED_TAGS,
 } from "../utils/search-parsing";
 import { shouldShowTagSuggestions } from "../utils/timer-display-helpers";
-import { createTagIconSelectionActions } from "../../../components/inline-icon-selection";
+import { createTagIconSelectionActions } from "../../../components/icons/inline-icon-selection";
 
 interface TagManagementProps {
   searchText: string;

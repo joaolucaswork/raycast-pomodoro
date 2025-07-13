@@ -3,7 +3,7 @@ import { CATEGORY_FALLBACK_ICONS } from "./icon-mappings";
 
 /**
  * Fallback and category handling for application icons.
- * 
+ *
  * Handles:
  * - Category-based fallback icons
  * - Intelligent category detection
@@ -44,70 +44,210 @@ export class IconFallbacks {
     const normalizedName = name.toLowerCase();
 
     // Development tools
-    if (this.matchesPatterns(normalizedName, [
-      "code", "studio", "ide", "editor", "xcode", "intellij", "webstorm",
-      "pycharm", "sublime", "atom", "vim", "emacs", "nano", "git", "github",
-      "terminal", "iterm", "console", "bash", "zsh", "powershell", "cmd",
-      "docker", "kubernetes", "postman", "insomnia", "sourcetree", "tower"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedName, [
+        "code",
+        "studio",
+        "ide",
+        "editor",
+        "xcode",
+        "intellij",
+        "webstorm",
+        "pycharm",
+        "sublime",
+        "atom",
+        "vim",
+        "emacs",
+        "nano",
+        "git",
+        "github",
+        "terminal",
+        "iterm",
+        "console",
+        "bash",
+        "zsh",
+        "powershell",
+        "cmd",
+        "docker",
+        "kubernetes",
+        "postman",
+        "insomnia",
+        "sourcetree",
+        "tower",
+      ])
+    ) {
       return "development";
     }
 
     // Web browsers
-    if (this.matchesPatterns(normalizedName, [
-      "chrome", "firefox", "safari", "edge", "opera", "brave", "vivaldi",
-      "browser", "chromium", "webkit", "tor"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedName, [
+        "chrome",
+        "firefox",
+        "safari",
+        "edge",
+        "opera",
+        "brave",
+        "vivaldi",
+        "browser",
+        "chromium",
+        "webkit",
+        "tor",
+      ])
+    ) {
       return "browser";
     }
 
     // Communication
-    if (this.matchesPatterns(normalizedName, [
-      "slack", "teams", "zoom", "skype", "discord", "telegram", "whatsapp",
-      "messenger", "signal", "mail", "outlook", "thunderbird", "airmail",
-      "spark", "canary", "polymail", "mailmate", "postbox"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedName, [
+        "slack",
+        "teams",
+        "zoom",
+        "skype",
+        "discord",
+        "telegram",
+        "whatsapp",
+        "messenger",
+        "signal",
+        "mail",
+        "outlook",
+        "thunderbird",
+        "airmail",
+        "spark",
+        "canary",
+        "polymail",
+        "mailmate",
+        "postbox",
+      ])
+    ) {
       return "communication";
     }
 
     // Design tools
-    if (this.matchesPatterns(normalizedName, [
-      "photoshop", "illustrator", "indesign", "aftereffects", "premiere",
-      "figma", "sketch", "adobe", "creative", "design", "brush", "paint",
-      "gimp", "inkscape", "blender", "maya", "cinema4d", "zeplin", "invision",
-      "principle", "framer", "protopie"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedName, [
+        "photoshop",
+        "illustrator",
+        "indesign",
+        "aftereffects",
+        "premiere",
+        "figma",
+        "sketch",
+        "adobe",
+        "creative",
+        "design",
+        "brush",
+        "paint",
+        "gimp",
+        "inkscape",
+        "blender",
+        "maya",
+        "cinema4d",
+        "zeplin",
+        "invision",
+        "principle",
+        "framer",
+        "protopie",
+      ])
+    ) {
       return "design";
     }
 
     // Productivity
-    if (this.matchesPatterns(normalizedName, [
-      "word", "excel", "powerpoint", "office", "pages", "numbers", "keynote",
-      "google docs", "google sheets", "google slides", "notion", "evernote",
-      "onenote", "bear", "obsidian", "roam", "logseq", "craft", "ulysses",
-      "scrivener", "markdown", "typora", "macdown", "notes", "reminders",
-      "calendar", "fantastical", "things", "todoist", "omnifocus", "taskwarrior"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedName, [
+        "word",
+        "excel",
+        "powerpoint",
+        "office",
+        "pages",
+        "numbers",
+        "keynote",
+        "google docs",
+        "google sheets",
+        "google slides",
+        "notion",
+        "evernote",
+        "onenote",
+        "bear",
+        "obsidian",
+        "roam",
+        "logseq",
+        "craft",
+        "ulysses",
+        "scrivener",
+        "markdown",
+        "typora",
+        "macdown",
+        "notes",
+        "reminders",
+        "calendar",
+        "fantastical",
+        "things",
+        "todoist",
+        "omnifocus",
+        "taskwarrior",
+      ])
+    ) {
       return "productivity";
     }
 
     // Media
-    if (this.matchesPatterns(normalizedName, [
-      "spotify", "music", "itunes", "apple music", "youtube", "netflix",
-      "vlc", "quicktime", "iina", "plex", "kodi", "photos", "lightroom",
-      "capture one", "final cut", "davinci resolve", "handbrake", "audacity",
-      "logic pro", "garageband", "ableton", "pro tools"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedName, [
+        "spotify",
+        "music",
+        "itunes",
+        "apple music",
+        "youtube",
+        "netflix",
+        "vlc",
+        "quicktime",
+        "iina",
+        "plex",
+        "kodi",
+        "photos",
+        "lightroom",
+        "capture one",
+        "final cut",
+        "davinci resolve",
+        "handbrake",
+        "audacity",
+        "logic pro",
+        "garageband",
+        "ableton",
+        "pro tools",
+      ])
+    ) {
       return "media";
     }
 
     // System utilities
-    if (this.matchesPatterns(normalizedName, [
-      "finder", "system preferences", "activity monitor", "disk utility",
-      "keychain", "automator", "applescript", "terminal", "console",
-      "preferences", "settings", "control panel", "task manager", "registry",
-      "cleaner", "optimizer", "monitor", "stats", "istat", "coconutbattery"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedName, [
+        "finder",
+        "system preferences",
+        "activity monitor",
+        "disk utility",
+        "keychain",
+        "automator",
+        "applescript",
+        "terminal",
+        "console",
+        "preferences",
+        "settings",
+        "control panel",
+        "task manager",
+        "registry",
+        "cleaner",
+        "optimizer",
+        "monitor",
+        "stats",
+        "istat",
+        "coconutbattery",
+      ])
+    ) {
       return "system";
     }
 
@@ -118,8 +258,8 @@ export class IconFallbacks {
    * Check if name matches any of the given patterns
    */
   private matchesPatterns(name: string, patterns: string[]): boolean {
-    return patterns.some(pattern => 
-      name.includes(pattern) || pattern.includes(name)
+    return patterns.some(
+      (pattern) => name.includes(pattern) || pattern.includes(name)
     );
   }
 
@@ -165,52 +305,94 @@ export class IconFallbacks {
   private detectCategoryFromBundleId(bundleId: string): string {
     const normalizedId = bundleId.toLowerCase();
 
-    if (this.matchesPatterns(normalizedId, [
-      "com.microsoft.vscode", "com.jetbrains", "com.apple.dt.xcode",
-      "com.github", "com.sublimetext", "com.panic", "com.barebones"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedId, [
+        "com.microsoft.vscode",
+        "com.jetbrains",
+        "com.apple.dt.xcode",
+        "com.github",
+        "com.sublimetext",
+        "com.panic",
+        "com.barebones",
+      ])
+    ) {
       return "development";
     }
 
-    if (this.matchesPatterns(normalizedId, [
-      "com.google.chrome", "com.apple.safari", "org.mozilla.firefox",
-      "com.microsoft.edgemac", "com.operasoftware", "com.brave"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedId, [
+        "com.google.chrome",
+        "com.apple.safari",
+        "org.mozilla.firefox",
+        "com.microsoft.edgemac",
+        "com.operasoftware",
+        "com.brave",
+      ])
+    ) {
       return "browser";
     }
 
-    if (this.matchesPatterns(normalizedId, [
-      "com.tinyspeck.slackmacgap", "com.microsoft.teams", "us.zoom.xos",
-      "com.skype", "com.discord", "com.apple.mail", "com.microsoft.outlook"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedId, [
+        "com.tinyspeck.slackmacgap",
+        "com.microsoft.teams",
+        "us.zoom.xos",
+        "com.skype",
+        "com.discord",
+        "com.apple.mail",
+        "com.microsoft.outlook",
+      ])
+    ) {
       return "communication";
     }
 
-    if (this.matchesPatterns(normalizedId, [
-      "com.adobe", "com.figma", "com.bohemiancoding.sketch3",
-      "com.invisionapp", "com.zeplin"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedId, [
+        "com.adobe",
+        "com.figma",
+        "com.bohemiancoding.sketch3",
+        "com.invisionapp",
+        "com.zeplin",
+      ])
+    ) {
       return "design";
     }
 
-    if (this.matchesPatterns(normalizedId, [
-      "com.microsoft.word", "com.microsoft.excel", "com.microsoft.powerpoint",
-      "com.apple.iwork", "com.google", "com.notion", "com.evernote"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedId, [
+        "com.microsoft.word",
+        "com.microsoft.excel",
+        "com.microsoft.powerpoint",
+        "com.apple.iwork",
+        "com.google",
+        "com.notion",
+        "com.evernote",
+      ])
+    ) {
       return "productivity";
     }
 
-    if (this.matchesPatterns(normalizedId, [
-      "com.spotify", "com.apple.music", "com.apple.tv", "com.netflix",
-      "org.videolan.vlc", "com.apple.photos"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedId, [
+        "com.spotify",
+        "com.apple.music",
+        "com.apple.tv",
+        "com.netflix",
+        "org.videolan.vlc",
+        "com.apple.photos",
+      ])
+    ) {
       return "media";
     }
 
-    if (this.matchesPatterns(normalizedId, [
-      "com.apple.finder", "com.apple.terminal", "com.apple.systempreferences",
-      "com.apple.activitymonitor"
-    ])) {
+    if (
+      this.matchesPatterns(normalizedId, [
+        "com.apple.finder",
+        "com.apple.terminal",
+        "com.apple.systempreferences",
+        "com.apple.activitymonitor",
+      ])
+    ) {
       return "system";
     }
 
@@ -227,34 +409,103 @@ export class IconFallbacks {
   }): string {
     // Check file extensions
     if (hints.fileExtensions) {
-      const extensions = hints.fileExtensions.map(ext => ext.toLowerCase());
-      
-      if (extensions.some(ext => [
-        ".js", ".ts", ".py", ".java", ".cpp", ".c", ".h", ".swift",
-        ".go", ".rs", ".php", ".rb", ".cs", ".html", ".css", ".scss",
-        ".json", ".xml", ".yaml", ".yml", ".sql", ".sh", ".bat"
-      ].includes(ext))) {
+      const extensions = hints.fileExtensions.map((ext) => ext.toLowerCase());
+
+      if (
+        extensions.some((ext) =>
+          [
+            ".js",
+            ".ts",
+            ".py",
+            ".java",
+            ".cpp",
+            ".c",
+            ".h",
+            ".swift",
+            ".go",
+            ".rs",
+            ".php",
+            ".rb",
+            ".cs",
+            ".html",
+            ".css",
+            ".scss",
+            ".json",
+            ".xml",
+            ".yaml",
+            ".yml",
+            ".sql",
+            ".sh",
+            ".bat",
+          ].includes(ext)
+        )
+      ) {
         return "development";
       }
 
-      if (extensions.some(ext => [
-        ".psd", ".ai", ".sketch", ".fig", ".xd", ".png", ".jpg", ".jpeg",
-        ".gif", ".svg", ".ico", ".tiff", ".bmp", ".webp"
-      ].includes(ext))) {
+      if (
+        extensions.some((ext) =>
+          [
+            ".psd",
+            ".ai",
+            ".sketch",
+            ".fig",
+            ".xd",
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".gif",
+            ".svg",
+            ".ico",
+            ".tiff",
+            ".bmp",
+            ".webp",
+          ].includes(ext)
+        )
+      ) {
         return "design";
       }
 
-      if (extensions.some(ext => [
-        ".mp4", ".mov", ".avi", ".mkv", ".mp3", ".wav", ".flac", ".aac",
-        ".m4a", ".ogg", ".wma"
-      ].includes(ext))) {
+      if (
+        extensions.some((ext) =>
+          [
+            ".mp4",
+            ".mov",
+            ".avi",
+            ".mkv",
+            ".mp3",
+            ".wav",
+            ".flac",
+            ".aac",
+            ".m4a",
+            ".ogg",
+            ".wma",
+          ].includes(ext)
+        )
+      ) {
         return "media";
       }
 
-      if (extensions.some(ext => [
-        ".doc", ".docx", ".pdf", ".txt", ".rtf", ".pages", ".xls", ".xlsx",
-        ".numbers", ".ppt", ".pptx", ".key", ".md", ".tex"
-      ].includes(ext))) {
+      if (
+        extensions.some((ext) =>
+          [
+            ".doc",
+            ".docx",
+            ".pdf",
+            ".txt",
+            ".rtf",
+            ".pages",
+            ".xls",
+            ".xlsx",
+            ".numbers",
+            ".ppt",
+            ".pptx",
+            ".key",
+            ".md",
+            ".tex",
+          ].includes(ext)
+        )
+      ) {
         return "productivity";
       }
     }
@@ -283,16 +534,16 @@ export class IconFallbacks {
    */
   public validateIconForCategory(icon: Icon, category: string): boolean {
     const expectedIcon = this.getCategoryFallbackIcon(category);
-    
+
     // Allow the expected icon and some common alternatives
     const validIcons: Record<string, Icon[]> = {
-      development: [Icon.Code, Icon.Terminal, Icon.Hammer, Icon.Wrench],
+      development: [Icon.Code, Icon.Terminal, Icon.Hammer, Icon.Gear],
       browser: [Icon.Globe, Icon.Link, Icon.Window],
       communication: [Icon.Message, Icon.Envelope, Icon.Video, Icon.Phone],
-      design: [Icon.Brush, Icon.Image, Icon.Palette, Icon.Pencil],
+      design: [Icon.Brush, Icon.Image, Icon.Pencil, Icon.Wand],
       productivity: [Icon.Document, Icon.Text, Icon.List, Icon.Calendar],
       media: [Icon.Music, Icon.Video, Icon.Image, Icon.Play],
-      system: [Icon.Gear, Icon.Cog, Icon.Settings, Icon.Monitor],
+      system: [Icon.Gear, Icon.Cog, Icon.Monitor, Icon.Desktop],
       other: [Icon.Desktop, Icon.AppWindow, Icon.Folder],
     };
 
@@ -309,7 +560,10 @@ export class IconFallbacks {
   /**
    * Get category statistics
    */
-  public getCategoryStatistics(): Record<string, { icon: Icon; description: string }> {
+  public getCategoryStatistics(): Record<
+    string,
+    { icon: Icon; description: string }
+  > {
     return {
       development: {
         icon: CATEGORY_FALLBACK_ICONS.development,

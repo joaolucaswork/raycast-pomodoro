@@ -121,13 +121,6 @@ export default function TimerHistory() {
     });
   }, [history, sortBy, filterType, completionFilter]);
 
-  const handleDetailToggle = (sessionId?: string) => {
-    if (sessionId) {
-      setSelectedSessionId(sessionId);
-    }
-    setIsShowingDetail(!isShowingDetail);
-  };
-
   // Get the filters configuration
   const filtersConfig = HistoryFilters({
     sortBy,

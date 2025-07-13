@@ -1,5 +1,5 @@
 import { Icon } from "@raycast/api";
-import appIconsData from "../data/app-icons.json";
+import appIconsData from "../../data/app-icons.json";
 
 /**
  * Interface for application icon mapping from JSON configuration
@@ -32,7 +32,10 @@ interface AppIconsConfig {
 export class JsonApplicationIconService {
   private static instance: JsonApplicationIconService;
   private config: AppIconsConfig;
-  private bundleIdMap: Map<string, { icon: Icon; category: string; name: string }>;
+  private bundleIdMap: Map<
+    string,
+    { icon: Icon; category: string; name: string }
+  >;
   private nameMap: Map<string, { icon: Icon; category: string; name: string }>;
   private aliasMap: Map<string, { icon: Icon; category: string; name: string }>;
 
@@ -75,9 +78,15 @@ export class JsonApplicationIconService {
       });
     });
 
-    console.log(`[JsonApplicationIconService] Initialized ${this.bundleIdMap.size} bundle ID mappings`);
-    console.log(`[JsonApplicationIconService] Initialized ${this.nameMap.size} name mappings`);
-    console.log(`[JsonApplicationIconService] Initialized ${this.aliasMap.size} alias mappings`);
+    console.log(
+      `[JsonApplicationIconService] Initialized ${this.bundleIdMap.size} bundle ID mappings`
+    );
+    console.log(
+      `[JsonApplicationIconService] Initialized ${this.nameMap.size} name mappings`
+    );
+    console.log(
+      `[JsonApplicationIconService] Initialized ${this.aliasMap.size} alias mappings`
+    );
   }
 
   /**
@@ -100,7 +109,9 @@ export class JsonApplicationIconService {
    * Get icon for application by name
    */
   public getIconByName(name: string): Icon {
-    const mapping = this.nameMap.get(name.toLowerCase()) || this.aliasMap.get(name.toLowerCase());
+    const mapping =
+      this.nameMap.get(name.toLowerCase()) ||
+      this.aliasMap.get(name.toLowerCase());
     return mapping?.icon || this.stringToIcon(this.config.defaultIcon);
   }
 
@@ -116,7 +127,9 @@ export class JsonApplicationIconService {
    * Get category for application by name
    */
   public getCategoryByName(name: string): string {
-    const mapping = this.nameMap.get(name.toLowerCase()) || this.aliasMap.get(name.toLowerCase());
+    const mapping =
+      this.nameMap.get(name.toLowerCase()) ||
+      this.aliasMap.get(name.toLowerCase());
     return mapping?.category || "other";
   }
 
@@ -126,15 +139,20 @@ export class JsonApplicationIconService {
   public getApplicationMapping(
     bundleId: string,
     name: string
-  ): { icon: Icon; category: string; isRecognized: boolean; recognizedName?: string } | null {
+  ): {
+    icon: Icon;
+    category: string;
+    isRecognized: boolean;
+    recognizedName?: string;
+  } | null {
     // Try bundle ID first
     let mapping = this.bundleIdMap.get(bundleId.toLowerCase());
-    
+
     if (!mapping) {
       // Try by name
       mapping = this.nameMap.get(name.toLowerCase());
     }
-    
+
     if (!mapping) {
       // Try by alias
       mapping = this.aliasMap.get(name.toLowerCase());
@@ -157,13 +175,17 @@ export class JsonApplicationIconService {
    */
   public getCategoryFallbackIcon(category: string): Icon {
     const fallbackIconName = this.config.categoryFallbacks[category];
-    return fallbackIconName ? this.stringToIcon(fallbackIconName) : this.stringToIcon(this.config.defaultIcon);
+    return fallbackIconName
+      ? this.stringToIcon(fallbackIconName)
+      : this.stringToIcon(this.config.defaultIcon);
   }
 
   /**
    * Get all applications in a category
    */
-  public getApplicationsByCategory(category: string): Array<{ name: string; icon: Icon; bundleIds: string[] }> {
+  public getApplicationsByCategory(
+    category: string
+  ): Array<{ name: string; icon: Icon; bundleIds: string[] }> {
     const categoryApps = this.config.applications[category];
     if (!categoryApps) return [];
 
@@ -191,15 +213,29 @@ export class JsonApplicationIconService {
   /**
    * Search for applications by name or alias
    */
-  public searchApplications(query: string): Array<{ name: string; icon: Icon; category: string; bundleIds: string[] }> {
-    const results: Array<{ name: string; icon: Icon; category: string; bundleIds: string[] }> = [];
+  public searchApplications(
+    query: string
+  ): Array<{
+    name: string;
+    icon: Icon;
+    category: string;
+    bundleIds: string[];
+  }> {
+    const results: Array<{
+      name: string;
+      icon: Icon;
+      category: string;
+      bundleIds: string[];
+    }> = [];
     const lowerQuery = query.toLowerCase();
 
     Object.entries(this.config.applications).forEach(([category, apps]) => {
       Object.entries(apps).forEach(([appName, mapping]) => {
         const matchesName = appName.toLowerCase().includes(lowerQuery);
-        const matchesAlias = mapping.aliases.some(alias => alias.toLowerCase().includes(lowerQuery));
-        
+        const matchesAlias = mapping.aliases.some((alias) =>
+          alias.toLowerCase().includes(lowerQuery)
+        );
+
         if (matchesName || matchesAlias) {
           results.push({
             name: appName,
@@ -230,10 +266,12 @@ export class JsonApplicationIconService {
       0
     );
 
-    const categoryCounts = Object.entries(this.config.applications).map(([category, apps]) => ({
-      category,
-      count: Object.keys(apps).length,
-    }));
+    const categoryCounts = Object.entries(this.config.applications).map(
+      ([category, apps]) => ({
+        category,
+        count: Object.keys(apps).length,
+      })
+    );
 
     return {
       totalApplications: totalApps,
@@ -247,4 +285,5 @@ export class JsonApplicationIconService {
 }
 
 // Export singleton instance
-export const jsonApplicationIconService = JsonApplicationIconService.getInstance();
+export const jsonApplicationIconService =
+  JsonApplicationIconService.getInstance();

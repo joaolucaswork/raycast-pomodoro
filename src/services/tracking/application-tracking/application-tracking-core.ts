@@ -1,7 +1,7 @@
 import { getFrontmostApplication, Application } from "@raycast/api";
-import { ApplicationUsage } from "../../types/timer";
-import { applicationIconService } from "../application-icon-service";
-import { jsonApplicationIconService } from "../json-app-icon-service";
+import { ApplicationUsage } from "../../../types/timer";
+import { applicationIconService } from "../../application-icon-service";
+import { jsonApplicationIconService } from "../../data/json-app-icon-service";
 import {
   ApplicationTrackingData,
   TRACKING_CONSTANTS,

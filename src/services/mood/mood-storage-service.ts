@@ -1,8 +1,4 @@
-import {
-  MoodEntry,
-  MoodType,
-  TimerSession,
-} from "../types/timer";
+import { MoodEntry, MoodType, TimerSession } from "../../types/timer";
 import {
   startOfDay,
   endOfDay,
@@ -15,7 +11,7 @@ import {
 
 /**
  * Service for mood data storage and retrieval operations.
- * 
+ *
  * Handles:
  * - Data filtering and querying
  * - Date range operations
@@ -40,7 +36,7 @@ export class MoodStorageService {
   public getMoodEntriesInRange(
     moodEntries: MoodEntry[],
     startDate: Date,
-    endDate: Date,
+    endDate: Date
   ): MoodEntry[] {
     return moodEntries.filter((entry) => {
       const entryDate = new Date(entry.timestamp);
@@ -56,7 +52,7 @@ export class MoodStorageService {
     return this.getMoodEntriesInRange(
       moodEntries,
       startOfDay(today),
-      endOfDay(today),
+      endOfDay(today)
     );
   }
 
@@ -68,7 +64,7 @@ export class MoodStorageService {
     return this.getMoodEntriesInRange(
       moodEntries,
       startOfWeek(today),
-      endOfWeek(today),
+      endOfWeek(today)
     );
   }
 
@@ -80,23 +76,32 @@ export class MoodStorageService {
     return this.getMoodEntriesInRange(
       moodEntries,
       startOfMonth(today),
-      endOfMonth(today),
+      endOfMonth(today)
     );
   }
 
   /**
    * Get recent mood entries (last N entries)
    */
-  public getRecentMoodEntries(moodEntries: MoodEntry[], count: number = 10): MoodEntry[] {
+  public getRecentMoodEntries(
+    moodEntries: MoodEntry[],
+    count: number = 10
+  ): MoodEntry[] {
     return moodEntries
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      )
       .slice(0, count);
   }
 
   /**
    * Get mood entries by specific mood type
    */
-  public getMoodEntriesByType(moodEntries: MoodEntry[], moodType: MoodType): MoodEntry[] {
+  public getMoodEntriesByType(
+    moodEntries: MoodEntry[],
+    moodType: MoodType
+  ): MoodEntry[] {
     return moodEntries.filter((entry) => entry.mood === moodType);
   }
 
@@ -105,7 +110,7 @@ export class MoodStorageService {
    */
   public getMoodEntriesByIntensity(
     moodEntries: MoodEntry[],
-    intensity: number,
+    intensity: number
   ): MoodEntry[] {
     return moodEntries.filter((entry) => entry.intensity === intensity);
   }
@@ -115,7 +120,7 @@ export class MoodStorageService {
    */
   public getMoodEntriesByContext(
     moodEntries: MoodEntry[],
-    context: "pre-session" | "during-session" | "post-session" | "standalone",
+    context: "pre-session" | "during-session" | "post-session" | "standalone"
   ): MoodEntry[] {
     return moodEntries.filter((entry) => entry.context === context);
   }
@@ -125,7 +130,7 @@ export class MoodStorageService {
    */
   public getMoodEntriesForSession(
     moodEntries: MoodEntry[],
-    sessionId: string,
+    sessionId: string
   ): MoodEntry[] {
     return moodEntries.filter((entry) => entry.sessionId === sessionId);
   }
@@ -136,10 +141,11 @@ export class MoodStorageService {
   public getMoodEntriesInIntensityRange(
     moodEntries: MoodEntry[],
     minIntensity: number,
-    maxIntensity: number,
+    maxIntensity: number
   ): MoodEntry[] {
     return moodEntries.filter(
-      (entry) => entry.intensity >= minIntensity && entry.intensity <= maxIntensity,
+      (entry) =>
+        entry.intensity >= minIntensity && entry.intensity <= maxIntensity
     );
   }
 
@@ -148,22 +154,26 @@ export class MoodStorageService {
    */
   public getMoodEntriesFromLastDays(
     moodEntries: MoodEntry[],
-    days: number,
+    days: number
   ): MoodEntry[] {
     const cutoffDate = subDays(new Date(), days);
-    return moodEntries.filter((entry) => new Date(entry.timestamp) >= cutoffDate);
+    return moodEntries.filter(
+      (entry) => new Date(entry.timestamp) >= cutoffDate
+    );
   }
 
   /**
    * Group mood entries by date
    */
   public groupMoodEntriesByDate(
-    moodEntries: MoodEntry[],
+    moodEntries: MoodEntry[]
   ): Record<string, MoodEntry[]> {
     const grouped: Record<string, MoodEntry[]> = {};
 
     moodEntries.forEach((entry) => {
-      const dateKey = startOfDay(new Date(entry.timestamp)).toISOString().split('T')[0];
+      const dateKey = startOfDay(new Date(entry.timestamp))
+        .toISOString()
+        .split("T")[0];
       if (!grouped[dateKey]) {
         grouped[dateKey] = [];
       }
@@ -177,7 +187,7 @@ export class MoodStorageService {
    * Group mood entries by mood type
    */
   public groupMoodEntriesByType(
-    moodEntries: MoodEntry[],
+    moodEntries: MoodEntry[]
   ): Record<MoodType, MoodEntry[]> {
     const grouped: Record<string, MoodEntry[]> = {};
 
@@ -195,7 +205,7 @@ export class MoodStorageService {
    * Group mood entries by context
    */
   public groupMoodEntriesByContext(
-    moodEntries: MoodEntry[],
+    moodEntries: MoodEntry[]
   ): Record<string, MoodEntry[]> {
     const grouped: Record<string, MoodEntry[]> = {};
 
@@ -216,7 +226,7 @@ export class MoodStorageService {
   public findMoodEntriesNearTimestamp(
     moodEntries: MoodEntry[],
     timestamp: Date,
-    windowMinutes: number = 30,
+    windowMinutes: number = 30
   ): MoodEntry[] {
     const windowMs = windowMinutes * 60 * 1000;
     const targetTime = timestamp.getTime();
@@ -231,7 +241,9 @@ export class MoodStorageService {
    * Get mood entries with notes
    */
   public getMoodEntriesWithNotes(moodEntries: MoodEntry[]): MoodEntry[] {
-    return moodEntries.filter((entry) => entry.notes && entry.notes.trim().length > 0);
+    return moodEntries.filter(
+      (entry) => entry.notes && entry.notes.trim().length > 0
+    );
   }
 
   /**
@@ -239,12 +251,11 @@ export class MoodStorageService {
    */
   public searchMoodEntriesByNotes(
     moodEntries: MoodEntry[],
-    searchTerm: string,
+    searchTerm: string
   ): MoodEntry[] {
     const term = searchTerm.toLowerCase();
     return moodEntries.filter(
-      (entry) =>
-        entry.notes && entry.notes.toLowerCase().includes(term),
+      (entry) => entry.notes && entry.notes.toLowerCase().includes(term)
     );
   }
 
@@ -266,23 +277,24 @@ export class MoodStorageService {
     moodEntries.forEach((entry) => {
       // Count moods
       moodCounts[entry.mood] = (moodCounts[entry.mood] || 0) + 1;
-      
+
       // Count contexts
       const context = entry.context || "standalone";
       contextCounts[context] = (contextCounts[context] || 0) + 1;
-      
+
       // Count intensities
-      intensityDistribution[entry.intensity] = 
+      intensityDistribution[entry.intensity] =
         (intensityDistribution[entry.intensity] || 0) + 1;
-      
+
       totalIntensity += entry.intensity;
     });
 
     return {
       totalEntries: moodEntries.length,
-      averageIntensity: moodEntries.length > 0 
-        ? Math.round((totalIntensity / moodEntries.length) * 10) / 10 
-        : 0,
+      averageIntensity:
+        moodEntries.length > 0
+          ? Math.round((totalIntensity / moodEntries.length) * 10) / 10
+          : 0,
       moodCounts: moodCounts as Record<MoodType, number>,
       contextCounts,
       intensityDistribution,
@@ -294,7 +306,7 @@ export class MoodStorageService {
    */
   public sortMoodEntries(
     moodEntries: MoodEntry[],
-    ascending: boolean = false,
+    ascending: boolean = false
   ): MoodEntry[] {
     return [...moodEntries].sort((a, b) => {
       const timeA = new Date(a.timestamp).getTime();

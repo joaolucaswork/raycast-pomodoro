@@ -47,7 +47,7 @@ export function MoodAnalytics({
         <List.Item
           title="Total Entries"
           subtitle={`${moodAnalytics.totalEntries} mood entries logged`}
-          icon={Icon.Number}
+          icon={Icon.Number00}
           accessories={[{ text: moodAnalytics.totalEntries.toString() }]}
         />
         <List.Item
@@ -60,7 +60,10 @@ export function MoodAnalytics({
               icon: {
                 source: Icon.Circle,
                 tintColor: getMoodIntensityColor(
-                  Math.round(moodAnalytics.averageIntensity)
+                  Math.max(
+                    1,
+                    Math.min(5, Math.round(moodAnalytics.averageIntensity))
+                  ) as 1 | 2 | 3 | 4 | 5
                 ),
               },
             },
@@ -90,7 +93,7 @@ export function MoodAnalytics({
             <List.Item
               title="Today's Average"
               subtitle={`${moodTrackingService.calculateMoodAnalytics(todaysMoods).averageIntensity}/5 intensity`}
-              icon={Icon.TrendingUp}
+              icon={Icon.ArrowUp}
               accessories={[
                 {
                   text: `${moodTrackingService.calculateMoodAnalytics(todaysMoods).averageIntensity}/5`,
@@ -114,7 +117,7 @@ export function MoodAnalytics({
             <List.Item
               title="Weekly Average"
               subtitle={`${moodTrackingService.calculateMoodAnalytics(weeklyMoods).averageIntensity}/5 intensity`}
-              icon={Icon.TrendingUp}
+              icon={Icon.ArrowUp}
               accessories={[
                 {
                   text: `${moodTrackingService.calculateMoodAnalytics(weeklyMoods).averageIntensity}/5`,
@@ -202,7 +205,7 @@ export function MoodAnalytics({
                 key={index}
                 title={`Tip ${index + 1}`}
                 subtitle={suggestion}
-                icon={Icon.Lightbulb}
+                icon={Icon.LightBulb}
               />
             ))}
         </List.Section>

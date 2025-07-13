@@ -3,8 +3,8 @@ import { useTimerStore } from "../store/timer-store";
 import { TimerState, SessionType } from "../types/timer";
 import { getMotivationalMessage, getSessionTypeLabel } from "../utils/helpers";
 import { notificationService } from "../services/notification-service";
-import { backgroundTimerService } from "../services/background-timer-service";
-import { adhdSupportService } from "../services/adhd-support-service";
+import { backgroundTimerService } from "../services/timer/background-timer-service";
+import { adhdSupportService } from "../services/features/adhd-support-service";
 
 export function useTimer() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -104,12 +104,12 @@ export function useTimer() {
         completedSession.duration,
         true,
         completedSession.energyLevel,
-        completedSession.moodState,
+        completedSession.moodState
       );
 
       store.awardPoints(
         points,
-        `Completed ${getSessionTypeLabel(completedSession.type)} session`,
+        `Completed ${getSessionTypeLabel(completedSession.type)} session`
       );
     }
 
@@ -121,7 +121,7 @@ export function useTimer() {
     // Show completion notification using notification service
     await notificationService.notifySessionComplete(
       currentSessionType,
-      config.enableNotifications,
+      config.enableNotifications
     );
 
     // Auto-start next session if enabled
@@ -155,14 +155,14 @@ export function useTimer() {
     taskName?: string,
     projectName?: string,
     tags?: string[],
-    taskIcon?: import("@raycast/api").Icon,
+    taskIcon?: import("@raycast/api").Icon
   ) => {
     await backgroundTimerService.startTimer(
       SessionType.WORK,
       taskName,
       projectName,
       tags,
-      taskIcon,
+      taskIcon
     );
     await notificationService.notifySessionStart(SessionType.WORK);
   };

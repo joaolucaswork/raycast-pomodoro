@@ -1,4 +1,4 @@
-import { ApplicationUsage } from "../../types/timer";
+import { ApplicationUsage } from "../../../types/timer";
 import {
   ApplicationTrackingData,
   ApplicationTrackingStats,

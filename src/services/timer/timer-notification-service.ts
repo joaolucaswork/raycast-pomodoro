@@ -1,10 +1,10 @@
-import { SessionType, TimerSession } from "../types/timer";
-import { notificationService } from "./notification-service";
-import { getSessionTypeLabel } from "../utils/helpers";
+import { SessionType, TimerSession } from "../../types/timer";
+import { notificationService } from "../notification-service";
+import { getSessionTypeLabel } from "../../utils/helpers";
 
 /**
  * Timer notification service for session-related notifications.
- * 
+ *
  * Handles:
  * - Session start notifications
  * - Session completion notifications
@@ -44,7 +44,7 @@ export class TimerNotificationService {
     try {
       const sessionLabel = getSessionTypeLabel(session.type);
       const duration = Math.round(session.duration / 60);
-      
+
       await notificationService.notifySessionCompletion(
         session.type,
         `${sessionLabel} completed (${duration} minutes)`,
@@ -64,7 +64,7 @@ export class TimerNotificationService {
   ): Promise<void> {
     try {
       const sessionLabel = getSessionTypeLabel(nextSessionType);
-      
+
       setTimeout(async () => {
         await notificationService.notifySessionStart(
           nextSessionType,
@@ -103,7 +103,7 @@ export class TimerNotificationService {
     try {
       const sessionLabel = getSessionTypeLabel(session.type);
       const { showToast, Toast } = require("@raycast/api");
-      
+
       await showToast({
         style: Toast.Style.Animated,
         title: "Session Paused",
@@ -121,7 +121,7 @@ export class TimerNotificationService {
     try {
       const sessionLabel = getSessionTypeLabel(session.type);
       const { showToast, Toast } = require("@raycast/api");
-      
+
       await showToast({
         style: Toast.Style.Success,
         title: "Session Resumed",
@@ -139,7 +139,7 @@ export class TimerNotificationService {
     try {
       const sessionLabel = getSessionTypeLabel(session.type);
       const { showToast, Toast } = require("@raycast/api");
-      
+
       await showToast({
         style: Toast.Style.Failure,
         title: "Session Stopped",
@@ -157,7 +157,7 @@ export class TimerNotificationService {
     try {
       const sessionLabel = getSessionTypeLabel(session.type);
       const { showToast, Toast } = require("@raycast/api");
-      
+
       await showToast({
         style: Toast.Style.Success,
         title: "Session Completed",
@@ -178,7 +178,7 @@ export class TimerNotificationService {
     try {
       const { showToast, Toast } = require("@raycast/api");
       const durationMinutes = Math.round(sessionDuration / 60);
-      
+
       await showToast({
         style: Toast.Style.Animated,
         title: "Hyperfocus Detected",
@@ -198,7 +198,7 @@ export class TimerNotificationService {
   ): Promise<void> {
     try {
       const { showToast, Toast } = require("@raycast/api");
-      
+
       await showToast({
         style: Toast.Style.Success,
         title: "Achievement Unlocked!",
@@ -218,7 +218,7 @@ export class TimerNotificationService {
   ): Promise<void> {
     try {
       const { showToast, Toast } = require("@raycast/api");
-      
+
       await showToast({
         style: Toast.Style.Success,
         title: `+${points} Points`,
@@ -240,7 +240,7 @@ export class TimerNotificationService {
       const sessionLabel = getSessionTypeLabel(session.type);
       const remainingMinutes = Math.ceil(timeRemaining / 60);
       const { showToast, Toast } = require("@raycast/api");
-      
+
       await showToast({
         style: Toast.Style.Animated,
         title: "Session Restored",
@@ -257,7 +257,7 @@ export class TimerNotificationService {
   public async notifyTimerInitialization(): Promise<void> {
     try {
       const { showToast, Toast } = require("@raycast/api");
-      
+
       await showToast({
         style: Toast.Style.Animated,
         title: "Timer Initialized",
@@ -277,7 +277,7 @@ export class TimerNotificationService {
   ): Promise<void> {
     try {
       const { showToast, Toast } = require("@raycast/api");
-      
+
       await showToast({
         style: Toast.Style.Failure,
         title: "Timer Error",

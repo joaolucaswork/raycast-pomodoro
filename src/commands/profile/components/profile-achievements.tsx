@@ -5,7 +5,7 @@ import {
 } from "../../../constants/design-tokens";
 import { RewardSystem } from "../../../types/timer";
 import { getAchievementStyling } from "../utils/achievement-styling";
-import { adhdSupportService } from "../../../services/adhd-support-service";
+import { adhdSupportService } from "../../../services/features/adhd-support-service";
 
 interface ProfileAchievementsProps {
   rewardSystem: RewardSystem;
