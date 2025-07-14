@@ -27,19 +27,25 @@ export class CommandErrorBoundary extends Component<
 
   constructor(props: CommandErrorBoundaryProps) {
     super(props);
-    this.state = { 
-      hasError: false, 
-      retryCount: 0 
+    this.state = {
+      hasError: false,
+      retryCount: 0,
     };
   }
 
-  static getDerivedStateFromError(error: Error): Partial<CommandErrorBoundaryState> {
+  static getDerivedStateFromError(
+    error: Error
+  ): Partial<CommandErrorBoundaryState> {
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error(`Command error in ${this.props.commandName}:`, error, errorInfo);
-    
+    console.error(
+      `Command error in ${this.props.commandName}:`,
+      error,
+      errorInfo
+    );
+
     this.setState({ error, errorInfo });
 
     // Log error details for debugging
@@ -61,7 +67,10 @@ export class CommandErrorBoundary extends Component<
       retryCount: this.state.retryCount,
     };
 
-    console.error("Detailed error report:", JSON.stringify(errorDetails, null, 2));
+    console.error(
+      "Detailed error report:",
+      JSON.stringify(errorDetails, null, 2)
+    );
   }
 
   private handleRetry = () => {
@@ -93,8 +102,9 @@ export class CommandErrorBoundary extends Component<
   private handleResetStore = () => {
     try {
       // Reset the timer store to default state
-      const { resetStats, clearAllHistory, clearAllMoodEntries } = useTimerStore.getState();
-      
+      const { resetStats, clearAllHistory, clearAllMoodEntries } =
+        useTimerStore.getState();
+
       resetStats();
       clearAllHistory();
       clearAllMoodEntries();
@@ -109,7 +119,8 @@ export class CommandErrorBoundary extends Component<
   render() {
     if (this.state.hasError) {
       const canRetry = this.state.retryCount < this.maxRetries;
-      const errorMessage = this.state.error?.message || "Unknown error occurred";
+      const errorMessage =
+        this.state.error?.message || "Unknown error occurred";
 
       return (
         <List
@@ -132,7 +143,7 @@ export class CommandErrorBoundary extends Component<
                   shortcut={{ modifiers: ["cmd", "shift"], key: "r" }}
                 />
               </ActionPanel.Section>
-              
+
               <ActionPanel.Section title="Advanced Recovery">
                 <Action
                   title="Reset Extension Data"
@@ -153,7 +164,7 @@ export class CommandErrorBoundary extends Component<
               tintColor: Color.Red,
             }}
           />
-          
+
           {/* Error details for debugging */}
           <List.Item
             title="Error Details"
@@ -165,7 +176,7 @@ export class CommandErrorBoundary extends Component<
               },
             ]}
           />
-          
+
           {this.state.error?.stack && (
             <List.Item
               title="Stack Trace"
@@ -208,20 +219,24 @@ export function withCommandErrorBoundary<P extends object>(
 /**
  * Specialized error boundary for the main timer command
  */
-export function TimerCommandErrorBoundary({ children }: { children: ReactNode }) {
+export function TimerCommandErrorBoundary({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const handleTimerRestart = () => {
     try {
-      const { stopTimer, resetCurrentSession } = useTimerStore.getState();
+      const { stopTimer, resetTimer } = useTimerStore.getState();
       stopTimer();
-      resetCurrentSession();
+      resetTimer();
     } catch (error) {
       console.error("Failed to restart timer:", error);
     }
   };
 
   return (
-    <CommandErrorBoundary 
-      commandName="Focus Timer" 
+    <CommandErrorBoundary
+      commandName="Focus Timer"
       onRestart={handleTimerRestart}
     >
       {children}
@@ -232,7 +247,11 @@ export function TimerCommandErrorBoundary({ children }: { children: ReactNode })
 /**
  * Specialized error boundary for the history command
  */
-export function HistoryCommandErrorBoundary({ children }: { children: ReactNode }) {
+export function HistoryCommandErrorBoundary({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const handleHistoryRestart = () => {
     try {
       const { refreshConfigFromPreferences } = useTimerStore.getState();
@@ -243,8 +262,8 @@ export function HistoryCommandErrorBoundary({ children }: { children: ReactNode 
   };
 
   return (
-    <CommandErrorBoundary 
-      commandName="Focus History" 
+    <CommandErrorBoundary
+      commandName="Focus History"
       onRestart={handleHistoryRestart}
     >
       {children}
@@ -255,7 +274,11 @@ export function HistoryCommandErrorBoundary({ children }: { children: ReactNode 
 /**
  * Specialized error boundary for mood tracking command
  */
-export function MoodCommandErrorBoundary({ children }: { children: ReactNode }) {
+export function MoodCommandErrorBoundary({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const handleMoodRestart = () => {
     try {
       const { refreshConfigFromPreferences } = useTimerStore.getState();
@@ -266,8 +289,8 @@ export function MoodCommandErrorBoundary({ children }: { children: ReactNode }) 
   };
 
   return (
-    <CommandErrorBoundary 
-      commandName="Mood Tracking" 
+    <CommandErrorBoundary
+      commandName="Mood Tracking"
       onRestart={handleMoodRestart}
     >
       {children}
@@ -289,8 +312,8 @@ export function TagCommandErrorBoundary({ children }: { children: ReactNode }) {
   };
 
   return (
-    <CommandErrorBoundary 
-      commandName="Tag Management" 
+    <CommandErrorBoundary
+      commandName="Tag Management"
       onRestart={handleTagRestart}
     >
       {children}
@@ -301,10 +324,15 @@ export function TagCommandErrorBoundary({ children }: { children: ReactNode }) {
 /**
  * Error boundary for analytics and statistics
  */
-export function AnalyticsCommandErrorBoundary({ children }: { children: ReactNode }) {
+export function AnalyticsCommandErrorBoundary({
+  children,
+}: {
+  children: ReactNode;
+}) {
   const handleAnalyticsRestart = () => {
     try {
-      const { recalculateStats, refreshConfigFromPreferences } = useTimerStore.getState();
+      const { recalculateStats, refreshConfigFromPreferences } =
+        useTimerStore.getState();
       refreshConfigFromPreferences();
       recalculateStats();
     } catch (error) {
@@ -313,8 +341,8 @@ export function AnalyticsCommandErrorBoundary({ children }: { children: ReactNod
   };
 
   return (
-    <CommandErrorBoundary 
-      commandName="Analytics" 
+    <CommandErrorBoundary
+      commandName="Analytics"
       onRestart={handleAnalyticsRestart}
     >
       {children}

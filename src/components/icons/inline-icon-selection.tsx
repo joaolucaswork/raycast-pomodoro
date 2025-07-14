@@ -287,7 +287,7 @@ export function createTaskIconSelectionActions(
   currentIcon?: Icon
 ) {
   return createIconSelectionActions({
-    title: "Select Task Icon",
+    title: "Select Round Icon",
     onIconSelect,
     currentIcon,
   });

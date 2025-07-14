@@ -4,7 +4,7 @@ import { storeUtilities } from "./store-utilities";
 
 /**
  * Store initialization service for setting up the timer store.
- * 
+ *
  * Handles:
  * - Initial store setup
  * - Configuration loading
@@ -58,10 +58,10 @@ export class StoreInitialization {
    */
   private validateAndMigrateData(): void {
     const validation = storeUtilities.validateStoreData();
-    
+
     if (!validation.isValid) {
       console.warn("Store data validation failed:", validation.issues);
-      
+
       // Attempt to fix critical issues
       this.fixCriticalIssues(validation.issues);
     }
@@ -141,7 +141,7 @@ export class StoreInitialization {
    */
   private migrateDataIfNeeded(): void {
     const state = useTimerStore.getState();
-    
+
     // Check for legacy data structures and migrate
     let needsMigration = false;
 
@@ -159,10 +159,12 @@ export class StoreInitialization {
     // Migrate legacy sessions without proper IDs
     if (state.history.some((session: any) => !session.id)) {
       console.log("Migrating legacy sessions...");
-      const migratedHistory = state.history.map((session: any, index: number) => ({
-        ...session,
-        id: session.id || `legacy-session-${index}-${Date.now()}`,
-      }));
+      const migratedHistory = state.history.map(
+        (session: any, index: number) => ({
+          ...session,
+          id: session.id || `legacy-session-${index}-${Date.now()}`,
+        })
+      );
       useTimerStore.setState({ history: migratedHistory });
       needsMigration = true;
     }
@@ -191,10 +193,18 @@ export class StoreInitialization {
    */
   private initializeRewardSystem(): void {
     const store = useTimerStore.getState();
-    
+
     // Ensure reward system is properly initialized
     if (!store.rewardSystem.achievements) {
       store.resetRewardSystem();
+    }
+
+    // Initialize boxing progress if not present
+    if (!store.boxingProgress) {
+      const { updateBoxingProgress } = store as any;
+      if (updateBoxingProgress) {
+        updateBoxingProgress();
+      }
     }
 
     // Check for any achievements that should be unlocked based on current stats
@@ -206,7 +216,7 @@ export class StoreInitialization {
    */
   private initializeMoodTracking(): void {
     const state = useTimerStore.getState();
-    
+
     // Ensure mood entries array exists
     if (!Array.isArray(state.moodEntries)) {
       useTimerStore.setState({ moodEntries: [] });
@@ -224,18 +234,19 @@ export class StoreInitialization {
    */
   private initializeTagSystem(): void {
     const state = useTimerStore.getState();
-    
+
     // Ensure tag arrays exist
     if (!Array.isArray(state.customTags)) {
       useTimerStore.setState({ customTags: [] });
     }
-    
+
     if (!Array.isArray(state.customTagConfigs)) {
       useTimerStore.setState({ customTagConfigs: [] });
     }
 
     // Set hasCreatedCustomTag flag based on existing tags
-    const hasCustomTags = state.customTags.length > 0 || state.customTagConfigs.length > 0;
+    const hasCustomTags =
+      state.customTags.length > 0 || state.customTagConfigs.length > 0;
     if (hasCustomTags && !state.hasCreatedCustomTag) {
       useTimerStore.setState({ hasCreatedCustomTag: true });
     }
@@ -246,38 +257,12 @@ export class StoreInitialization {
    */
   private checkInitialAchievements(): void {
     const state = useTimerStore.getState();
-    const stats = state.stats;
 
-    // Check session milestones
-    const sessionMilestones = [1, 5, 10, 25, 50, 100];
-    sessionMilestones.forEach((milestone) => {
-      if (stats.completedSessions >= milestone) {
-        const achievementName = `${milestone} Sessions Completed`;
-        const hasAchievement = state.rewardSystem.achievements.some(
-          (achievement) => achievement.name === achievementName
-        );
-        
-        if (!hasAchievement) {
-          state.unlockAchievement(achievementName, 50);
-        }
-      }
-    });
-
-    // Check time milestones
-    const hours = Math.floor(stats.totalWorkTime / 3600);
-    const hourMilestones = [1, 10, 25, 50, 100];
-    hourMilestones.forEach((milestone) => {
-      if (hours >= milestone) {
-        const achievementName = `${milestone} Hours of Focus`;
-        const hasAchievement = state.rewardSystem.achievements.some(
-          (achievement) => achievement.name === achievementName
-        );
-        
-        if (!hasAchievement) {
-          state.unlockAchievement(achievementName, 75);
-        }
-      }
-    });
+    // Update boxing progress and check for boxing achievements
+    const { updateBoxingProgress } = state as any;
+    if (updateBoxingProgress) {
+      updateBoxingProgress();
+    }
   }
 
   /**
@@ -285,16 +270,16 @@ export class StoreInitialization {
    */
   private handleInitializationError(error: unknown): void {
     console.error("Store initialization failed, attempting recovery...");
-    
+
     try {
       // Reset to safe defaults
       storeUtilities.resetStore();
-      
+
       // Try basic initialization again
       const store = useTimerStore.getState();
       store.refreshConfigFromPreferences();
       store.recalculateStats();
-      
+
       console.log("Store recovery completed");
       this.isInitialized = true;
     } catch (recoveryError) {

@@ -18,8 +18,8 @@ export default function FocusTimer() {
     setSelectedTaskIcon,
     targetRounds,
     setTargetRounds,
-    preSessionMood,
-    setPreSessionMood,
+    preRoundMood,
+    setpreRoundMood,
     isInitialized,
 
     // Timer state
@@ -65,11 +65,11 @@ export default function FocusTimer() {
   // Show loading state only if we're not initialized AND there's no current session
   if (!isInitialized && !currentSession) {
     return (
-      <List navigationTitle="Focus Timer" isLoading={true}>
+      <List navigationTitle="Another Round" isLoading={true}>
         <List.EmptyView
           icon={Icon.Clock}
-          title="Initializing Focus Timer"
-          description="Setting up your productivity workspace..."
+          title="Preparing for Another Round"
+          description="Setting up your boxing training workspace..."
         />
       </List>
     );
@@ -77,8 +77,8 @@ export default function FocusTimer() {
 
   return (
     <List
-      navigationTitle="Focus Timer"
-      searchBarPlaceholder="Type something"
+      navigationTitle="Another Round"
+      searchBarPlaceholder="What are you training for today?"
       searchText={searchText}
       onSearchTextChange={setSearchText}
       searchBarAccessory={
@@ -127,11 +127,11 @@ export default function FocusTimer() {
             selectedTaskIcon={selectedTaskIcon}
             setSelectedTaskIcon={setSelectedTaskIcon}
             targetRounds={targetRounds}
-            preSessionMood={preSessionMood}
+            preRoundMood={preRoundMood}
             config={config}
             getTagConfig={getTagConfig}
             onStartWork={handleStartWork}
-            onSetPreSessionMood={setPreSessionMood}
+            onSetpreRoundMood={setpreRoundMood}
           />
 
           {/* Tag Suggestions */}
@@ -153,8 +153,8 @@ export default function FocusTimer() {
       {(isIdle || isCompleted) && !searchText && (
         <List.EmptyView
           icon={Icon.Clock}
-          title="Focus Timer"
-          description="Enter a task name in the search bar above to get started, or press Cmd+Return to start a focus session"
+          title="Ready for Another Round"
+          description="Enter what you're training for in the search bar above, or press Cmd+Return to start your round"
         />
       )}
 

@@ -5,7 +5,7 @@ import { MoodType, MoodEntry } from "../../../types/timer";
  */
 
 /**
- * Mood options for pre-session selection
+ * Mood options for pre-round selection
  */
 export const MOOD_OPTIONS: { value: MoodType; title: string }[] = [
   { value: "energized", title: "Energized" },

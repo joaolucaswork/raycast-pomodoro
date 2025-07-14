@@ -52,24 +52,24 @@ export class WindowsIntegration {
     if (!this.isWindows) return;
 
     try {
-      let tooltip = "Pomodoro Timer";
+      let tooltip = "Another Round";
       let icon = "default";
 
       switch (state) {
         case TimerState.RUNNING:
-          tooltip = `Timer Running - ${formatTime(timeRemaining || 0)} remaining`;
+          tooltip = `Round Active - ${formatTime(timeRemaining || 0)} remaining`;
           icon = "running";
           break;
         case TimerState.PAUSED:
-          tooltip = `Timer Paused - ${formatTime(timeRemaining || 0)} remaining`;
+          tooltip = `Round Paused - ${formatTime(timeRemaining || 0)} remaining`;
           icon = "paused";
           break;
         case TimerState.COMPLETED:
-          tooltip = "Session Complete!";
+          tooltip = "Round Complete! Victory!";
           icon = "completed";
           break;
         default:
-          tooltip = "Pomodoro Timer - Ready";
+          tooltip = "Another Round - Ready to Fight";
           icon = "idle";
       }
 

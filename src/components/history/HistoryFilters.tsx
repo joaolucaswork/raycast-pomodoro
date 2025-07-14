@@ -50,10 +50,7 @@ export function HistoryFilters({
         </ActionPanel.Section>
         <ActionPanel.Section title="Filter">
           <ActionPanel.Submenu title="Round Type" icon={Icon.Filter}>
-            <Action
-              title="All Rounds"
-              onAction={() => setFilterType("all")}
-            />
+            <Action title="All Rounds" onAction={() => setFilterType("all")} />
             <Action
               title="Focus Rounds"
               onAction={() => setFilterType("work")}
@@ -96,7 +93,8 @@ export function HistoryFilters({
 export function useHistoryFilters() {
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [filterType, setFilterType] = useState<FilterType>("all");
-  const [completionFilter, setCompletionFilter] = useState<CompletionFilter>("all");
+  const [completionFilter, setCompletionFilter] =
+    useState<CompletionFilter>("all");
 
   return {
     sortBy,
@@ -123,7 +121,9 @@ export function filterAndSortSessions(
 
   // Apply type filter
   if (filters.filterType !== "all") {
-    filtered = filtered.filter((session) => session.type === filters.filterType);
+    filtered = filtered.filter(
+      (session) => session.type === filters.filterType
+    );
   }
 
   // Apply completion filter
@@ -170,15 +170,17 @@ export function getFilterSummary(filters: {
 
   if (filters.filterType !== "all") {
     const typeLabels = {
-      work: "Focus Rounds",
-      short_break: "Short Breaks",
-      long_break: "Long Breaks",
+      work: "Rounds",
+      short_break: "Rest Breaks",
+      long_break: "Recovery Breaks",
     };
     parts.push(typeLabels[filters.filterType]);
   }
 
   if (filters.completionFilter !== "all") {
-    parts.push(filters.completionFilter === "completed" ? "Completed" : "Incomplete");
+    parts.push(
+      filters.completionFilter === "completed" ? "Completed" : "Incomplete"
+    );
   }
 
   const sortLabels = {
@@ -198,21 +200,65 @@ export function getFilterSummary(filters: {
 export function getFilterOptions() {
   return {
     sortOptions: [
-      { value: "newest" as const, title: "Newest First", description: "Most recent sessions first" },
-      { value: "oldest" as const, title: "Oldest First", description: "Oldest sessions first" },
-      { value: "longest" as const, title: "Longest Rounds", description: "Longest duration first" },
-      { value: "shortest" as const, title: "Shortest Rounds", description: "Shortest duration first" },
+      {
+        value: "newest" as const,
+        title: "Newest First",
+        description: "Most recent sessions first",
+      },
+      {
+        value: "oldest" as const,
+        title: "Oldest First",
+        description: "Oldest sessions first",
+      },
+      {
+        value: "longest" as const,
+        title: "Longest Rounds",
+        description: "Longest duration first",
+      },
+      {
+        value: "shortest" as const,
+        title: "Shortest Rounds",
+        description: "Shortest duration first",
+      },
     ],
     typeOptions: [
-      { value: "all" as const, title: "All Rounds", description: "Show all session types" },
-      { value: "work" as const, title: "Focus Rounds", description: "Work sessions only" },
-      { value: "short_break" as const, title: "Short Breaks", description: "Short break sessions only" },
-      { value: "long_break" as const, title: "Long Breaks", description: "Long break sessions only" },
+      {
+        value: "all" as const,
+        title: "All Rounds",
+        description: "Show all session types",
+      },
+      {
+        value: "work" as const,
+        title: "Focus Rounds",
+        description: "Work sessions only",
+      },
+      {
+        value: "short_break" as const,
+        title: "Short Breaks",
+        description: "Short break sessions only",
+      },
+      {
+        value: "long_break" as const,
+        title: "Long Breaks",
+        description: "Long break sessions only",
+      },
     ],
     completionOptions: [
-      { value: "all" as const, title: "All Rounds", description: "Show completed and incomplete" },
-      { value: "completed" as const, title: "Completed Only", description: "Completed sessions only" },
-      { value: "incomplete" as const, title: "Incomplete Only", description: "Incomplete sessions only" },
+      {
+        value: "all" as const,
+        title: "All Rounds",
+        description: "Show completed and incomplete",
+      },
+      {
+        value: "completed" as const,
+        title: "Completed Only",
+        description: "Completed sessions only",
+      },
+      {
+        value: "incomplete" as const,
+        title: "Incomplete Only",
+        description: "Incomplete sessions only",
+      },
     ],
   };
 }
@@ -226,11 +272,13 @@ export function validateFilters(filters: {
   completionFilter: string;
 }): boolean {
   const { sortOptions, typeOptions, completionOptions } = getFilterOptions();
-  
+
   return (
-    sortOptions.some(option => option.value === filters.sortBy) &&
-    typeOptions.some(option => option.value === filters.filterType) &&
-    completionOptions.some(option => option.value === filters.completionFilter)
+    sortOptions.some((option) => option.value === filters.sortBy) &&
+    typeOptions.some((option) => option.value === filters.filterType) &&
+    completionOptions.some(
+      (option) => option.value === filters.completionFilter
+    )
   );
 }
 

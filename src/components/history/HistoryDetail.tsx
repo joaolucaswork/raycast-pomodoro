@@ -1,4 +1,4 @@
-import { Icon, List } from "@raycast/api";
+import { Icon, List, Color } from "@raycast/api";
 import { format } from "date-fns";
 import { TimerSession, MoodEntry } from "../../types/timer";
 import {
@@ -50,7 +50,7 @@ export function HistoryDetail({ session }: HistoryDetailProps) {
   const getTagColor = (tag: string) => {
     const { getTagConfig } = useTimerStore.getState();
     const config = getTagConfig(tag);
-    return config?.color || "Blue";
+    return config?.color || Color.Blue;
   };
 
   return (

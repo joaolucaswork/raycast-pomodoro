@@ -1,4 +1,4 @@
-# 🍅 Raycast Pomodoro Timer - Quick Reference
+# 🥊 Another Round - Quick Reference
 
 ## ⌨️ Keyboard Shortcuts
 
@@ -6,7 +6,7 @@
 
 | Shortcut     | Action                |
 | ------------ | --------------------- |
-| `Cmd+Return` | Start work session    |
+| `Cmd+Return` | Start round           |
 | `Cmd+J`      | Quick start (no task) |
 | `Cmd+Space`  | Pause/Resume timer    |
 | `Cmd+.`      | Stop timer            |

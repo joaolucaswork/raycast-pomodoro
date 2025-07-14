@@ -1,4 +1,4 @@
-import { List, Icon } from "@raycast/api";
+import { List, Icon, Color } from "@raycast/api";
 import { useMemo } from "react";
 import {
   format,
@@ -20,7 +20,7 @@ interface HistoryListProps {
   selectedSessionId: string | null;
   onSelectionChange: (id: string | null) => void;
   onDetailToggle: (sessionId?: string) => void;
-  getTagColor: (tag: string) => string;
+  getTagColor: (tag: string) => Color;
 }
 
 export function HistoryList({
@@ -120,7 +120,7 @@ interface SessionGroupProps {
   isShowingDetail: boolean;
   selectedSessionId: string | null;
   onDetailToggle: (sessionId?: string) => void;
-  getTagColor: (tag: string) => string;
+  getTagColor: (tag: string) => Color;
   customRenderer?: (session: TimerSession) => React.ReactNode;
 }
 
@@ -135,9 +135,9 @@ export function SessionGroup({
   customRenderer,
 }: SessionGroupProps) {
   const sessionCount = sessions.length;
-  const completedCount = sessions.filter(s => s.completed).length;
+  const completedCount = sessions.filter((s) => s.completed).length;
   const totalDuration = sessions.reduce((sum, s) => sum + s.duration, 0);
-  
+
   const sectionTitle = `${title} (${completedCount}/${sessionCount} completed, ${Math.floor(totalDuration / 60)}m total)`;
 
   return (
@@ -205,9 +205,7 @@ export function CompactHistoryList({
               {Math.floor(session.duration / 60)}m
             </span>
           </div>
-          <div className="session-status">
-            {session.completed ? "✓" : "○"}
-          </div>
+          <div className="session-status">{session.completed ? "✓" : "○"}</div>
         </div>
       ))}
       {sessions.length > maxItems && (
@@ -229,7 +227,7 @@ interface VirtualHistoryListProps {
   containerHeight: number;
   isShowingDetail: boolean;
   onDetailToggle: (sessionId?: string) => void;
-  getTagColor: (tag: string) => string;
+  getTagColor: (tag: string) => Color;
 }
 
 export function VirtualHistoryList({
@@ -272,18 +270,20 @@ export function VirtualHistoryList({
 export function useSessionGrouping(sessions: TimerSession[]) {
   return useMemo(() => {
     const groups = {
-      today: sessions.filter(s => isToday(new Date(s.startTime))),
-      yesterday: sessions.filter(s => isYesterday(new Date(s.startTime))),
-      thisWeek: sessions.filter(s => 
-        isThisWeek(new Date(s.startTime)) && 
-        !isToday(new Date(s.startTime)) && 
-        !isYesterday(new Date(s.startTime))
+      today: sessions.filter((s) => isToday(new Date(s.startTime))),
+      yesterday: sessions.filter((s) => isYesterday(new Date(s.startTime))),
+      thisWeek: sessions.filter(
+        (s) =>
+          isThisWeek(new Date(s.startTime)) &&
+          !isToday(new Date(s.startTime)) &&
+          !isYesterday(new Date(s.startTime))
       ),
-      thisMonth: sessions.filter(s => 
-        isThisMonth(new Date(s.startTime)) && 
-        !isThisWeek(new Date(s.startTime))
+      thisMonth: sessions.filter(
+        (s) =>
+          isThisMonth(new Date(s.startTime)) &&
+          !isThisWeek(new Date(s.startTime))
       ),
-      older: sessions.filter(s => !isThisMonth(new Date(s.startTime))),
+      older: sessions.filter((s) => !isThisMonth(new Date(s.startTime))),
     };
 
     return groups;
@@ -295,14 +295,17 @@ export function useSessionGrouping(sessions: TimerSession[]) {
  */
 export function getGroupStatistics(sessions: TimerSession[]) {
   const total = sessions.length;
-  const completed = sessions.filter(s => s.completed).length;
+  const completed = sessions.filter((s) => s.completed).length;
   const totalDuration = sessions.reduce((sum, s) => sum + s.duration, 0);
   const avgDuration = total > 0 ? totalDuration / total : 0;
-  
-  const byType = sessions.reduce((acc, session) => {
-    acc[session.type] = (acc[session.type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+
+  const byType = sessions.reduce(
+    (acc, session) => {
+      acc[session.type] = (acc[session.type] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
   return {
     total,

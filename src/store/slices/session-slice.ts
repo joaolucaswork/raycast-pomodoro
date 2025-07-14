@@ -61,6 +61,7 @@ export interface SessionSlice {
   updateSessionIcon: (sessionId: string, taskIcon?: Icon) => void;
   updateSessionNotes: (sessionId: string, notes?: string) => void;
   updateSessionName: (sessionId: string, taskName?: string) => void;
+  updateSessionTags: (sessionId: string, tags: string[]) => void;
   skipSession: () => void;
   clearAllHistory: () => void;
 
@@ -274,6 +275,17 @@ export const createSessionSlice: StateCreator<
         lastCompletedSession: shouldSave ? completedSession : null,
       });
 
+      // Update boxing progress and check for achievements if session was saved
+      if (shouldSave && currentSession.type === SessionType.WORK) {
+        // Use setTimeout to ensure state is updated first
+        setTimeout(() => {
+          const store = get() as any; // Type assertion to access achievement methods
+          if (store.updateBoxingProgress) {
+            store.updateBoxingProgress();
+          }
+        }, 100);
+      }
+
       // Show notification if session was too short to be saved
       if (!shouldSave) {
         showToast({
@@ -412,6 +424,18 @@ export const createSessionSlice: StateCreator<
     const { history } = get();
     const newHistory = history.map((session) =>
       session.id === sessionId ? { ...session, taskName } : session
+    );
+
+    set({
+      history: newHistory,
+      stats: calculateStats(newHistory),
+    });
+  },
+
+  updateSessionTags: (sessionId: string, tags: string[]) => {
+    const { history } = get();
+    const newHistory = history.map((session) =>
+      session.id === sessionId ? { ...session, tags } : session
     );
 
     set({

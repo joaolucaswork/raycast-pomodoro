@@ -1,15 +1,15 @@
-# 📱 Raycast Pomodoro Timer - User Guide
+# 🥊 Another Round - User Guide
 
-Welcome to the enhanced Raycast Pomodoro Timer! This guide will help you make the most of the new application tracking features and improved user interface.
+Welcome to Another Round! This guide will help you make the most of the boxing-themed focus timer with achievement tracking and improved productivity features.
 
 ## 🚀 Getting Started
 
 ### First Time Setup
 
-1. **Open Raycast** and search for "Pomodoro Timer"
+1. **Open Raycast** and search for "Focus Session" or "Another Round"
 2. **Configure Preferences** by pressing `Cmd+,` in the extension
 3. **Enable Application Tracking** in preferences for productivity insights
-4. **Start Your First Session** using `Cmd+Return`
+4. **Start Your First Round** using `Cmd+Return`
 
 ### Quick Start Checklist
 

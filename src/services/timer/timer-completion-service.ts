@@ -188,9 +188,11 @@ export class TimerCompletionService {
 
     // Check for hyperfocus if enabled
     if (updatedState.config.enableHyperfocusDetection) {
-      const hyperfocusResult = updatedState.checkHyperfocus();
+      updatedState.checkHyperfocus();
 
-      if (hyperfocusResult && enableNotifications) {
+      // Check if hyperfocus was detected after the check
+      const { hyperfocusDetection } = updatedState;
+      if (hyperfocusDetection.isHyperfocusDetected && enableNotifications) {
         await timerNotificationService.notifyHyperfocusDetected(
           completedSession.duration,
           15 // Recommended break duration

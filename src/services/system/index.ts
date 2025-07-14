@@ -3,4 +3,4 @@ export { preferencesService } from "./preferences-service";
 export { windowsIntegration } from "./windows-integration";
 
 // Re-export types for convenience
-export type { PreferencesConfig } from "../../types/timer";
+// PreferencesConfig type removed - no longer needed

@@ -2,7 +2,7 @@ import { useTimerStore } from "./timer-store";
 
 /**
  * Store subscription management for automatic updates and side effects.
- * 
+ *
  * Handles:
  * - Automatic stats recalculation
  * - Achievement checking
@@ -123,25 +123,36 @@ export class StoreSubscriptions {
    */
   private setupSessionStateSubscription(): void {
     const unsubscribe = useTimerStore.subscribe(
-      (state) => ({ 
-        timerState: state.state, 
+      (state) => ({
+        timerState: state.state,
         currentSession: state.currentSession,
-        timeRemaining: state.timeRemaining 
+        timeRemaining: state.timeRemaining,
       }),
       (current, previous) => {
         if (current.timerState !== previous.timerState) {
-          console.log(`Timer state changed: ${previous.timerState} -> ${current.timerState}`);
+          console.log(
+            `Timer state changed: ${previous.timerState} -> ${current.timerState}`
+          );
           this.handleStateTransition(current.timerState, previous.timerState);
         }
 
         if (current.currentSession !== previous.currentSession) {
           console.log("Current session changed");
-          this.handleSessionChange(current.currentSession, previous.currentSession);
+          this.handleSessionChange(
+            current.currentSession,
+            previous.currentSession
+          );
         }
 
         // Handle time remaining changes for warnings
-        if (current.timeRemaining !== previous.timeRemaining && current.timeRemaining > 0) {
-          this.handleTimeRemainingChange(current.timeRemaining, current.currentSession);
+        if (
+          current.timeRemaining !== previous.timeRemaining &&
+          current.timeRemaining > 0
+        ) {
+          this.handleTimeRemainingChange(
+            current.timeRemaining,
+            current.currentSession
+          );
         }
       }
     );
@@ -151,12 +162,9 @@ export class StoreSubscriptions {
   /**
    * Check for new achievements based on stats changes
    */
-  private checkForNewAchievements(
-    newStats: any,
-    prevStats: any
-  ): void {
+  private checkForNewAchievements(newStats: any, prevStats: any): void {
     const state = useTimerStore.getState();
-    
+
     if (!state.config.enableRewardSystem) {
       return;
     }
@@ -171,7 +179,7 @@ export class StoreSubscriptions {
       );
 
       if (newMilestone) {
-        state.unlockAchievement(`${newMilestone} Sessions Completed`, 50);
+        state.unlockAchievement(`${newMilestone}-sessions-completed`);
       }
     }
 
@@ -180,19 +188,18 @@ export class StoreSubscriptions {
       const streakMilestones = [3, 7, 14, 30, 60, 100];
       const newStreakMilestone = streakMilestones.find(
         (milestone) =>
-          newStats.streakCount >= milestone &&
-          prevStats.streakCount < milestone
+          newStats.streakCount >= milestone && prevStats.streakCount < milestone
       );
 
       if (newStreakMilestone) {
-        state.unlockAchievement(`${newStreakMilestone}-Day Streak`, 100);
+        state.unlockAchievement(`${newStreakMilestone}-day-streak`);
       }
     }
 
     // Check for time-based achievements
     const newHours = Math.floor(newStats.totalWorkTime / 3600);
     const prevHours = Math.floor(prevStats.totalWorkTime / 3600);
-    
+
     if (newHours > prevHours) {
       const hourMilestones = [1, 10, 25, 50, 100, 250, 500, 1000];
       const newHourMilestone = hourMilestones.find(
@@ -200,7 +207,7 @@ export class StoreSubscriptions {
       );
 
       if (newHourMilestone) {
-        state.unlockAchievement(`${newHourMilestone} Hours of Focus`, 75);
+        state.unlockAchievement(`${newHourMilestone}-hours-focus`);
       }
     }
   }
@@ -242,14 +249,19 @@ export class StoreSubscriptions {
         weekAgo.setDate(weekAgo.getDate() - 7);
         return entryDate >= weekAgo;
       })
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      .sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
 
     if (recentEntries.length >= 3) {
       const averageIntensity =
         recentEntries.reduce((sum, entry) => sum + entry.intensity, 0) /
         recentEntries.length;
 
-      console.log(`Recent mood trend: ${averageIntensity.toFixed(1)}/5 average intensity`);
+      console.log(
+        `Recent mood trend: ${averageIntensity.toFixed(1)}/5 average intensity`
+      );
 
       // Trigger mood-based recommendations if needed
       if (averageIntensity < 2.5) {
@@ -289,7 +301,10 @@ export class StoreSubscriptions {
   /**
    * Handle time remaining changes for warnings
    */
-  private handleTimeRemainingChange(timeRemaining: number, currentSession: any): void {
+  private handleTimeRemainingChange(
+    timeRemaining: number,
+    currentSession: any
+  ): void {
     if (!currentSession) {
       return;
     }
@@ -301,7 +316,7 @@ export class StoreSubscriptions {
 
     // Check for warning intervals (5min, 2min, 1min)
     const warningIntervals = state.config.warningIntervals || [300, 120, 60];
-    
+
     for (const interval of warningIntervals) {
       if (timeRemaining === interval) {
         console.log(`Transition warning: ${interval / 60} minutes remaining`);

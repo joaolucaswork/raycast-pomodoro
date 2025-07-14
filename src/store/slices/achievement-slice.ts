@@ -5,8 +5,12 @@ import {
   BreakActivity,
   Achievement,
   PomodoroStore,
+  BoxingProgress,
+  AchievementStats,
 } from "../../types/timer";
 import { adhdSupportService } from "../../services/features/adhd-support-service";
+import { boxingAchievementService } from "../../services/features/boxing-achievement-service";
+import { boxingNotificationService } from "../../services/features/boxing-notification-service";
 
 /**
  * Default reward system state
@@ -31,6 +35,26 @@ export const DEFAULT_HYPERFOCUS_DETECTION: HyperfocusDetection = {
 };
 
 /**
+ * Default boxing progress state
+ */
+export const DEFAULT_BOXING_PROGRESS: BoxingProgress = {
+  totalRounds: 0,
+  currentStreak: 0,
+  longestStreak: 0,
+  totalTrainingTime: 0,
+  championshipLevel: 1,
+  dailyRoundsToday: 0,
+  weeklyRoundsThisWeek: 0,
+  monthlyRoundsThisMonth: 0,
+  bestRoundDuration: 0,
+  averageRoundDuration: 0,
+  moodTrackingStreak: 0,
+  earlyBirdRounds: 0,
+  nightOwlRounds: 0,
+  weekendWarriorRounds: 0,
+};
+
+/**
  * Achievement slice interface - defines achievement and ADHD support-related state and actions
  */
 export interface AchievementSlice {
@@ -39,6 +63,8 @@ export interface AchievementSlice {
   hyperfocusDetection: HyperfocusDetection;
   breakActivities: BreakActivity[];
   currentBreakActivity?: BreakActivity;
+  // Boxing-themed achievement state
+  boxingProgress: BoxingProgress;
 
   // Achievement actions
   awardPoints: (points: number, reason: string) => void;
@@ -71,6 +97,14 @@ export interface AchievementSlice {
   getCurrentLevel: () => number;
   getPointsToNextLevel: () => number;
   getStreakMultiplier: () => number;
+
+  // Boxing-themed achievement methods
+  updateBoxingProgress: () => void;
+  getBoxingAchievements: () => Achievement[];
+  checkBoxingAchievements: () => Achievement[];
+  getAchievementStats: () => AchievementStats;
+  getBoxingLevel: () => import("../../types/timer").BoxingLevel;
+  getNextBoxingLevel: () => import("../../types/timer").BoxingLevel | null;
 }
 
 /**
@@ -87,6 +121,7 @@ export const createAchievementSlice: StateCreator<
   hyperfocusDetection: DEFAULT_HYPERFOCUS_DETECTION,
   breakActivities: adhdSupportService.getDefaultBreakActivities(),
   currentBreakActivity: undefined,
+  boxingProgress: DEFAULT_BOXING_PROGRESS,
 
   // Achievement actions
   awardPoints: (points: number, _reason: string) => {
@@ -299,5 +334,112 @@ export const createAchievementSlice: StateCreator<
   getStreakMultiplier: () => {
     const { rewardSystem } = get();
     return rewardSystem.streakMultiplier;
+  },
+
+  // Boxing-themed achievement methods
+  updateBoxingProgress: () => {
+    const { history } = get();
+    const newBoxingProgress =
+      boxingAchievementService.calculateBoxingProgress(history);
+
+    set({
+      boxingProgress: newBoxingProgress,
+    });
+
+    // Check for new boxing achievements
+    const { rewardSystem } = get();
+    const newAchievements = boxingAchievementService.checkAchievements(
+      history,
+      rewardSystem.achievements,
+      newBoxingProgress
+    );
+
+    if (newAchievements.length > 0) {
+      const totalNewPoints = newAchievements.reduce(
+        (sum, achievement) => sum + achievement.points,
+        0
+      );
+
+      set({
+        rewardSystem: {
+          ...rewardSystem,
+          achievements: [...rewardSystem.achievements, ...newAchievements],
+          points: rewardSystem.points + totalNewPoints,
+          level: boxingAchievementService.calculateBoxingLevel(
+            rewardSystem.points + totalNewPoints
+          ).level,
+        },
+      });
+
+      // Show achievement notifications
+      boxingNotificationService.showMultipleAchievements(newAchievements);
+    }
+  },
+
+  getBoxingAchievements: () => {
+    return boxingAchievementService.getBoxingAchievements();
+  },
+
+  checkBoxingAchievements: () => {
+    const { history, rewardSystem, boxingProgress } = get();
+    return boxingAchievementService.checkAchievements(
+      history,
+      rewardSystem.achievements,
+      boxingProgress
+    );
+  },
+
+  getAchievementStats: (): AchievementStats => {
+    const { rewardSystem } = get();
+    const allAchievements = boxingAchievementService.getBoxingAchievements();
+    const currentLevel = boxingAchievementService.calculateBoxingLevel(
+      rewardSystem.points
+    );
+    const levels = boxingAchievementService.getBoxingLevels();
+    const nextLevel = levels.find(
+      (level) => level.level === currentLevel.level + 1
+    );
+
+    const unlockedByRarity = rewardSystem.achievements.reduce(
+      (acc, achievement) => {
+        acc[achievement.rarity]++;
+        return acc;
+      },
+      { common: 0, rare: 0, epic: 0, legendary: 0 }
+    );
+
+    return {
+      totalAchievements: allAchievements.length,
+      unlockedAchievements: rewardSystem.achievements.length,
+      commonAchievements: unlockedByRarity.common,
+      rareAchievements: unlockedByRarity.rare,
+      epicAchievements: unlockedByRarity.epic,
+      legendaryAchievements: unlockedByRarity.legendary,
+      totalPoints: rewardSystem.points,
+      currentLevel,
+      nextLevel,
+      pointsToNextLevel: boxingAchievementService.getPointsToNextLevel(
+        rewardSystem.points
+      ),
+      completionPercentage: Math.round(
+        (rewardSystem.achievements.length / allAchievements.length) * 100
+      ),
+    };
+  },
+
+  getBoxingLevel: () => {
+    const { rewardSystem } = get();
+    return boxingAchievementService.calculateBoxingLevel(rewardSystem.points);
+  },
+
+  getNextBoxingLevel: () => {
+    const { rewardSystem } = get();
+    const currentLevel = boxingAchievementService.calculateBoxingLevel(
+      rewardSystem.points
+    );
+    const levels = boxingAchievementService.getBoxingLevels();
+    return (
+      levels.find((level) => level.level === currentLevel.level + 1) || null
+    );
   },
 });

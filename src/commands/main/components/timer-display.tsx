@@ -204,7 +204,7 @@ export function TimerDisplay({
               ? `${currentSession.taskName} - ${currentFocusPeriodSessionCount + 1}/${targetRounds}`
               : searchText.trim().length > 0
                 ? `${currentFocusPeriodSessionCount + 1}/${targetRounds}`
-                : `define a task name • ${currentFocusPeriodSessionCount + 1}/${targetRounds}`
+                : `define your training goal • ${currentFocusPeriodSessionCount + 1}/${targetRounds}`
             : `${timerDisplay.title}${currentSession.taskName ? ` • ${currentSession.taskName}` : ""}`
         }
         accessories={[
@@ -261,7 +261,7 @@ export function TimerDisplay({
             {searchText.trim().length > 0 && (
               <ActionPanel.Section title="Quick Actions">
                 <Action
-                  title="Start New Session"
+                  title="Start New Round"
                   icon={Icon.ArrowRight}
                   onAction={onStartNewSession}
                   shortcut={{ modifiers: ["cmd"], key: "n" }}
@@ -277,22 +277,22 @@ export function TimerDisplay({
         {timerDisplay.nextBreakTime && (
           <List.Item
             icon={Icon.Clock}
-            title="Next Break"
+            title="Bell Time"
             subtitle={timerDisplay.nextBreakTime.toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             })}
-            accessories={[{ text: "Scheduled" }]}
+            accessories={[{ text: "Round ends" }]}
           />
         )}
 
         {currentSession.taskName && (
           <List.Item
             icon={currentSession.taskIcon || Icon.Document}
-            title="Task Configuration"
+            title="Training Focus"
             subtitle={
               isConfiguring
-                ? "Editing task details..."
+                ? "Editing training details..."
                 : currentSession.taskName
             }
             accessories={[
@@ -307,7 +307,9 @@ export function TimerDisplay({
               <ActionPanel>
                 <Action
                   title={
-                    isConfiguring ? "Finish Configuration" : "Configure Task"
+                    isConfiguring
+                      ? "Finish Configuration"
+                      : "Configure Training"
                   }
                   icon={isConfiguring ? Icon.Check : Icon.Pencil}
                   onAction={isConfiguring ? exitConfigMode : enterConfigMode}

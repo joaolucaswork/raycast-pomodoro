@@ -20,7 +20,15 @@ export * from "./features";
 
 // Legacy exports for backward compatibility
 export { SessionManagementForm } from "./session-editing";
-export { MoodTracking } from "./mood-tracking";
+export {
+  MoodEntryForm,
+  MoodLoggingForm,
+  MoodManagementForm,
+  MoodHistory,
+  MoodHistoryList,
+  MoodAnalytics,
+  QuickMoodSelector,
+} from "./mood-tracking";
 
 // Re-export types for convenience
 export type { TimerSession, MoodType, MoodEntry } from "../types/timer";

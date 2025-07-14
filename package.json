@@ -1,9 +1,9 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
-  "name": "raycast-pomodoro",
+  "name": "another-round",
   "version": "1.0.0",
-  "title": "Pomodoro Timer",
-  "description": "A comprehensive Pomodoro timer extension for Raycast with persistent background operation, menu bar integration, and advanced productivity tracking",
+  "title": "Another Round",
+  "description": "Another Round - A boxing-themed focus timer extension for Raycast. Knock out procrastination with focused work rounds, achievement tracking, and productivity insights.",
   "icon": "icon.png",
   "author": "joaolucas-dev",
   "categories": [
@@ -26,7 +26,12 @@
     "time-management",
     "background-timer",
     "menu-bar",
-    "persistent"
+    "persistent",
+    "boxing",
+    "achievements",
+    "another-round",
+    "rounds",
+    "knockout"
   ],
   "platforms": [
     "Windows"
@@ -109,7 +114,7 @@
     {
       "name": "main-command",
       "title": "Focus Session",
-      "description": "Start, stop, and manage your focus rounds",
+      "description": "Start another round of focused work - knock out procrastination with boxing-themed productivity",
       "mode": "view",
       "keywords": [
         "pomodoro",
@@ -118,33 +123,43 @@
         "focus",
         "start",
         "work",
-        "session"
+        "session",
+        "round",
+        "boxing",
+        "knockout"
       ]
     },
     {
       "name": "timer-history",
-      "title": "Timer History",
-      "description": "View your focus round history",
+      "title": "Round History",
+      "description": "View your round history and track your victories against procrastination",
       "mode": "view",
       "keywords": [
         "history",
         "sessions",
         "past",
         "completed",
-        "log"
+        "log",
+        "rounds",
+        "boxing",
+        "victories"
       ]
     },
     {
       "name": "profile-command",
-      "title": "Statistics & Profile",
-      "description": "View your statistics, achievements, and mood tracking",
+      "title": "Profile & Achievements",
+      "description": "View your profile, championship achievements, and training statistics",
       "mode": "view",
       "keywords": [
         "profile",
         "stats",
         "statistics",
         "achievements",
-        "mood"
+        "mood",
+        "boxing",
+        "championship",
+        "training",
+        "belt"
       ]
     }
   ],

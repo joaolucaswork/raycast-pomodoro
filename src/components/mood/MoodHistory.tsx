@@ -26,6 +26,8 @@ import { MoodEntryForm } from "./MoodEntryForm";
 interface MoodHistoryProps {
   moodEntries: MoodEntry[];
   onMoodUpdated?: () => void;
+  onDeleteEntry?: (id: string) => void;
+  showSessionLink?: boolean;
 }
 
 export function MoodHistory({ moodEntries, onMoodUpdated }: MoodHistoryProps) {
@@ -125,6 +127,7 @@ export function MoodHistory({ moodEntries, onMoodUpdated }: MoodHistoryProps) {
 
         if (entry.context) {
           accessories.unshift({
+            text: entry.context,
             icon: {
               source: getMoodContextIcon(entry.context),
               tintColor: getMoodColor(entry.mood),

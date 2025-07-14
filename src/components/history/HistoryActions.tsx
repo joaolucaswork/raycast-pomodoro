@@ -44,7 +44,7 @@ export function HistoryActions({
 
     if (confirmed) {
       deleteSession(session.id);
-      
+
       showToast({
         style: Toast.Style.Success,
         title: "Session Deleted",
@@ -62,11 +62,7 @@ export function HistoryActions({
       {/* Primary action: View Details */}
       <Action
         title={isShowingDetail ? "Hide Details" : "Show Details"}
-        icon={
-          isShowingDetail
-            ? Icon.EyeDisabled
-            : ACTION_ICONS.VIEW_DETAILS
-        }
+        icon={isShowingDetail ? Icon.EyeDisabled : ACTION_ICONS.VIEW_DETAILS}
         onAction={() => onDetailToggle(session.id)}
         shortcut={SHORTCUTS.PRIMARY_ACTION}
       />
@@ -75,9 +71,7 @@ export function HistoryActions({
       <Action
         title="Manage Session"
         icon={Icon.Gear}
-        onAction={() =>
-          push(<SessionManagementForm session={session} />)
-        }
+        onAction={() => push(<SessionManagementForm session={session} />)}
         shortcut={{ modifiers: ["cmd"], key: "m" }}
       />
 
@@ -88,7 +82,7 @@ export function HistoryActions({
           onAction={() => handleDuplicateSession(session)}
           shortcut={{ modifiers: ["cmd"], key: "d" }}
         />
-        
+
         <Action
           title="Export Session"
           icon={Icon.Download}
@@ -160,10 +154,10 @@ export function BulkHistoryActions({
     };
 
     const jsonString = JSON.stringify(exportData, null, 2);
-    
+
     // In a real implementation, this would trigger a file download
     console.log("Bulk export data:", jsonString);
-    
+
     showToast({
       style: Toast.Style.Success,
       title: "Export Ready",
@@ -201,15 +195,9 @@ export function BulkHistoryActions({
 
 function handleDuplicateSession(session: TimerSession) {
   const { startTimer } = useTimerStore.getState();
-  
+
   // Create a new session with the same properties
-  startTimer(
-    session.type,
-    session.taskName,
-    session.projectName,
-    session.tags,
-    session.taskIcon
-  );
+  startTimer(session.type, session.taskName, session.projectName, session.tags);
 
   showToast({
     style: Toast.Style.Success,
@@ -225,10 +213,10 @@ function handleExportSession(session: TimerSession) {
   };
 
   const jsonString = JSON.stringify(exportData, null, 2);
-  
+
   // In a real implementation, this would trigger a file download
   console.log("Session export data:", jsonString);
-  
+
   showToast({
     style: Toast.Style.Success,
     title: "Session Exported",
@@ -252,17 +240,17 @@ export function QuickActions({ session }: QuickActionsProps) {
         onAction={() => handleDuplicateSession(session)}
         shortcut={{ modifiers: ["cmd"], key: "r" }}
       />
-      
+
       <Action
         title="Add to Favorites"
         icon={Icon.Star}
         onAction={() => handleAddToFavorites(session)}
         shortcut={{ modifiers: ["cmd"], key: "f" }}
       />
-      
+
       <Action
         title="Share Session"
-        icon={Icon.Share}
+        icon={Icon.Upload}
         onAction={() => handleShareSession(session)}
         shortcut={{ modifiers: ["cmd"], key: "s" }}
       />
@@ -281,10 +269,10 @@ function handleAddToFavorites(session: TimerSession) {
 
 function handleShareSession(session: TimerSession) {
   const shareText = `Focus Session: ${session.taskName || "Untitled"}\nDuration: ${Math.floor(session.duration / 60)}m\nCompleted: ${session.completed ? "Yes" : "No"}`;
-  
+
   // In a real implementation, this would open the system share dialog
   console.log("Share text:", shareText);
-  
+
   showToast({
     style: Toast.Style.Success,
     title: "Share Ready",
@@ -310,7 +298,7 @@ export function ContextMenuActions({ session }: { session: TimerSession }) {
           });
         }}
       />
-      
+
       <Action
         title="Copy Session Details"
         icon={Icon.Document}
