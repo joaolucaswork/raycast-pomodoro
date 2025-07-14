@@ -13,6 +13,7 @@ import {
 } from "../../utils/helpers";
 import { calculateStats } from "../../store/slices/stats-slice";
 import { adhdSupportService } from "../features/adhd-support-service";
+import { pointsSystemService } from "../features/points-system-service";
 import { timerCoreService } from "./timer-core-service";
 import { timerNotificationService } from "./timer-notification-service";
 
@@ -46,14 +47,15 @@ export class TimerCompletionService {
   ): Promise<void> {
     const completedSession = await this.processSessionCompletion(
       session,
+      false,
       false
     );
 
     // Update store - go directly to IDLE state (no auto-start during restore)
     this.updateStoreAfterCompletion(completedSession, TimerState.IDLE, false);
 
-    // Process ADHD features but no auto-start
-    await this.processAdhdFeatures(completedSession, false);
+    // Process ADHD features but no auto-start (assume natural completion during restore)
+    await this.processAdhdFeatures(completedSession, false, false);
 
     console.log(
       "[TimerCompletionService] Session completed during restore, going to idle state (no auto-start)"
@@ -67,7 +69,11 @@ export class TimerCompletionService {
     session: TimerSession,
     isManualCompletion: boolean = false
   ): Promise<void> {
-    const completedSession = await this.processSessionCompletion(session, true);
+    const completedSession = await this.processSessionCompletion(
+      session,
+      true,
+      isManualCompletion
+    );
 
     // Update store to COMPLETED state initially
     this.updateStoreAfterCompletion(
@@ -77,7 +83,7 @@ export class TimerCompletionService {
     );
 
     // Process ADHD features
-    await this.processAdhdFeatures(completedSession, true);
+    await this.processAdhdFeatures(completedSession, true, isManualCompletion);
 
     // Handle auto-start logic
     await this.handleAutoStartLogic(session.type, isManualCompletion);
@@ -88,7 +94,8 @@ export class TimerCompletionService {
    */
   private async processSessionCompletion(
     session: TimerSession,
-    shouldNotify: boolean
+    shouldNotify: boolean,
+    isManualCompletion: boolean = false
   ): Promise<TimerSession> {
     // Stop application tracking and capture usage data if it was a work session
     const applicationUsage = timerCoreService.stopApplicationTracking(
@@ -99,7 +106,9 @@ export class TimerCompletionService {
       ...session,
       endTime: new Date(),
       completed: true,
-      endReason: SessionEndReason.COMPLETED,
+      endReason: isManualCompletion
+        ? SessionEndReason.STOPPED
+        : SessionEndReason.COMPLETED,
       applicationUsage,
     };
 
@@ -119,15 +128,29 @@ export class TimerCompletionService {
     newState: TimerState,
     shouldSave: boolean
   ): void {
+    console.log("[DEBUG] updateStoreAfterCompletion called with:", {
+      sessionId: completedSession.id,
+      newState,
+      shouldSave,
+      sessionStartTime: completedSession.startTime,
+      sessionEndTime: completedSession.endTime,
+    });
+
     const { history, sessionCount, currentFocusPeriodSessionCount } =
       useTimerStore.getState();
+
+    console.log("[DEBUG] Current store state:", {
+      currentHistoryLength: history.length,
+      sessionCount,
+      currentFocusPeriodSessionCount,
+    });
 
     // Check if session should be saved to history based on duration
     const shouldSaveToHistory =
       shouldSave && shouldSaveSessionToHistory(completedSession);
     const actualDuration = getActualSessionDuration(completedSession);
 
-    console.log("[TimerCompletionService] Session completion details:", {
+    console.log("[DEBUG] Session completion details:", {
       sessionId: completedSession.id,
       type: completedSession.type,
       taskName: completedSession.taskName,
@@ -157,6 +180,22 @@ export class TimerCompletionService {
         ? currentFocusPeriodSessionCount + 1
         : currentFocusPeriodSessionCount;
 
+    console.log("[DEBUG] About to update store with:", {
+      shouldSaveToHistory,
+      oldHistoryLength: history.length,
+      newHistoryLength: newHistory.length,
+      sessionBeingAdded: shouldSaveToHistory
+        ? {
+            id: completedSession.id,
+            type: completedSession.type,
+            taskName: completedSession.taskName,
+            startTime: completedSession.startTime,
+            endTime: completedSession.endTime,
+            completed: completedSession.completed,
+          }
+        : null,
+    });
+
     useTimerStore.setState({
       currentSession: null,
       state: newState,
@@ -169,11 +208,19 @@ export class TimerCompletionService {
       lastCompletedSession: shouldSaveToHistory ? completedSession : null,
     });
 
-    console.log("[TimerCompletionService] Store updated after completion:", {
+    console.log("[DEBUG] Store updated after completion:", {
       newHistoryLength: newHistory.length,
       savedToHistory: shouldSaveToHistory,
       newState,
       lastCompletedSessionId: shouldSaveToHistory ? completedSession.id : null,
+    });
+
+    // Verify the store was actually updated
+    const updatedState = useTimerStore.getState();
+    console.log("[DEBUG] Store state after update:", {
+      actualHistoryLength: updatedState.history.length,
+      lastHistoryItem:
+        updatedState.history[updatedState.history.length - 1]?.id,
     });
   }
 
@@ -182,24 +229,33 @@ export class TimerCompletionService {
    */
   private async processAdhdFeatures(
     completedSession: TimerSession,
-    enableNotifications: boolean
+    enableNotifications: boolean,
+    isManualCompletion: boolean = false
   ): Promise<void> {
     const updatedState = useTimerStore.getState();
 
-    // Award points if reward system is enabled
+    // Award points if reward system is enabled using new points system
     if (updatedState.config.enableRewardSystem) {
-      const points = adhdSupportService.calculateSessionPoints(
-        completedSession.duration,
-        true,
-        completedSession.energyLevel,
-        completedSession.moodState
+      const pointsResult = pointsSystemService.calculateSessionPoints(
+        completedSession,
+        isManualCompletion
       );
 
-      const reason = `Completed ${getSessionTypeLabel(completedSession.type)} session`;
-      updatedState.awardPoints(points, reason);
+      // Only award points if the system determines they should be awarded
+      if (pointsResult.shouldAward && pointsResult.points > 0) {
+        updatedState.awardPoints(pointsResult.points, pointsResult.reason);
 
-      if (enableNotifications) {
-        await timerNotificationService.notifyPointsAwarded(points, reason);
+        if (enableNotifications) {
+          await timerNotificationService.notifyPointsAwarded(
+            pointsResult.points,
+            pointsResult.reason
+          );
+        }
+      } else if (enableNotifications && !pointsResult.shouldAward) {
+        // Notify user why points weren't awarded
+        await timerNotificationService.notifyPointsRestricted(
+          pointsResult.reason
+        );
       }
     }
 
@@ -225,12 +281,33 @@ export class TimerCompletionService {
     completedSessionType: SessionType,
     isManualCompletion: boolean
   ): Promise<void> {
-    const { config, currentFocusPeriodSessionCount } = useTimerStore.getState();
+    const {
+      config,
+      currentFocusPeriodSessionCount,
+      targetRounds,
+      currentFocusPeriodId,
+    } = useTimerStore.getState();
 
-    // Determine if auto-start should happen
+    // Check if we're in a multi-round focus period and have remaining rounds
+    const hasRemainingRounds =
+      currentFocusPeriodId && currentFocusPeriodSessionCount < targetRounds;
+
+    // For multi-round sessions, we should continue even if auto-start is disabled
+    // This ensures the pomodoro flow continues within a focus period
+    const shouldAutoStartForMultiRound =
+      !isManualCompletion && hasRemainingRounds;
+
+    // Regular auto-start logic (respects user preferences)
+    // Always evaluate shouldAutoStartNext for testing purposes, then apply manual completion restriction
+    const shouldAutoStartBasedOnConfig = timerCoreService.shouldAutoStartNext(
+      completedSessionType,
+      config
+    );
+    const shouldAutoStartRegular =
+      !isManualCompletion && shouldAutoStartBasedOnConfig;
+
     const shouldAutoStart =
-      !isManualCompletion &&
-      timerCoreService.shouldAutoStartNext(completedSessionType, config);
+      shouldAutoStartForMultiRound || shouldAutoStartRegular;
 
     if (shouldAutoStart) {
       const nextSessionType = timerCoreService.getNextSessionType(
@@ -239,8 +316,30 @@ export class TimerCompletionService {
         config
       );
 
+      // For multi-round sessions after breaks, check if we should end the focus period
+      if (completedSessionType !== SessionType.WORK && hasRemainingRounds) {
+        // After a break in a multi-round session, continue with work if we have remaining rounds
+        console.log(
+          `[TimerCompletionService] Continuing multi-round session: ${currentFocusPeriodSessionCount}/${targetRounds} rounds completed`
+        );
+      } else if (
+        completedSessionType === SessionType.WORK &&
+        !hasRemainingRounds
+      ) {
+        // Work session completed and no more rounds - only auto-start break if configured
+        if (!shouldAutoStartRegular) {
+          // End the focus period and go to idle
+          setTimeout(() => {
+            useTimerStore.setState({
+              state: TimerState.IDLE,
+            });
+          }, 5000);
+          return;
+        }
+      }
+
       console.log(
-        `[TimerCompletionService] Auto-starting ${nextSessionType} session after completion`
+        `[TimerCompletionService] Auto-starting ${nextSessionType} session after completion (multi-round: ${shouldAutoStartForMultiRound}, regular: ${shouldAutoStartRegular})`
       );
 
       // Schedule auto-start with delay
@@ -279,19 +378,15 @@ export class TimerCompletionService {
   }
 
   /**
-   * Calculates points for a completed session
+   * Calculates points for a completed session using the new points system
    */
   public calculateSessionPoints(
-    duration: number,
-    completed: boolean,
-    energyLevel?: number,
-    moodState?: string
-  ): number {
-    return adhdSupportService.calculateSessionPoints(
-      duration,
-      completed,
-      energyLevel,
-      moodState
+    session: TimerSession,
+    isManualCompletion: boolean
+  ): { points: number; reason: string; shouldAward: boolean } {
+    return pointsSystemService.calculateSessionPoints(
+      session,
+      isManualCompletion
     );
   }
 
@@ -313,21 +408,22 @@ export class TimerCompletionService {
   /**
    * Gets completion statistics for a session
    */
-  public getCompletionStats(session: TimerSession): {
+  public getCompletionStats(
+    session: TimerSession,
+    isManualCompletion: boolean = false
+  ): {
     duration: number;
     shouldSave: boolean;
-    points: number;
+    pointsResult: { points: number; reason: string; shouldAward: boolean };
   } {
     const duration = this.getSessionDuration(session);
     const shouldSave = this.shouldSaveSession(session);
-    const points = this.calculateSessionPoints(
-      session.duration,
-      session.completed,
-      session.energyLevel,
-      session.moodState
+    const pointsResult = this.calculateSessionPoints(
+      session,
+      isManualCompletion
     );
 
-    return { duration, shouldSave, points };
+    return { duration, shouldSave, pointsResult };
   }
 }
 

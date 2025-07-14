@@ -263,15 +263,17 @@ export const createAchievementSlice: StateCreator<
   },
 
   completeBreakActivity: (rating?: 1 | 2 | 3 | 4 | 5) => {
-    const { currentBreakActivity, rewardSystem } = get();
+    const { currentBreakActivity, awardPoints } = get();
     if (currentBreakActivity) {
       // Award points for completing break activity
       const points = rating ? rating * 10 : 25; // Base 25 points, bonus for rating
+      const reason = rating
+        ? `Completed break activity with ${rating}/5 rating`
+        : "Completed break activity";
+
+      awardPoints(points, reason);
+
       set({
-        rewardSystem: {
-          ...rewardSystem,
-          points: rewardSystem.points + points,
-        },
         currentBreakActivity: undefined,
       });
     }

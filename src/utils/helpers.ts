@@ -160,7 +160,19 @@ function ensureDate(value: string | number | Date | undefined): Date {
 export function shouldSaveSessionToHistory(
   session: import("../types/timer").TimerSession
 ): boolean {
-  if (!session.startTime) return false;
+  console.log("[DEBUG] shouldSaveSessionToHistory called with session:", {
+    id: session.id,
+    type: session.type,
+    taskName: session.taskName,
+    startTime: session.startTime,
+    endTime: session.endTime,
+    completed: session.completed,
+  });
+
+  if (!session.startTime) {
+    console.log("[DEBUG] Session has no startTime, not saving");
+    return false;
+  }
 
   try {
     const startTime = ensureDate(session.startTime);
@@ -169,9 +181,17 @@ export function shouldSaveSessionToHistory(
       (endTime.getTime() - startTime.getTime()) / 1000
     );
 
+    console.log("[DEBUG] Session duration calculation:", {
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+      actualDuration,
+      minimumRequired: MIN_SESSION_DURATION_FOR_HISTORY,
+      shouldSave: actualDuration >= MIN_SESSION_DURATION_FOR_HISTORY,
+    });
+
     return actualDuration >= MIN_SESSION_DURATION_FOR_HISTORY;
   } catch (error) {
-    console.warn("Error checking session duration:", error);
+    console.warn("[DEBUG] Error checking session duration:", error);
     return false;
   }
 }
@@ -182,14 +202,33 @@ export function shouldSaveSessionToHistory(
 export function getActualSessionDuration(
   session: import("../types/timer").TimerSession
 ): number {
-  if (!session.startTime) return 0;
+  console.log("[DEBUG] getActualSessionDuration called with session:", {
+    id: session.id,
+    startTime: session.startTime,
+    endTime: session.endTime,
+  });
+
+  if (!session.startTime) {
+    console.log("[DEBUG] Session has no startTime, returning 0");
+    return 0;
+  }
 
   try {
     const startTime = ensureDate(session.startTime);
     const endTime = session.endTime ? ensureDate(session.endTime) : new Date();
-    return Math.floor((endTime.getTime() - startTime.getTime()) / 1000);
+    const duration = Math.floor(
+      (endTime.getTime() - startTime.getTime()) / 1000
+    );
+
+    console.log("[DEBUG] Calculated session duration:", {
+      startTime: startTime.toISOString(),
+      endTime: endTime.toISOString(),
+      durationSeconds: duration,
+    });
+
+    return duration;
   } catch (error) {
-    console.warn("Error calculating session duration:", error);
+    console.warn("[DEBUG] Error calculating session duration:", error);
     return 0;
   }
 }

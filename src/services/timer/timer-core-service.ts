@@ -180,6 +180,20 @@ export class TimerCoreService {
   }
 
   /**
+   * Determines if a focus period should continue based on remaining rounds
+   */
+  public shouldContinueFocusPeriod(
+    currentFocusPeriodSessionCount: number,
+    targetRounds: number,
+    currentFocusPeriodId: string | null
+  ): boolean {
+    return (
+      currentFocusPeriodId !== null &&
+      currentFocusPeriodSessionCount < targetRounds
+    );
+  }
+
+  /**
    * Validates if a timer operation can be performed
    */
   public canPerformOperation(

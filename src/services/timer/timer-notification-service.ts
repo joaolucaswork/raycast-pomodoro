@@ -230,6 +230,23 @@ export class TimerNotificationService {
   }
 
   /**
+   * Notifies about points being restricted
+   */
+  public async notifyPointsRestricted(reason: string): Promise<void> {
+    try {
+      const { showToast, Toast } = require("@raycast/api");
+
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Points Restricted",
+        message: reason,
+      });
+    } catch (error) {
+      console.error("Failed to send points restriction notification:", error);
+    }
+  }
+
+  /**
    * Notifies about session state restoration
    */
   public async notifySessionRestored(
