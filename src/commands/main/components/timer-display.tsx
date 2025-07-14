@@ -148,18 +148,38 @@ export function TimerDisplay({
     }
   };
 
-  // Mood options for quick logging
+  // Mood options for quick logging - using correct MoodType values and icons
   const moodOptions = [
-    { mood: "happy" as MoodType, icon: Icon.Heart, intensity: 4 as const },
-    { mood: "focused" as MoodType, icon: Icon.BullsEye, intensity: 4 as const },
-    { mood: "calm" as MoodType, icon: Icon.Cloud, intensity: 3 as const },
-    { mood: "energetic" as MoodType, icon: Icon.Bolt, intensity: 5 as const },
+    {
+      mood: "energized" as MoodType,
+      icon: getMoodIcon("energized"),
+      intensity: 4 as const,
+    },
+    {
+      mood: "focused" as MoodType,
+      icon: getMoodIcon("focused"),
+      intensity: 4 as const,
+    },
+    {
+      mood: "calm" as MoodType,
+      icon: getMoodIcon("calm"),
+      intensity: 3 as const,
+    },
+    {
+      mood: "motivated" as MoodType,
+      icon: getMoodIcon("motivated"),
+      intensity: 5 as const,
+    },
     {
       mood: "stressed" as MoodType,
-      icon: Icon.ExclamationMark,
+      icon: getMoodIcon("stressed"),
       intensity: 2 as const,
     },
-    { mood: "tired" as MoodType, icon: Icon.Moon, intensity: 2 as const },
+    {
+      mood: "tired" as MoodType,
+      icon: getMoodIcon("tired"),
+      intensity: 2 as const,
+    },
   ];
 
   const getTimerDisplay = () => {
@@ -187,6 +207,21 @@ export function TimerDisplay({
 
   const timerDisplay = getTimerDisplay();
   const recentMood = getMostRecentMoodEntry(moodEntries);
+
+  // Get mood entries for current session
+  const currentSessionMoods = moodEntries.filter(
+    (entry) => entry.sessionId === currentSession.id
+  );
+
+  // Get pre-session mood (mood logged before session started)
+  const preSessionMood = currentSessionMoods.find(
+    (entry) => entry.context === "pre-session"
+  );
+
+  // Get post-session mood (mood that will be/was logged after session)
+  const postSessionMood = currentSessionMoods.find(
+    (entry) => entry.context === "post-session"
+  );
 
   return (
     <>
@@ -276,7 +311,7 @@ export function TimerDisplay({
       <List.Section title="Session Info">
         {timerDisplay.nextBreakTime && (
           <List.Item
-            icon={Icon.Clock}
+            icon={Icon.Bell}
             title="Bell Time"
             subtitle={timerDisplay.nextBreakTime.toLocaleTimeString([], {
               hour: "2-digit",
@@ -351,10 +386,48 @@ export function TimerDisplay({
           <List.Item
             icon={Icon.Tag}
             title="Tags"
-            subtitle={currentSession.tags.map((tag) => `#${tag}`).join(" ")}
+            subtitle={currentSession.tags.join(" ")}
             accessories={currentSession.tags.map((tag) => ({
               tag: { value: tag, color: getTagColor(tag, getTagConfig) },
             }))}
+          />
+        )}
+
+        {/* Pre-round mood display */}
+        {preSessionMood && (
+          <List.Item
+            icon={{
+              source: getMoodIcon(preSessionMood.mood),
+              tintColor: getMoodColor(preSessionMood.mood),
+            }}
+            title="Pre-Round Mood"
+            subtitle={`${preSessionMood.mood.charAt(0).toUpperCase() + preSessionMood.mood.slice(1)} (${preSessionMood.intensity}/5)`}
+            accessories={[
+              {
+                text: formatDistanceToNow(new Date(preSessionMood.timestamp), {
+                  addSuffix: true,
+                }),
+              },
+            ]}
+          />
+        )}
+
+        {/* Post-round mood display */}
+        {postSessionMood && (
+          <List.Item
+            icon={{
+              source: getMoodIcon(postSessionMood.mood),
+              tintColor: getMoodColor(postSessionMood.mood),
+            }}
+            title="Post-Round Mood"
+            subtitle={`${postSessionMood.mood.charAt(0).toUpperCase() + postSessionMood.mood.slice(1)} (${postSessionMood.intensity}/5)`}
+            accessories={[
+              {
+                text: formatDistanceToNow(new Date(postSessionMood.timestamp), {
+                  addSuffix: true,
+                }),
+              },
+            ]}
           />
         )}
       </List.Section>

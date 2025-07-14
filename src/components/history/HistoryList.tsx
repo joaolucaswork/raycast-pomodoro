@@ -69,8 +69,8 @@ export function HistoryList({
   if (sessions.length === 0) {
     return (
       <List.EmptyView
-        title="No Focus Sessions"
-        description="Start your first focus round to see your session history here"
+        title="No Training Rounds"
+        description="Start your first round to see your Another Round training history here"
         icon={{
           source: SESSION_ICONS.IDLE,
           tintColor: STATUS_COLORS.NEUTRAL,

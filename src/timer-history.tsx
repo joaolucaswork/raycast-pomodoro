@@ -135,8 +135,8 @@ export default function TimerHistory() {
 
   return (
     <List
-      navigationTitle="Focus History"
-      searchBarPlaceholder="Search rounds..."
+      navigationTitle="Another Round History"
+      searchBarPlaceholder="Search training rounds..."
       isShowingDetail={isShowingDetail && filteredAndSortedSessions.length > 0}
       onSelectionChange={(id) => {
         if (id) {

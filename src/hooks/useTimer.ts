@@ -1,10 +1,8 @@
 import { useEffect, useRef } from "react";
 import { useTimerStore } from "../store/timer-store";
 import { TimerState, SessionType } from "../types/timer";
-import { getMotivationalMessage, getSessionTypeLabel } from "../utils/helpers";
 import { notificationService } from "../services/notification-service";
 import { backgroundTimerService } from "../services/timer/background-timer-service";
-import { adhdSupportService } from "../services/features/adhd-support-service";
 
 export function useTimer() {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -14,14 +12,7 @@ export function useTimer() {
     currentSession,
     config,
     sessionCount,
-    history,
-    startTimer,
-    pauseTimer,
-    resumeTimer,
-    stopTimer,
-    resetTimer,
     skipSession,
-    completeSession,
     getNextSessionType,
     updateCurrentSessionName,
     updateCurrentSessionIcon,
@@ -52,12 +43,18 @@ export function useTimer() {
           const newTimeRemaining = prevState.timeRemaining - 1;
 
           if (newTimeRemaining <= 0) {
-            // Timer completed
-            handleTimerComplete();
+            // Timer completed - trigger background service to handle completion
+            console.log(
+              "[useTimer] Timer reached zero, triggering background service completion"
+            );
+
+            // Trigger background service to check and handle completion
+            backgroundTimerService.updateTimerState();
+
             return {
               ...prevState,
               timeRemaining: 0,
-              state: TimerState.COMPLETED,
+              // Don't change state here - let background service handle it
             };
           }
 
@@ -83,73 +80,8 @@ export function useTimer() {
     };
   }, [state]); // Only depend on state, not timeRemaining
 
-  const handleTimerComplete = async () => {
-    if (!currentSession) return;
-
-    // Store current session info before completion for notifications and auto-start
-    const currentSessionType = currentSession.type;
-    const currentSessionCount = sessionCount;
-
-    // Use the store's completeSession method to ensure proper stats calculation
-    // and achievement processing
-    completeSession();
-
-    // ADHD-specific features - get fresh state after completion
-    const store = useTimerStore.getState();
-    const completedSession = store.history[store.history.length - 1]; // Get the just-completed session
-
-    if (completedSession && store.config.enableRewardSystem) {
-      // Calculate and award points
-      const points = adhdSupportService.calculateSessionPoints(
-        completedSession.duration,
-        true,
-        completedSession.energyLevel,
-        completedSession.moodState
-      );
-
-      store.awardPoints(
-        points,
-        `Completed ${getSessionTypeLabel(completedSession.type)} session`
-      );
-    }
-
-    // Check for hyperfocus if enabled
-    if (store.config.enableHyperfocusDetection) {
-      store.checkHyperfocus();
-    }
-
-    // Show completion notification using notification service
-    await notificationService.notifySessionComplete(
-      currentSessionType,
-      config.enableNotifications
-    );
-
-    // Auto-start next session if enabled
-    if (shouldAutoStartNext(currentSessionType)) {
-      const nextSessionType =
-        currentSessionType === SessionType.WORK
-          ? getNextSessionType()
-          : SessionType.WORK;
-
-      setTimeout(() => {
-        startTimer(nextSessionType);
-        // Toast disabled for Windows compatibility
-        // showToast({
-        //   style: Toast.Style.Success,
-        //   title: "Auto-starting next session",
-        //   message: getMotivationalMessage(nextSessionType, currentSessionCount + 1),
-        // });
-      }, 2000); // 2 second delay before auto-start
-    }
-  };
-
-  const shouldAutoStartNext = (completedType: SessionType): boolean => {
-    if (completedType === SessionType.WORK) {
-      return config.autoStartBreaks;
-    } else {
-      return config.autoStartWork;
-    }
-  };
+  // Timer completion is now handled by the background timer service
+  // This ensures consistent completion logic and prevents race conditions
 
   const startWorkSession = async (
     taskName?: string,

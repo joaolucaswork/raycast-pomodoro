@@ -199,12 +199,21 @@ export type AchievementRequirementType =
   | "total_time" // Total focus time in minutes
   | "daily_goal" // Sessions in a single day
   | "session_duration" // Single session duration
-  | "mood_tracking" // Mood entries tracked
+  | "mood_tracking" // Legacy mood tracking (deprecated)
   | "time_of_day" // Sessions at specific times
   | "weekend_sessions" // Sessions on weekends
   | "consecutive_days" // Days with at least one session
   | "tag_usage" // Using custom tags
-  | "session_notes"; // Adding notes to sessions
+  | "session_notes" // Adding notes to sessions
+  // New mood-related achievement types
+  | "mood_entries_total" // Total mood entries logged
+  | "mood_tracking_streak" // Consecutive sessions with mood tracking
+  | "mood_entries_with_notes" // Mood entries that include notes
+  | "mood_intensity_range" // Different intensity levels used
+  | "mood_context_entries" // Mood entries in specific contexts
+  | "mood_specific_sessions" // Sessions completed in specific mood states
+  | "mood_improvement_pattern" // Positive mood progression patterns
+  | "mood_awareness_diversity"; // Different mood types logged
 
 export interface Challenge {
   id: string;
@@ -234,6 +243,26 @@ export interface BoxingProgress {
   earlyBirdRounds: number; // Rounds completed before 8 AM
   nightOwlRounds: number; // Rounds completed after 10 PM
   weekendWarriorRounds: number; // Rounds completed on weekends
+  // New mood-related tracking fields
+  totalMoodEntries: number; // Total mood entries logged
+  moodEntriesWithNotes: number; // Mood entries that include notes
+  uniqueIntensityLevelsUsed: number; // Different intensity levels (1-5) used
+  uniqueMoodTypesLogged: number; // Different mood types logged
+  preSessionMoodEntries: number; // Pre-session mood entries
+  duringSessionMoodEntries: number; // During-session mood entries
+  postSessionMoodEntries: number; // Post-session mood entries
+  standaloneMoodEntries: number; // Standalone mood entries
+  // Mood-specific session counts
+  energizedSessions: number; // Sessions completed while energized
+  focusedSessions: number; // Sessions completed while focused
+  calmSessions: number; // Sessions completed while calm
+  motivatedSessions: number; // Sessions completed while motivated
+  neutralSessions: number; // Sessions completed while neutral
+  tiredSessions: number; // Sessions completed while tired (resilience)
+  stressedSessions: number; // Sessions completed while stressed (perseverance)
+  overwhelmedSessions: number; // Sessions completed while overwhelmed
+  distractedSessions: number; // Sessions completed while distracted
+  moodImprovementPatterns: number; // Positive mood progression instances
 }
 
 // Achievement notification data
