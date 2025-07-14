@@ -18,7 +18,7 @@ export function AchievementNotificationBanner({
   useEffect(() => {
     if (notification) {
       setIsVisible(true);
-      
+
       // Auto-hide after delay
       const timer = setTimeout(() => {
         setIsVisible(false);
@@ -37,7 +37,8 @@ export function AchievementNotificationBanner({
     return null;
   }
 
-  const { achievement, isNewUnlock, progressUpdate, celebrationLevel } = notification;
+  const { achievement, isNewUnlock, progressUpdate, celebrationLevel } =
+    notification;
 
   // Get rarity-specific styling
   const getRarityConfig = (rarity: string) => {
@@ -110,7 +111,7 @@ export function AchievementNotificationBanner({
             },
             {
               icon: {
-                source: Icon.Sparkles,
+                source: Icon.Star,
                 tintColor: Color.Yellow,
               },
             },
@@ -124,9 +125,11 @@ export function AchievementNotificationBanner({
   if (progressUpdate) {
     const progressPercentage = Math.round(progressUpdate.percentage);
     const isNearCompletion = progressPercentage >= 75;
-    
+
     return (
-      <List.Section title={`🎯 ${isNearCompletion ? "Almost There!" : "Progress Update"}`}>
+      <List.Section
+        title={`🎯 ${isNearCompletion ? "Almost There!" : "Progress Update"}`}
+      >
         <List.Item
           icon={{
             source: achievement.icon,
@@ -162,13 +165,16 @@ export function AchievementNotificationBanner({
 
 // Hook for managing achievement notifications
 export function useAchievementNotifications() {
-  const [currentNotification, setCurrentNotification] = useState<AchievementNotification | null>(null);
-  const [notificationQueue, setNotificationQueue] = useState<AchievementNotification[]>([]);
+  const [currentNotification, setCurrentNotification] =
+    useState<AchievementNotification | null>(null);
+  const [notificationQueue, setNotificationQueue] = useState<
+    AchievementNotification[]
+  >([]);
 
   const showNotification = (notification: AchievementNotification) => {
     if (currentNotification) {
       // Add to queue if there's already a notification showing
-      setNotificationQueue(prev => [...prev, notification]);
+      setNotificationQueue((prev) => [...prev, notification]);
     } else {
       setCurrentNotification(notification);
     }
@@ -176,10 +182,10 @@ export function useAchievementNotifications() {
 
   const dismissCurrentNotification = () => {
     setCurrentNotification(null);
-    
+
     // Show next notification from queue if available
     setTimeout(() => {
-      setNotificationQueue(prev => {
+      setNotificationQueue((prev) => {
         if (prev.length > 0) {
           const [next, ...rest] = prev;
           setCurrentNotification(next);

@@ -32,8 +32,17 @@ export function BoxingProgressDisplay({
 
   // Get championship level display
   const getChampionshipDisplay = () => {
-    const levels = ["Rookie", "Amateur", "Professional", "Champion", "Hall of Famer"];
-    return levels[Math.min(progress.championshipLevel - 1, levels.length - 1)] || "Rookie";
+    const levels = [
+      "Rookie",
+      "Amateur",
+      "Professional",
+      "Champion",
+      "Hall of Famer",
+    ];
+    return (
+      levels[Math.min(progress.championshipLevel - 1, levels.length - 1)] ||
+      "Rookie"
+    );
   };
 
   if (!showDetailed) {
@@ -119,7 +128,7 @@ export function BoxingProgressDisplay({
           accessories={[
             { text: `${progress.currentStreak} rounds` },
             ...(progress.currentStreak > 0
-              ? [{ icon: { source: Icon.Flame, tintColor: Color.Orange } }]
+              ? [{ icon: { source: Icon.Bolt, tintColor: Color.Orange } }]
               : []),
           ]}
         />
@@ -138,7 +147,7 @@ export function BoxingProgressDisplay({
       {/* Session Quality */}
       <List.Section title="💪 Session Quality">
         <List.Item
-          icon={Icon.Timer}
+          icon={Icon.Clock}
           title="Average Round Duration"
           subtitle={`Your typical training round lasts ${avgDurationMinutes} minutes`}
           accessories={[
@@ -188,7 +197,7 @@ export function BoxingProgressDisplay({
           subtitle={`${progress.monthlyRoundsThisMonth} rounds completed this month`}
           accessories={[
             { text: `${progress.monthlyRoundsThisMonth} rounds` },
-            { icon: { source: Icon.Chart, tintColor: Color.Purple } },
+            { icon: { source: Icon.BarChart, tintColor: Color.Purple } },
           ]}
         />
       </List.Section>
@@ -246,10 +255,12 @@ export function BoxingProgressDisplay({
             title="Last Training Round"
             subtitle={`Completed on ${progress.lastRoundDate.toLocaleDateString()}`}
             accessories={[
-              { text: progress.lastRoundDate.toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              }) },
+              {
+                text: progress.lastRoundDate.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                }),
+              },
               { icon: { source: Icon.CheckCircle, tintColor: Color.Green } },
             ]}
           />

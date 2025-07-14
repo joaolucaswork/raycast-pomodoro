@@ -1,16 +1,7 @@
 // Icon components barrel export
-export { 
+export {
   createTaskIconSelectionActions,
-  createUniversalIconSelectionActions,
-  createIconSelectionSubmenu,
-  IconSelectionPopup,
-  IconCategorySubmenu,
-  SearchAllIconsSubmenu,
-  PopularIconsSubmenu,
-  getIconsByCategory,
-  getAllIcons,
-  searchIcons,
-  getPopularIcons,
+  createIconSelectionActions,
 } from "./inline-icon-selection";
 
 // Re-export types for convenience

@@ -61,6 +61,7 @@ export interface SessionSlice {
   updateSessionIcon: (sessionId: string, taskIcon?: Icon) => void;
   updateSessionNotes: (sessionId: string, notes?: string) => void;
   updateSessionName: (sessionId: string, taskName?: string) => void;
+  updateSessionTags: (sessionId: string, tags: string[]) => void;
   skipSession: () => void;
   clearAllHistory: () => void;
 
@@ -423,6 +424,18 @@ export const createSessionSlice: StateCreator<
     const { history } = get();
     const newHistory = history.map((session) =>
       session.id === sessionId ? { ...session, taskName } : session
+    );
+
+    set({
+      history: newHistory,
+      stats: calculateStats(newHistory),
+    });
+  },
+
+  updateSessionTags: (sessionId: string, tags: string[]) => {
+    const { history } = get();
+    const newHistory = history.map((session) =>
+      session.id === sessionId ? { ...session, tags } : session
     );
 
     set({

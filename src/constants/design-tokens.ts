@@ -83,6 +83,9 @@ export const ACTION_ICONS = {
   COPY: Icon.Clipboard,
   SETTINGS: Icon.Gear,
   SAVE: Icon.SaveDocument,
+  VIEW: Icon.Eye,
+  EDIT: Icon.Pencil,
+  DELETE: Icon.Trash,
 } as const;
 
 // Status Colors - Semantic color usage

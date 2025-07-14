@@ -144,6 +144,8 @@ export class ADHDSupportService {
         icon: Icon.Play,
         rarity: "common",
         points: 50,
+        category: "legacy",
+        requirements: [{ type: "sessions_completed", value: 1 }],
       },
       {
         id: "energy-warrior",
@@ -152,6 +154,8 @@ export class ADHDSupportService {
         icon: Icon.Bolt,
         rarity: "rare",
         points: 100,
+        category: "legacy",
+        requirements: [{ type: "mood_tracking", value: 1 }],
       },
       {
         id: "struggle-champion",
@@ -160,6 +164,8 @@ export class ADHDSupportService {
         icon: Icon.Trophy,
         rarity: "epic",
         points: 200,
+        category: "legacy",
+        requirements: [{ type: "sessions_completed", value: 10 }],
       },
       {
         id: "hyperfocus-master",
@@ -168,6 +174,8 @@ export class ADHDSupportService {
         icon: Icon.BullsEye,
         rarity: "legendary",
         points: 300,
+        category: "legacy",
+        requirements: [{ type: "session_duration", value: 120 }],
       },
       {
         id: "consistency-king",
@@ -176,6 +184,8 @@ export class ADHDSupportService {
         icon: Icon.Calendar,
         rarity: "epic",
         points: 250,
+        category: "legacy",
+        requirements: [{ type: "consecutive_days", value: 7 }],
       },
       {
         id: "marathon-runner",
@@ -184,6 +194,8 @@ export class ADHDSupportService {
         icon: Icon.Clock,
         rarity: "rare",
         points: 150,
+        category: "legacy",
+        requirements: [{ type: "sessions_completed", value: 50 }],
       },
     ];
   }
