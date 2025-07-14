@@ -57,7 +57,7 @@ export class WindowsIntegration {
 
       switch (state) {
         case TimerState.RUNNING:
-          tooltip = `Boxing Round Active - ${formatTime(timeRemaining || 0)} remaining`;
+          tooltip = `Round Active - ${formatTime(timeRemaining || 0)} remaining`;
           icon = "running";
           break;
         case TimerState.PAUSED:

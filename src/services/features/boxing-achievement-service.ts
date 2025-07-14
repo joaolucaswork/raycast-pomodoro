@@ -24,7 +24,7 @@ export class BoxingAchievementService {
       {
         id: "first-bell",
         name: "First Bell",
-        description: "Complete your first boxing round against procrastination",
+        description: "Complete your first round against procrastination",
         icon: Icon.Play,
         rarity: "common",
         points: 25,
@@ -35,7 +35,7 @@ export class BoxingAchievementService {
       {
         id: "training-begins",
         name: "Training Begins",
-        description: "Complete 5 boxing rounds - your training is underway",
+        description: "Complete 5 rounds - your training is underway",
         icon: Icon.Hammer,
         rarity: "common",
         points: 50,
@@ -46,7 +46,7 @@ export class BoxingAchievementService {
       {
         id: "getting-stronger",
         name: "Getting Stronger",
-        description: "Complete 25 boxing rounds - you're building strength",
+        description: "Complete 25 rounds - you're building strength",
         icon: Icon.BullsEye,
         rarity: "rare",
         points: 100,
@@ -57,7 +57,7 @@ export class BoxingAchievementService {
       {
         id: "seasoned-fighter",
         name: "Seasoned Fighter",
-        description: "Complete 100 boxing rounds - you're a seasoned fighter",
+        description: "Complete 100 rounds - you're a seasoned fighter",
         icon: Icon.Trophy,
         rarity: "epic",
         points: 250,
@@ -68,7 +68,7 @@ export class BoxingAchievementService {
       {
         id: "champion-material",
         name: "Champion Material",
-        description: "Complete 500 boxing rounds - you have champion potential",
+        description: "Complete 500 rounds - you have champion potential",
         icon: Icon.Crown,
         rarity: "legendary",
         points: 500,
@@ -581,7 +581,7 @@ export class BoxingAchievementService {
     }).length;
 
     // Calculate mood tracking streak
-    let moodTrackingStreak = 0;
+    const moodTrackingStreak = 0;
     // This would need to be calculated based on mood entries, simplified for now
 
     // Calculate durations

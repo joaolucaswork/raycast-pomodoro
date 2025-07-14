@@ -119,8 +119,7 @@ export class MoodAnalyticsService {
    */
   public calculateWeeklyTrend(moodEntries: MoodEntry[]): Array<{
     date: string;
-    averageIntensity: number;
-    mostCommonMood: MoodType;
+    averageMood: number;
     entryCount: number;
   }> {
     const now = new Date();
@@ -138,8 +137,7 @@ export class MoodAnalyticsService {
 
       return {
         date: format(day, "yyyy-MM-dd"),
-        averageIntensity: this.calculateAverageIntensity(dayEntries),
-        mostCommonMood: this.getMostCommonMood(dayEntries),
+        averageMood: this.calculateAverageIntensity(dayEntries),
         entryCount: dayEntries.length,
       };
     });

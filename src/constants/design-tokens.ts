@@ -164,7 +164,7 @@ export const ACHIEVEMENT_ICONS = {
 // Mood Tracking Colors - Semantic colors for different mood states
 export const MOOD_COLORS = {
   // Positive moods
-  ENERGIZED: Color.Yellow,
+  ENERGIZED: Color.Orange,
   FOCUSED: Color.Green,
   CALM: Color.Blue,
   MOTIVATED: Color.Purple,
@@ -172,8 +172,8 @@ export const MOOD_COLORS = {
   NEUTRAL: Color.SecondaryText,
   // Challenging moods
   TIRED: Color.Orange,
-  STRESSED: Color.Red,
-  OVERWHELMED: Color.Red,
+  STRESSED: Color.Orange,
+  OVERWHELMED: Color.Purple,
   DISTRACTED: Color.Orange,
   // Intensity levels
   INTENSITY_1: Color.SecondaryText,

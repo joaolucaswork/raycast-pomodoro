@@ -85,7 +85,7 @@ export function BoxingProgressDisplay({
       <List.Section title="🥊 Training Overview">
         <List.Item
           icon={Icon.Trophy}
-          title="Total Boxing Rounds"
+          title="Total Rounds"
           subtitle={`${progress.totalRounds} rounds completed in your training career`}
           accessories={[
             { text: `${progress.totalRounds} rounds` },

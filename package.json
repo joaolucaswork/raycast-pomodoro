@@ -132,7 +132,7 @@
     {
       "name": "timer-history",
       "title": "Round History",
-      "description": "View your boxing round history and track your victories against procrastination",
+      "description": "View your round history and track your victories against procrastination",
       "mode": "view",
       "keywords": [
         "history",
@@ -147,8 +147,8 @@
     },
     {
       "name": "profile-command",
-      "title": "Boxing Profile & Achievements",
-      "description": "View your boxing profile, championship achievements, and training statistics",
+      "title": "Profile & Achievements",
+      "description": "View your profile, championship achievements, and training statistics",
       "mode": "view",
       "keywords": [
         "profile",

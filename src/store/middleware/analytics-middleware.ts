@@ -29,9 +29,9 @@ export const analyticsMiddleware =
 
       // Call original set function
       if (replace === true) {
-        originalSet(partial, true);
+        originalSet(partial as T, true);
       } else {
-        originalSet(partial, replace as false | undefined);
+        originalSet(partial, replace);
       }
 
       const newState = get();
@@ -107,7 +107,10 @@ function trackStateChanges(prevState: PomodoroStore, newState: PomodoroStore) {
   // Track configuration changes
   if (JSON.stringify(prevState.config) !== JSON.stringify(newState.config)) {
     trackEvent("config_updated", {
-      changes: getConfigChanges(prevState.config, newState.config),
+      changes: getConfigChanges(
+        prevState.config as unknown as Record<string, unknown>,
+        newState.config as unknown as Record<string, unknown>
+      ),
     });
   }
 

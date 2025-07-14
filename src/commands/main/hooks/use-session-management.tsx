@@ -18,7 +18,7 @@ export function useSessionManagement() {
   const [selectedTaskIcon, setSelectedTaskIcon] = useState<Icon | undefined>(
     undefined
   );
-  const [preSessionMood, setPreSessionMood] = useState<MoodType | null>(null);
+  const [preRoundMood, setpreRoundMood] = useState<MoodType | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
   const {
@@ -172,13 +172,13 @@ export function useSessionManagement() {
     startWorkSession(limitedTaskName, undefined, tags, iconToUse);
 
     // Log pre-session mood if selected
-    if (preSessionMood) {
+    if (preRoundMood) {
       // Get the session ID after starting (we'll need to wait a moment for it to be created)
       setTimeout(() => {
         const currentState = useTimerStore.getState();
         const sessionId = currentState.currentSession?.id;
         if (sessionId) {
-          addMoodEntry(preSessionMood, 3, "pre-session", sessionId);
+          addMoodEntry(preRoundMood, 3, "pre-session", sessionId);
         }
       }, 100);
     }
@@ -195,7 +195,7 @@ export function useSessionManagement() {
     addCustomTag,
     selectedTaskIcon,
     getTagConfig,
-    preSessionMood,
+    preRoundMood,
     addMoodEntry,
   ]);
 
@@ -219,8 +219,8 @@ export function useSessionManagement() {
     setSelectedTaskIcon,
     targetRounds,
     setTargetRounds,
-    preSessionMood,
-    setPreSessionMood,
+    preRoundMood,
+    setpreRoundMood,
     isInitialized,
 
     // Timer state

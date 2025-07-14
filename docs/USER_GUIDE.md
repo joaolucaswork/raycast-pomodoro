@@ -9,7 +9,7 @@ Welcome to Another Round! This guide will help you make the most of the boxing-t
 1. **Open Raycast** and search for "Focus Session" or "Another Round"
 2. **Configure Preferences** by pressing `Cmd+,` in the extension
 3. **Enable Application Tracking** in preferences for productivity insights
-4. **Start Your First Boxing Round** using `Cmd+Return`
+4. **Start Your First Round** using `Cmd+Return`
 
 ### Quick Start Checklist
 

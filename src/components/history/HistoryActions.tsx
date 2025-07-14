@@ -197,13 +197,7 @@ function handleDuplicateSession(session: TimerSession) {
   const { startTimer } = useTimerStore.getState();
 
   // Create a new session with the same properties
-  startTimer(
-    session.type,
-    session.taskName,
-    session.projectName,
-    session.tags,
-    session.taskIcon
-  );
+  startTimer(session.type, session.taskName, session.projectName, session.tags);
 
   showToast({
     style: Toast.Style.Success,

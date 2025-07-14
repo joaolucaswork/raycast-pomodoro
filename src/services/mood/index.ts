@@ -6,9 +6,4 @@ export { moodStorageService } from "./mood-storage-service";
 export { moodValidationService } from "./mood-validation-service";
 
 // Re-export types for convenience
-export type {
-  MoodType,
-  MoodEntry,
-  MoodAnalytics,
-  MoodTrend,
-} from "../../types/timer";
+export type { MoodType, MoodEntry, MoodAnalytics } from "../../types/timer";

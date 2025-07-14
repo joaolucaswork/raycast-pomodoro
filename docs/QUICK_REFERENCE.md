@@ -6,7 +6,7 @@
 
 | Shortcut     | Action                |
 | ------------ | --------------------- |
-| `Cmd+Return` | Start boxing round    |
+| `Cmd+Return` | Start round           |
 | `Cmd+J`      | Quick start (no task) |
 | `Cmd+Space`  | Pause/Resume timer    |
 | `Cmd+.`      | Stop timer            |

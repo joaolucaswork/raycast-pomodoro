@@ -18,8 +18,8 @@ export default function FocusTimer() {
     setSelectedTaskIcon,
     targetRounds,
     setTargetRounds,
-    preSessionMood,
-    setPreSessionMood,
+    preRoundMood,
+    setpreRoundMood,
     isInitialized,
 
     // Timer state
@@ -127,11 +127,11 @@ export default function FocusTimer() {
             selectedTaskIcon={selectedTaskIcon}
             setSelectedTaskIcon={setSelectedTaskIcon}
             targetRounds={targetRounds}
-            preSessionMood={preSessionMood}
+            preRoundMood={preRoundMood}
             config={config}
             getTagConfig={getTagConfig}
             onStartWork={handleStartWork}
-            onSetPreSessionMood={setPreSessionMood}
+            onSetpreRoundMood={setpreRoundMood}
           />
 
           {/* Tag Suggestions */}
@@ -154,7 +154,7 @@ export default function FocusTimer() {
         <List.EmptyView
           icon={Icon.Clock}
           title="Ready for Another Round"
-          description="Enter what you're training for in the search bar above, or press Cmd+Return to start your boxing round"
+          description="Enter what you're training for in the search bar above, or press Cmd+Return to start your round"
         />
       )}
 

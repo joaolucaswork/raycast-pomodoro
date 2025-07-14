@@ -170,7 +170,7 @@ export function getFilterSummary(filters: {
 
   if (filters.filterType !== "all") {
     const typeLabels = {
-      work: "Boxing Rounds",
+      work: "Rounds",
       short_break: "Rest Breaks",
       long_break: "Recovery Breaks",
     };
