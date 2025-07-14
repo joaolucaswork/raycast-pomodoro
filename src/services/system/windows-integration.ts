@@ -1,13 +1,7 @@
 import { TimerState, SessionType } from "../../types/timer";
 import { getSessionTypeLabel, formatTime } from "../../utils/helpers";
 
-export interface WindowsNotificationOptions {
-  title: string;
-  body: string;
-  icon?: string;
-  sound?: boolean;
-  duration?: number;
-}
+// Windows notification options removed - not compatible with Raycast
 
 export class WindowsIntegration {
   private static instance: WindowsIntegration;
@@ -86,16 +80,8 @@ export class WindowsIntegration {
     }
   }
 
-  // Windows Toast Notifications
-  public async showWindowsToast(
-    options: WindowsNotificationOptions
-  ): Promise<boolean> {
-    if (!this.isWindows) return false;
-
-    // Windows toast notifications not available in Raycast environment
-    console.log(`Would show Windows toast: ${options.title} - ${options.body}`);
-    return true;
-  }
+  // Windows Toast Notifications (removed - not compatible with Raycast)
+  // Use Raycast's native Toast notifications instead
 
   // Windows Focus Assist Integration
   public async setFocusAssistMode(enabled: boolean): Promise<boolean> {
@@ -132,38 +118,8 @@ export class WindowsIntegration {
     }
   }
 
-  // Windows Action Center Integration
-  public async sendActionCenterNotification(
-    sessionType: SessionType,
-    isComplete: boolean
-  ): Promise<void> {
-    if (!this.isWindows) return;
-
-    const sessionLabel = getSessionTypeLabel(sessionType);
-    const title = isComplete
-      ? `${sessionLabel} Complete!`
-      : `${sessionLabel} Started`;
-
-    let body: string;
-    if (isComplete) {
-      body =
-        sessionType === SessionType.WORK
-          ? "Great job! Time for a well-deserved break."
-          : "Break's over! Ready to get back to work?";
-    } else {
-      body =
-        sessionType === SessionType.WORK
-          ? "Time to focus and be productive!"
-          : "Take a moment to relax and recharge.";
-    }
-
-    await this.showWindowsToast({
-      title,
-      body,
-      sound: true,
-      duration: 5,
-    });
-  }
+  // Windows Action Center Integration (removed - not compatible with Raycast)
+  // Use Raycast's native notification system instead
 
   // Global Keyboard Shortcuts (placeholder)
   public async registerGlobalShortcuts(): Promise<boolean> {

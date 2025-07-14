@@ -3,11 +3,11 @@
 // Timer services
 export * from "./timer";
 
-// Mood tracking services  
+// Mood tracking services
 export * from "./mood";
 
 // Notification services (already organized)
-export * from "./notifications";
+// Notifications folder removed - use simplified notification-service.ts instead
 export { notificationService } from "./notification-service";
 
 // Application icon services (already organized)
