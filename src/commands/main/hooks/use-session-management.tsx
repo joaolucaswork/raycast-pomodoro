@@ -171,7 +171,7 @@ export function useSessionManagement() {
     // Start the work session
     startWorkSession(limitedTaskName, undefined, tags, iconToUse);
 
-    // Log pre-session mood if selected
+    // Log pre-round mood if selected
     if (preRoundMood) {
       // Get the session ID after starting (we'll need to wait a moment for it to be created)
       setTimeout(() => {

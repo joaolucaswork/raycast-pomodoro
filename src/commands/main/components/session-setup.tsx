@@ -80,7 +80,7 @@ export function SessionSetup({
               selectedTaskIcon
             )}
 
-            <ActionPanel.Submenu title="Set Pre-session Mood" icon={Icon.Heart}>
+            <ActionPanel.Submenu title="Set Pre-round Mood" icon={Icon.Heart}>
               {MOOD_OPTIONS.map((mood) => (
                 <Action
                   key={mood.value}
