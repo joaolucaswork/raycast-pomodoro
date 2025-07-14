@@ -21,9 +21,6 @@ export function ProfileAchievements({
   rewardSystem,
   viewMode,
 }: ProfileAchievementsProps) {
-  // Only render when in achievements mode
-  if (viewMode !== "achievements") return null;
-
   // Get boxing achievement data from store
   const {
     getBoxingAchievements,
@@ -32,6 +29,9 @@ export function ProfileAchievements({
     getNextBoxingLevel,
     boxingProgress,
   } = useTimerStore();
+
+  // Only render when in achievements mode
+  if (viewMode !== "achievements") return null;
 
   const boxingAchievements = getBoxingAchievements();
   const achievementStats = getAchievementStats();

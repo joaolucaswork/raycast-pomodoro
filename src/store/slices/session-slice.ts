@@ -226,6 +226,13 @@ export const createSessionSlice: StateCreator<
     } = get();
 
     if (currentSession) {
+      console.log("[SessionSlice] Completing session:", {
+        sessionId: currentSession.id,
+        type: currentSession.type,
+        taskName: currentSession.taskName,
+        startTime: currentSession.startTime,
+      });
+
       // Stop application tracking and capture usage data if it was a work session
       let applicationUsage = undefined;
       if (
@@ -246,6 +253,13 @@ export const createSessionSlice: StateCreator<
       // Check if session should be saved to history based on duration
       const shouldSave = shouldSaveSessionToHistory(completedSession);
       const actualDuration = getActualSessionDuration(completedSession);
+
+      console.log("[SessionSlice] Session completion details:", {
+        actualDuration,
+        shouldSave,
+        minimumRequired: 40,
+        currentHistoryLength: history.length,
+      });
 
       // Only add to history if session meets minimum duration requirement
       const newHistory = shouldSave ? [...history, completedSession] : history;
@@ -273,6 +287,12 @@ export const createSessionSlice: StateCreator<
         // Remove mood prompt to fix timer stop bug
         isPostSessionMoodPromptVisible: false,
         lastCompletedSession: shouldSave ? completedSession : null,
+      });
+
+      console.log("[SessionSlice] Session completion result:", {
+        savedToHistory: shouldSave,
+        newHistoryLength: newHistory.length,
+        lastCompletedSessionId: shouldSave ? completedSession.id : null,
       });
 
       // Update boxing progress and check for achievements if session was saved

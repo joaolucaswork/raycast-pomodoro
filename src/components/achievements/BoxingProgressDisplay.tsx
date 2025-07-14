@@ -1,6 +1,14 @@
-import { List, Icon, Color, ActionPanel, Action } from "@raycast/api";
+import {
+  List,
+  Icon,
+  Color,
+  ActionPanel,
+  Action,
+  useNavigation,
+} from "@raycast/api";
 import { BoxingProgress, BoxingLevel } from "../../types/timer";
 import { formatDuration } from "../../utils/helpers";
+import { DetailedStatsView } from "./DetailedStatsView";
 
 interface BoxingProgressDisplayProps {
   progress: BoxingProgress;
@@ -15,6 +23,7 @@ export function BoxingProgressDisplay({
   nextLevel,
   showDetailed = false,
 }: BoxingProgressDisplayProps) {
+  const { push } = useNavigation();
   // Calculate training time in hours
   const trainingHours = Math.floor(progress.totalTrainingTime / 60);
   const trainingMinutes = progress.totalTrainingTime % 60;
@@ -68,7 +77,13 @@ export function BoxingProgressDisplay({
                 title="View Detailed Stats"
                 icon={Icon.BarChart}
                 onAction={() => {
-                  // Could navigate to detailed stats view
+                  push(
+                    <DetailedStatsView
+                      progress={progress}
+                      currentLevel={currentLevel}
+                      nextLevel={nextLevel}
+                    />
+                  );
                 }}
               />
             </ActionPanel>
@@ -82,13 +97,12 @@ export function BoxingProgressDisplay({
   return (
     <>
       {/* Overall Progress */}
-      <List.Section title="🥊 Training Overview">
+      <List.Section title="Training Overview">
         <List.Item
           icon={Icon.Trophy}
           title="Total Rounds"
           subtitle={`${progress.totalRounds} rounds completed in your training career`}
           accessories={[
-            { text: `${progress.totalRounds} rounds` },
             { icon: { source: Icon.CheckCircle, tintColor: Color.Green } },
           ]}
         />
@@ -99,7 +113,6 @@ export function BoxingProgressDisplay({
           subtitle={`${trainingHours} hours and ${trainingMinutes} minutes of focused training`}
           accessories={[
             { text: formatDuration(progress.totalTrainingTime * 60) },
-            { icon: { source: Icon.Stopwatch, tintColor: Color.Blue } },
           ]}
         />
 
@@ -114,23 +127,21 @@ export function BoxingProgressDisplay({
                 color: currentLevel.color,
               },
             },
-            { text: `Level ${progress.championshipLevel}` },
           ]}
         />
       </List.Section>
 
       {/* Streak Information */}
-      <List.Section title="🔥 Streak Performance">
+      <List.Section title="Streak Performance">
         <List.Item
           icon={Icon.Bolt}
           title="Current Streak"
           subtitle={getStreakStatus()}
-          accessories={[
-            { text: `${progress.currentStreak} rounds` },
-            ...(progress.currentStreak > 0
+          accessories={
+            progress.currentStreak > 0
               ? [{ icon: { source: Icon.Bolt, tintColor: Color.Orange } }]
-              : []),
-          ]}
+              : []
+          }
         />
 
         <List.Item
@@ -138,20 +149,18 @@ export function BoxingProgressDisplay({
           title="Best Streak"
           subtitle={`Your longest streak was ${progress.longestStreak} rounds`}
           accessories={[
-            { text: `${progress.longestStreak} rounds` },
             { icon: { source: Icon.Trophy, tintColor: Color.Yellow } },
           ]}
         />
       </List.Section>
 
       {/* Session Quality */}
-      <List.Section title="💪 Session Quality">
+      <List.Section title="Session Quality">
         <List.Item
           icon={Icon.Clock}
           title="Average Round Duration"
           subtitle={`Your typical training round lasts ${avgDurationMinutes} minutes`}
           accessories={[
-            { text: `${avgDurationMinutes} min` },
             { icon: { source: Icon.BarChart, tintColor: Color.Blue } },
           ]}
         />
@@ -161,24 +170,22 @@ export function BoxingProgressDisplay({
           title="Best Round Duration"
           subtitle={`Your longest training round was ${bestDurationMinutes} minutes`}
           accessories={[
-            { text: `${bestDurationMinutes} min` },
             { icon: { source: Icon.Crown, tintColor: Color.Purple } },
           ]}
         />
       </List.Section>
 
       {/* Time-based Stats */}
-      <List.Section title="📅 Training Schedule">
+      <List.Section title="Training Schedule">
         <List.Item
           icon={Icon.Calendar}
           title="Today's Training"
           subtitle={`${progress.dailyRoundsToday} rounds completed today`}
-          accessories={[
-            { text: `${progress.dailyRoundsToday} rounds` },
-            ...(progress.dailyRoundsToday > 0
+          accessories={
+            progress.dailyRoundsToday > 0
               ? [{ icon: { source: Icon.CheckCircle, tintColor: Color.Green } }]
-              : []),
-          ]}
+              : []
+          }
         />
 
         <List.Item
@@ -186,7 +193,6 @@ export function BoxingProgressDisplay({
           title="This Week's Training"
           subtitle={`${progress.weeklyRoundsThisWeek} rounds completed this week`}
           accessories={[
-            { text: `${progress.weeklyRoundsThisWeek} rounds` },
             { icon: { source: Icon.BarChart, tintColor: Color.Blue } },
           ]}
         />
@@ -196,20 +202,18 @@ export function BoxingProgressDisplay({
           title="This Month's Training"
           subtitle={`${progress.monthlyRoundsThisMonth} rounds completed this month`}
           accessories={[
-            { text: `${progress.monthlyRoundsThisMonth} rounds` },
             { icon: { source: Icon.BarChart, tintColor: Color.Purple } },
           ]}
         />
       </List.Section>
 
       {/* Special Achievements */}
-      <List.Section title="⭐ Special Training">
+      <List.Section title="Special Training">
         <List.Item
           icon={Icon.Sun}
           title="Early Bird Training"
           subtitle={`${progress.earlyBirdRounds} rounds completed before 8 AM`}
           accessories={[
-            { text: `${progress.earlyBirdRounds} rounds` },
             { icon: { source: Icon.Sun, tintColor: Color.Yellow } },
           ]}
         />
@@ -218,10 +222,7 @@ export function BoxingProgressDisplay({
           icon={Icon.Moon}
           title="Night Owl Training"
           subtitle={`${progress.nightOwlRounds} rounds completed after 10 PM`}
-          accessories={[
-            { text: `${progress.nightOwlRounds} rounds` },
-            { icon: { source: Icon.Moon, tintColor: Color.Blue } },
-          ]}
+          accessories={[{ icon: { source: Icon.Moon, tintColor: Color.Blue } }]}
         />
 
         <List.Item
@@ -229,7 +230,6 @@ export function BoxingProgressDisplay({
           title="Weekend Warrior"
           subtitle={`${progress.weekendWarriorRounds} rounds completed on weekends`}
           accessories={[
-            { text: `${progress.weekendWarriorRounds} rounds` },
             { icon: { source: Icon.Trophy, tintColor: Color.Orange } },
           ]}
         />
@@ -240,7 +240,6 @@ export function BoxingProgressDisplay({
             title="Mood Tracking Streak"
             subtitle={`${progress.moodTrackingStreak} consecutive sessions with mood tracking`}
             accessories={[
-              { text: `${progress.moodTrackingStreak} sessions` },
               { icon: { source: Icon.Heart, tintColor: Color.Red } },
             ]}
           />
@@ -249,7 +248,7 @@ export function BoxingProgressDisplay({
 
       {/* Last Training Session */}
       {progress.lastRoundDate && (
-        <List.Section title="📝 Recent Activity">
+        <List.Section title="Recent Activity">
           <List.Item
             icon={Icon.Clock}
             title="Last Training Round"
@@ -261,7 +260,6 @@ export function BoxingProgressDisplay({
                   minute: "2-digit",
                 }),
               },
-              { icon: { source: Icon.CheckCircle, tintColor: Color.Green } },
             ]}
           />
         </List.Section>

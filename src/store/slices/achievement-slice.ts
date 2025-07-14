@@ -52,6 +52,26 @@ export const DEFAULT_BOXING_PROGRESS: BoxingProgress = {
   earlyBirdRounds: 0,
   nightOwlRounds: 0,
   weekendWarriorRounds: 0,
+  // New mood-related tracking fields
+  totalMoodEntries: 0,
+  moodEntriesWithNotes: 0,
+  uniqueIntensityLevelsUsed: 0,
+  uniqueMoodTypesLogged: 0,
+  preSessionMoodEntries: 0,
+  duringSessionMoodEntries: 0,
+  postSessionMoodEntries: 0,
+  standaloneMoodEntries: 0,
+  // Mood-specific session counts
+  energizedSessions: 0,
+  focusedSessions: 0,
+  calmSessions: 0,
+  motivatedSessions: 0,
+  neutralSessions: 0,
+  tiredSessions: 0,
+  stressedSessions: 0,
+  overwhelmedSessions: 0,
+  distractedSessions: 0,
+  moodImprovementPatterns: 0,
 };
 
 /**
@@ -338,9 +358,11 @@ export const createAchievementSlice: StateCreator<
 
   // Boxing-themed achievement methods
   updateBoxingProgress: () => {
-    const { history } = get();
-    const newBoxingProgress =
-      boxingAchievementService.calculateBoxingProgress(history);
+    const { history, moodEntries } = get();
+    const newBoxingProgress = boxingAchievementService.calculateBoxingProgress(
+      history,
+      moodEntries
+    );
 
     set({
       boxingProgress: newBoxingProgress,
@@ -400,7 +422,14 @@ export const createAchievementSlice: StateCreator<
       (level) => level.level === currentLevel.level + 1
     );
 
-    const unlockedByRarity = rewardSystem.achievements.reduce(
+    // Get unlocked achievement IDs for boxing achievements only
+    const unlockedIds = rewardSystem.achievements.map((a) => a.id);
+    const unlockedBoxingAchievements = allAchievements.filter((achievement) =>
+      unlockedIds.includes(achievement.id)
+    );
+
+    // Count unlocked achievements by rarity (only boxing achievements)
+    const unlockedByRarity = unlockedBoxingAchievements.reduce(
       (acc, achievement) => {
         acc[achievement.rarity]++;
         return acc;
@@ -410,7 +439,7 @@ export const createAchievementSlice: StateCreator<
 
     return {
       totalAchievements: allAchievements.length,
-      unlockedAchievements: rewardSystem.achievements.length,
+      unlockedAchievements: unlockedBoxingAchievements.length,
       commonAchievements: unlockedByRarity.common,
       rareAchievements: unlockedByRarity.rare,
       epicAchievements: unlockedByRarity.epic,
@@ -422,7 +451,7 @@ export const createAchievementSlice: StateCreator<
         rewardSystem.points
       ),
       completionPercentage: Math.round(
-        (rewardSystem.achievements.length / allAchievements.length) * 100
+        (unlockedBoxingAchievements.length / allAchievements.length) * 100
       ),
     };
   },

@@ -1,3 +1,4 @@
+import { Icon } from "@raycast/api";
 import { adhdSupportService } from "../../../services/features/adhd-support-service";
 import { RewardSystem, TimerSession } from "../../../types/timer";
 
@@ -57,19 +58,19 @@ export const getSessionStatus = (session: TimerSession) => {
     return {
       status: "Completed",
       color: "#10B981", // STATUS_COLORS.SUCCESS equivalent
-      icon: "checkmark.circle" as const,
+      icon: Icon.CheckCircle,
     };
   } else if (session.endTime && !session.completed) {
     return {
       status: "Manual Stop",
       color: "#F59E0B", // STATUS_COLORS.WARNING equivalent
-      icon: "stop.circle" as const,
+      icon: Icon.Stop,
     };
   } else {
     return {
       status: "Incomplete",
       color: "#EF4444", // STATUS_COLORS.ERROR equivalent
-      icon: "xmark.circle" as const,
+      icon: Icon.XMarkCircle,
     };
   }
 };

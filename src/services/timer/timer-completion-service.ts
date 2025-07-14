@@ -127,6 +127,16 @@ export class TimerCompletionService {
       shouldSave && shouldSaveSessionToHistory(completedSession);
     const actualDuration = getActualSessionDuration(completedSession);
 
+    console.log("[TimerCompletionService] Session completion details:", {
+      sessionId: completedSession.id,
+      type: completedSession.type,
+      taskName: completedSession.taskName,
+      actualDuration,
+      shouldSave,
+      shouldSaveToHistory,
+      currentHistoryLength: history.length,
+    });
+
     // Show notification if session was too short to be saved
     if (shouldSave && !shouldSaveToHistory) {
       timerNotificationService.notifySessionTooShort(actualDuration);
@@ -157,6 +167,13 @@ export class TimerCompletionService {
       stats: calculateStats(newHistory),
       isPostSessionMoodPromptVisible: false,
       lastCompletedSession: shouldSaveToHistory ? completedSession : null,
+    });
+
+    console.log("[TimerCompletionService] Store updated after completion:", {
+      newHistoryLength: newHistory.length,
+      savedToHistory: shouldSaveToHistory,
+      newState,
+      lastCompletedSessionId: shouldSaveToHistory ? completedSession.id : null,
     });
   }
 
