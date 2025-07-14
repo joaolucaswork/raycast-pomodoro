@@ -1,7 +1,7 @@
 import { Icon, Color } from "@raycast/api";
 
 /**
- * Design tokens for consistent styling across the Raycast Pomodoro extension.
+ * Design tokens for consistent styling across the Another Round extension.
  *
  * This module provides a centralized system of design tokens that ensure visual
  * consistency and adherence to Raycast's native design patterns and guidelines.

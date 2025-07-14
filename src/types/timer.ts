@@ -168,7 +168,43 @@ export interface Achievement {
   unlockedAt?: Date;
   rarity: "common" | "rare" | "epic" | "legendary";
   points: number;
+  category: AchievementCategory;
+  requirements: AchievementRequirement[];
+  progress?: number;
+  maxProgress?: number;
+  isBoxingThemed?: boolean; // Flag for boxing-themed achievements
 }
+
+export type AchievementCategory =
+  | "training_milestones" // Basic completion achievements
+  | "knockout_streaks" // Consistency streaks
+  | "championship_belts" // Major time-based milestones
+  | "daily_training" // Daily goal achievements
+  | "endurance_challenges" // Long session achievements
+  | "consistency_championships" // Weekly/monthly consistency
+  | "special_achievements" // Unique/special accomplishments
+  | "mood_mastery" // Mood tracking related
+  | "legacy"; // Old achievements (for backward compatibility)
+
+export interface AchievementRequirement {
+  type: AchievementRequirementType;
+  value: number;
+  timeframe?: "daily" | "weekly" | "monthly" | "all_time";
+  metadata?: Record<string, any>; // Additional requirement data
+}
+
+export type AchievementRequirementType =
+  | "sessions_completed" // Total sessions completed
+  | "streak_length" // Consecutive sessions
+  | "total_time" // Total focus time in minutes
+  | "daily_goal" // Sessions in a single day
+  | "session_duration" // Single session duration
+  | "mood_tracking" // Mood entries tracked
+  | "time_of_day" // Sessions at specific times
+  | "weekend_sessions" // Sessions on weekends
+  | "consecutive_days" // Days with at least one session
+  | "tag_usage" // Using custom tags
+  | "session_notes"; // Adding notes to sessions
 
 export interface Challenge {
   id: string;
@@ -179,6 +215,63 @@ export interface Challenge {
   reward: number;
   expiresAt: Date;
   type: "daily" | "weekly" | "monthly";
+}
+
+// Boxing-themed achievement progress tracking
+export interface BoxingProgress {
+  totalRounds: number; // Total completed focus sessions
+  currentStreak: number; // Current consecutive sessions
+  longestStreak: number; // Best streak ever
+  totalTrainingTime: number; // Total focus time in minutes
+  championshipLevel: number; // Current championship level (1-5)
+  dailyRoundsToday: number; // Rounds completed today
+  weeklyRoundsThisWeek: number; // Rounds completed this week
+  monthlyRoundsThisMonth: number; // Rounds completed this month
+  lastRoundDate?: Date; // When the last round was completed
+  bestRoundDuration: number; // Longest single session in minutes
+  averageRoundDuration: number; // Average session duration
+  moodTrackingStreak: number; // Consecutive sessions with mood tracking
+  earlyBirdRounds: number; // Rounds completed before 8 AM
+  nightOwlRounds: number; // Rounds completed after 10 PM
+  weekendWarriorRounds: number; // Rounds completed on weekends
+}
+
+// Achievement notification data
+export interface AchievementNotification {
+  achievement: Achievement;
+  isNewUnlock: boolean;
+  progressUpdate?: {
+    current: number;
+    max: number;
+    percentage: number;
+  };
+  celebrationLevel: "minimal" | "standard" | "enthusiastic";
+}
+
+// Boxing-themed level system
+export interface BoxingLevel {
+  level: number;
+  title: string;
+  description: string;
+  minPoints: number;
+  maxPoints: number;
+  icon: import("@raycast/api").Icon;
+  color: import("@raycast/api").Color;
+}
+
+// Achievement statistics for analytics
+export interface AchievementStats {
+  totalAchievements: number;
+  unlockedAchievements: number;
+  commonAchievements: number;
+  rareAchievements: number;
+  epicAchievements: number;
+  legendaryAchievements: number;
+  totalPoints: number;
+  currentLevel: BoxingLevel;
+  nextLevel?: BoxingLevel;
+  pointsToNextLevel: number;
+  completionPercentage: number;
 }
 
 export interface HyperfocusDetection {
@@ -218,6 +311,8 @@ export interface PomodoroState {
   targetRounds: number; // Target sessions for current focus period
   // ADHD-specific state
   rewardSystem: RewardSystem;
+  // Boxing-themed progress tracking
+  boxingProgress: BoxingProgress;
   hyperfocusDetection: HyperfocusDetection;
   breakActivities: BreakActivity[];
   currentBreakActivity?: BreakActivity;

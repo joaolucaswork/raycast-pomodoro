@@ -2,6 +2,7 @@ import { showToast, showHUD, Toast } from "@raycast/api";
 import { SessionType } from "../types/timer";
 import { getSessionTypeLabel } from "../utils/helpers";
 import { useTimerStore } from "../store/timer-store";
+import { boxingNotificationService } from "./features/boxing-notification-service";
 
 /**
  * Simplified notification service using only Raycast native notifications.
@@ -87,12 +88,21 @@ export class NotificationService {
     const config = useTimerStore.getState().config;
     if (!config.enableNotifications) return;
 
-    const sessionLabel = getSessionTypeLabel(sessionType);
-    const title = customMessage || `${sessionLabel} Started`;
-    const message = taskName ? `Task: ${taskName}` : undefined;
+    // Use boxing-themed notifications for work sessions
+    if (sessionType === SessionType.WORK) {
+      const { currentFocusPeriodSessionCount } = useTimerStore.getState();
+      await boxingNotificationService.showRoundStart(
+        taskName,
+        currentFocusPeriodSessionCount + 1
+      );
+    } else {
+      const sessionLabel = getSessionTypeLabel(sessionType);
+      const title = customMessage || `${sessionLabel} Started`;
+      const message = taskName ? `Task: ${taskName}` : undefined;
 
-    await this.showHUD(title);
-    await this.showSuccess(title, message);
+      await this.showHUD(title);
+      await this.showSuccess(title, message);
+    }
   }
 
   /**
@@ -106,12 +116,30 @@ export class NotificationService {
     const config = useTimerStore.getState().config;
     if (!config.enableNotifications) return;
 
-    const sessionLabel = getSessionTypeLabel(sessionType);
-    const title = `${sessionLabel} Complete`;
-    const fullMessage = taskName ? `${message} - ${taskName}` : message;
+    // Use boxing-themed notifications for work sessions
+    if (sessionType === SessionType.WORK) {
+      const { currentFocusPeriodSessionCount } = useTimerStore.getState();
+      // Extract duration from message if possible
+      const durationMatch = message.match(/(\d+)/);
+      const duration = durationMatch ? parseInt(durationMatch[1]) : 25;
 
-    await this.showHUD(fullMessage);
-    await this.showSuccess(title, fullMessage);
+      await boxingNotificationService.showRoundComplete(
+        duration,
+        taskName,
+        currentFocusPeriodSessionCount + 1
+      );
+    } else if (sessionType === SessionType.SHORT_BREAK) {
+      await boxingNotificationService.showBreakTime("short");
+    } else if (sessionType === SessionType.LONG_BREAK) {
+      await boxingNotificationService.showBreakTime("long");
+    } else {
+      const sessionLabel = getSessionTypeLabel(sessionType);
+      const title = `${sessionLabel} Complete`;
+      const fullMessage = taskName ? `${message} - ${taskName}` : message;
+
+      await this.showHUD(fullMessage);
+      await this.showSuccess(title, fullMessage);
+    }
   }
 
   /**

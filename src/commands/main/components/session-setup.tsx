@@ -38,8 +38,8 @@ export function SessionSetup({
   return (
     <List.Item
       icon={selectedTaskIcon || Icon.Play}
-      title={currentTaskName || "Focus Session"}
-      subtitle={`${config.workDuration} min`}
+      title={currentTaskName || "Boxing Round"}
+      subtitle={`${config.workDuration} min round`}
       accessories={[
         ...(currentTags.length > 0
           ? currentTags.map((tag) => ({
@@ -66,7 +66,7 @@ export function SessionSetup({
         <ActionPanel>
           <ActionPanel.Section>
             <Action
-              title="Start Focus Round"
+              title="Start Boxing Round"
               icon={selectedTaskIcon || ACTION_ICONS.PLAY}
               onAction={onStartWork}
               shortcut={SHORTCUTS.PRIMARY_ACTION}
