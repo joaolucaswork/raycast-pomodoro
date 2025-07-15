@@ -7,7 +7,7 @@ import { PomodoroStore, TimerSession, SessionType } from "../../types/timer";
 export interface AnalyticsEvent {
   type: string;
   timestamp: Date;
-  data?: Record<string, any>;
+  data?: Record<string, unknown>;
 }
 
 /**
@@ -21,14 +21,17 @@ export const analyticsMiddleware =
     const originalSet = set;
 
     // Wrap set function to track state changes
-    const wrappedSet = (partial: any, replace?: boolean | undefined) => {
+    const wrappedSet = (
+      partial: Partial<T> | ((state: T) => Partial<T>),
+      replace?: boolean | undefined
+    ) => {
       const prevState = get();
 
       // Call original set function
       if (replace === true) {
-        originalSet(partial, true);
+        originalSet(partial as T, true);
       } else {
-        originalSet(partial, replace as false | undefined);
+        originalSet(partial, replace);
       }
 
       const newState = get();
@@ -104,7 +107,10 @@ function trackStateChanges(prevState: PomodoroStore, newState: PomodoroStore) {
   // Track configuration changes
   if (JSON.stringify(prevState.config) !== JSON.stringify(newState.config)) {
     trackEvent("config_updated", {
-      changes: getConfigChanges(prevState.config, newState.config),
+      changes: getConfigChanges(
+        prevState.config as unknown as Record<string, unknown>,
+        newState.config as unknown as Record<string, unknown>
+      ),
     });
   }
 
@@ -162,10 +168,10 @@ function trackStateChanges(prevState: PomodoroStore, newState: PomodoroStore) {
  * Get configuration changes between two config objects
  */
 function getConfigChanges(
-  prevConfig: any,
-  newConfig: any
-): Record<string, { from: any; to: any }> {
-  const changes: Record<string, { from: any; to: any }> = {};
+  prevConfig: Record<string, unknown>,
+  newConfig: Record<string, unknown>
+): Record<string, { from: unknown; to: unknown }> {
+  const changes: Record<string, { from: unknown; to: unknown }> = {};
 
   Object.keys(newConfig).forEach((key) => {
     if (prevConfig[key] !== newConfig[key]) {
@@ -182,7 +188,7 @@ function getConfigChanges(
 /**
  * Track an analytics event
  */
-function trackEvent(type: string, data?: Record<string, any>) {
+function trackEvent(type: string, data?: Record<string, unknown>) {
   const event: AnalyticsEvent = {
     type,
     timestamp: new Date(),

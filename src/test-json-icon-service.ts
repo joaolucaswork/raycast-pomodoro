@@ -4,8 +4,11 @@
  */
 
 import { Icon } from "@raycast/api";
-import { jsonApplicationIconService } from "./services/json-app-icon-service";
-import { getApplicationIcon, getIconServiceStatistics } from "./utils/app-icon-utils";
+import { jsonApplicationIconService } from "./services/data/json-app-icon-service";
+import {
+  getApplicationIcon,
+  getIconServiceStatistics,
+} from "./utils/app-icon-utils";
 
 /**
  * Test basic icon mapping functionality
@@ -14,16 +17,26 @@ function testBasicIconMapping() {
   console.log("🧪 Testing basic icon mapping...");
 
   // Test VS Code mapping
-  const vscodeIcon = jsonApplicationIconService.getIconByBundleId("com.microsoft.VSCode");
-  console.log(`VS Code icon: ${vscodeIcon === Icon.Code ? "✅ Code" : "❌ " + vscodeIcon}`);
+  const vscodeIcon = jsonApplicationIconService.getIconByBundleId(
+    "com.microsoft.VSCode"
+  );
+  console.log(
+    `VS Code icon: ${vscodeIcon === Icon.Code ? "✅ Code" : "❌ " + vscodeIcon}`
+  );
 
   // Test Chrome mapping
   const chromeIcon = jsonApplicationIconService.getIconByName("Google Chrome");
-  console.log(`Chrome icon: ${chromeIcon === Icon.Globe ? "✅ Globe" : "❌ " + chromeIcon}`);
+  console.log(
+    `Chrome icon: ${chromeIcon === Icon.Globe ? "✅ Globe" : "❌ " + chromeIcon}`
+  );
 
   // Test Slack mapping
-  const slackIcon = jsonApplicationIconService.getIconByBundleId("com.tinyspeck.slackmacgap");
-  console.log(`Slack icon: ${slackIcon === Icon.Message ? "✅ Message" : "❌ " + slackIcon}`);
+  const slackIcon = jsonApplicationIconService.getIconByBundleId(
+    "com.tinyspeck.slackmacgap"
+  );
+  console.log(
+    `Slack icon: ${slackIcon === Icon.Message ? "✅ Message" : "❌ " + slackIcon}`
+  );
 
   console.log("");
 }
@@ -36,10 +49,14 @@ function testAliasMapping() {
 
   // Test VS Code aliases
   const vscodeByAlias = jsonApplicationIconService.getIconByName("VSCode");
-  console.log(`VSCode alias: ${vscodeByAlias === Icon.Code ? "✅ Code" : "❌ " + vscodeByAlias}`);
+  console.log(
+    `VSCode alias: ${vscodeByAlias === Icon.Code ? "✅ Code" : "❌ " + vscodeByAlias}`
+  );
 
   const codeAlias = jsonApplicationIconService.getIconByName("Code");
-  console.log(`Code alias: ${codeAlias === Icon.Code ? "✅ Code" : "❌ " + codeAlias}`);
+  console.log(
+    `Code alias: ${codeAlias === Icon.Code ? "✅ Code" : "❌ " + codeAlias}`
+  );
 
   console.log("");
 }
@@ -55,12 +72,19 @@ function testCategories() {
   console.log(`Categories: ${categories.join(", ")}`);
 
   // Test category mapping
-  const vscodeCategory = jsonApplicationIconService.getCategoryByBundleId("com.microsoft.VSCode");
-  console.log(`VS Code category: ${vscodeCategory === "development" ? "✅ development" : "❌ " + vscodeCategory}`);
+  const vscodeCategory = jsonApplicationIconService.getCategoryByBundleId(
+    "com.microsoft.VSCode"
+  );
+  console.log(
+    `VS Code category: ${vscodeCategory === "development" ? "✅ development" : "❌ " + vscodeCategory}`
+  );
 
   // Test fallback icons
-  const devFallback = jsonApplicationIconService.getCategoryFallbackIcon("development");
-  console.log(`Development fallback: ${devFallback === Icon.Code ? "✅ Code" : "❌ " + devFallback}`);
+  const devFallback =
+    jsonApplicationIconService.getCategoryFallbackIcon("development");
+  console.log(
+    `Development fallback: ${devFallback === Icon.Code ? "✅ Code" : "❌ " + devFallback}`
+  );
 
   console.log("");
 }
@@ -73,7 +97,7 @@ function testSearch() {
 
   const codeResults = jsonApplicationIconService.searchApplications("code");
   console.log(`Search "code" results: ${codeResults.length} applications`);
-  codeResults.forEach(app => {
+  codeResults.forEach((app) => {
     console.log(`  - ${app.name} (${app.category})`);
   });
 
@@ -113,11 +137,18 @@ function testComprehensiveMapping() {
 function testUtilityFunctions() {
   console.log("🧪 Testing utility functions...");
 
-  const vscodeIcon = getApplicationIcon("com.microsoft.VSCode", "Visual Studio Code");
-  console.log(`Utility VS Code icon: ${vscodeIcon === Icon.Code ? "✅ Code" : "❌ " + vscodeIcon}`);
+  const vscodeIcon = getApplicationIcon(
+    "com.microsoft.VSCode",
+    "Visual Studio Code"
+  );
+  console.log(
+    `Utility VS Code icon: ${vscodeIcon === Icon.Code ? "✅ Code" : "❌ " + vscodeIcon}`
+  );
 
   const unknownIcon = getApplicationIcon("com.unknown.app", "Unknown App");
-  console.log(`Unknown app icon: ${unknownIcon === Icon.Desktop ? "✅ Desktop" : "❌ " + unknownIcon}`);
+  console.log(
+    `Unknown app icon: ${unknownIcon === Icon.Desktop ? "✅ Desktop" : "❌ " + unknownIcon}`
+  );
 
   console.log("");
 }
@@ -136,7 +167,7 @@ function testStatistics() {
   const serviceStats = jsonApplicationIconService.getStatistics();
   console.log(`Bundle ID mappings: ${serviceStats.totalBundleIds}`);
   console.log(`Alias mappings: ${serviceStats.totalAliases}`);
-  
+
   console.log("Category breakdown:");
   serviceStats.categoryCounts.forEach(({ category, count }) => {
     console.log(`  ${category}: ${count} applications`);
@@ -152,12 +183,19 @@ function testFallbacks() {
   console.log("🧪 Testing fallback behavior...");
 
   // Test unknown application
-  const unknownIcon = jsonApplicationIconService.getIconByBundleId("com.unknown.application");
-  console.log(`Unknown app icon: ${unknownIcon === Icon.Desktop ? "✅ Desktop (default)" : "❌ " + unknownIcon}`);
+  const unknownIcon = jsonApplicationIconService.getIconByBundleId(
+    "com.unknown.application"
+  );
+  console.log(
+    `Unknown app icon: ${unknownIcon === Icon.Desktop ? "✅ Desktop (default)" : "❌ " + unknownIcon}`
+  );
 
   // Test unknown category fallback
-  const unknownCategoryIcon = jsonApplicationIconService.getCategoryFallbackIcon("unknown-category");
-  console.log(`Unknown category fallback: ${unknownCategoryIcon === Icon.Desktop ? "✅ Desktop" : "❌ " + unknownCategoryIcon}`);
+  const unknownCategoryIcon =
+    jsonApplicationIconService.getCategoryFallbackIcon("unknown-category");
+  console.log(
+    `Unknown category fallback: ${unknownCategoryIcon === Icon.Desktop ? "✅ Desktop" : "❌ " + unknownCategoryIcon}`
+  );
 
   console.log("");
 }
@@ -187,7 +225,6 @@ function runAllTests() {
     console.log("- Search functionality operational");
     console.log("- Fallback mechanisms working");
     console.log("- Integration with application tracking ready");
-
   } catch (error) {
     console.error("❌ Test failed:", error);
   }

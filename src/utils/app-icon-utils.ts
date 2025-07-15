@@ -1,5 +1,5 @@
 import { Icon } from "@raycast/api";
-import { jsonApplicationIconService } from "../services/json-app-icon-service";
+import { jsonApplicationIconService } from "../services/data/json-app-icon-service";
 import { applicationIconService } from "../services/application-icon-service";
 
 /**
@@ -13,13 +13,19 @@ import { applicationIconService } from "../services/application-icon-service";
  */
 export function getApplicationIcon(bundleId: string, name: string): Icon {
   // Try JSON service first (more comprehensive)
-  const jsonMapping = jsonApplicationIconService.getApplicationMapping(bundleId, name);
+  const jsonMapping = jsonApplicationIconService.getApplicationMapping(
+    bundleId,
+    name
+  );
   if (jsonMapping) {
     return jsonMapping.icon;
   }
 
   // Fallback to legacy service
-  const legacyMapping = applicationIconService.getApplicationMapping(bundleId, name);
+  const legacyMapping = applicationIconService.getApplicationMapping(
+    bundleId,
+    name
+  );
   if (legacyMapping) {
     return legacyMapping.icon;
   }
@@ -33,13 +39,19 @@ export function getApplicationIcon(bundleId: string, name: string): Icon {
  */
 export function getApplicationCategory(bundleId: string, name: string): string {
   // Try JSON service first
-  const jsonMapping = jsonApplicationIconService.getApplicationMapping(bundleId, name);
+  const jsonMapping = jsonApplicationIconService.getApplicationMapping(
+    bundleId,
+    name
+  );
   if (jsonMapping) {
     return jsonMapping.category;
   }
 
   // Fallback to legacy service
-  const legacyMapping = applicationIconService.getApplicationMapping(bundleId, name);
+  const legacyMapping = applicationIconService.getApplicationMapping(
+    bundleId,
+    name
+  );
   if (legacyMapping) {
     return legacyMapping.category;
   }
@@ -50,9 +62,14 @@ export function getApplicationCategory(bundleId: string, name: string): string {
 /**
  * Check if an application is recognized by any service
  */
-export function isApplicationRecognized(bundleId: string, name: string): boolean {
-  return jsonApplicationIconService.isApplicationRecognized(bundleId, name) ||
-         applicationIconService.getApplicationMapping(bundleId, name) !== null;
+export function isApplicationRecognized(
+  bundleId: string,
+  name: string
+): boolean {
+  return (
+    jsonApplicationIconService.isApplicationRecognized(bundleId, name) ||
+    applicationIconService.getApplicationMapping(bundleId, name) !== null
+  );
 }
 
 /**
@@ -67,7 +84,7 @@ export function getCategoryFallbackIcon(category: string): Icon {
  */
 export function searchApplications(query: string) {
   const jsonResults = jsonApplicationIconService.searchApplications(query);
-  
+
   // Could extend this to include legacy service results if needed
   return jsonResults;
 }
@@ -75,9 +92,18 @@ export function searchApplications(query: string) {
 /**
  * Get comprehensive application mapping with all available data
  */
-export function getComprehensiveApplicationMapping(bundleId: string, name: string) {
-  const jsonMapping = jsonApplicationIconService.getApplicationMapping(bundleId, name);
-  const legacyMapping = applicationIconService.getApplicationMapping(bundleId, name);
+export function getComprehensiveApplicationMapping(
+  bundleId: string,
+  name: string
+) {
+  const jsonMapping = jsonApplicationIconService.getApplicationMapping(
+    bundleId,
+    name
+  );
+  const legacyMapping = applicationIconService.getApplicationMapping(
+    bundleId,
+    name
+  );
 
   return {
     icon: jsonMapping?.icon || legacyMapping?.icon || Icon.Desktop,
@@ -93,7 +119,7 @@ export function getComprehensiveApplicationMapping(bundleId: string, name: strin
  */
 export function getIconServiceStatistics() {
   const jsonStats = jsonApplicationIconService.getStatistics();
-  
+
   return {
     jsonService: jsonStats,
     totalRecognizedApps: jsonStats.totalApplications,

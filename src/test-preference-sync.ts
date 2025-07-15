@@ -3,7 +3,7 @@
  * This script tests the refreshConfigFromPreferences functionality
  */
 
-import { preferencesService } from "./services/preferences-service";
+import { preferencesService } from "./services/system/preferences-service";
 import { useTimerStore } from "./store/timer-store";
 import { SessionType } from "./types/timer";
 

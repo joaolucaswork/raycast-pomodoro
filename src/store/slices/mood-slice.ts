@@ -1,7 +1,13 @@
 import { StateCreator } from "zustand";
-import { MoodEntry, MoodType, MoodAnalytics, TimerSession, PomodoroStore } from "../../types/timer";
+import {
+  MoodEntry,
+  MoodType,
+  MoodAnalytics,
+  TimerSession,
+  PomodoroStore,
+} from "../../types/timer";
 import { generateId } from "../../utils/helpers";
-import { moodTrackingService } from "../../services/mood-tracking-service";
+import { moodTrackingService } from "../../services/mood/mood-tracking-service";
 
 /**
  * Mood slice interface - defines mood tracking-related state and actions
@@ -49,12 +55,10 @@ export interface MoodSlice {
 /**
  * Create mood slice with all mood tracking-related functionality
  */
-export const createMoodSlice: StateCreator<
-  PomodoroStore,
-  [],
-  [],
-  MoodSlice
-> = (set, get) => ({
+export const createMoodSlice: StateCreator<PomodoroStore, [], [], MoodSlice> = (
+  set,
+  get
+) => ({
   // Initial state
   moodEntries: [],
   isPostSessionMoodPromptVisible: false,
@@ -167,7 +171,10 @@ export const createMoodSlice: StateCreator<
   getRecentMoodEntries: (count: number = 10) => {
     const { moodEntries } = get();
     return moodEntries
-      .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+      .sort(
+        (a, b) =>
+          new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      )
       .slice(0, count);
   },
 
@@ -175,10 +182,13 @@ export const createMoodSlice: StateCreator<
     const { moodEntries } = get();
     if (moodEntries.length === 0) return null;
 
-    const moodCounts = moodEntries.reduce((acc, entry) => {
-      acc[entry.mood] = (acc[entry.mood] || 0) + 1;
-      return acc;
-    }, {} as Record<MoodType, number>);
+    const moodCounts = moodEntries.reduce(
+      (acc, entry) => {
+        acc[entry.mood] = (acc[entry.mood] || 0) + 1;
+        return acc;
+      },
+      {} as Record<MoodType, number>
+    );
 
     return Object.entries(moodCounts).reduce((a, b) =>
       moodCounts[a[0] as MoodType] > moodCounts[b[0] as MoodType] ? a : b
@@ -189,7 +199,10 @@ export const createMoodSlice: StateCreator<
     const { moodEntries } = get();
     if (moodEntries.length === 0) return 0;
 
-    const totalIntensity = moodEntries.reduce((acc, entry) => acc + entry.intensity, 0);
+    const totalIntensity = moodEntries.reduce(
+      (acc, entry) => acc + entry.intensity,
+      0
+    );
     return totalIntensity / moodEntries.length;
   },
 });

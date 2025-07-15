@@ -1,9 +1,9 @@
 {
   "$schema": "https://www.raycast.com/schemas/extension.json",
-  "name": "raycast-pomodoro",
+  "name": "another-round",
   "version": "1.0.0",
-  "title": "Pomodoro Timer",
-  "description": "A comprehensive Pomodoro timer extension for Raycast with persistent background operation, menu bar integration, and advanced productivity tracking",
+  "title": "Another Round",
+  "description": "Another Round - A boxing-themed focus timer extension for Raycast. Knock out procrastination with focused work rounds, achievement tracking, and productivity insights.",
   "icon": "icon.png",
   "author": "joaolucas-dev",
   "categories": [
@@ -26,84 +26,15 @@
     "time-management",
     "background-timer",
     "menu-bar",
-    "persistent"
+    "persistent",
+    "boxing",
+    "achievements",
+    "another-round",
+    "rounds",
+    "knockout"
   ],
   "platforms": [
     "Windows"
-  ],
-  "preferences": [
-    {
-      "name": "workDuration",
-      "title": "Work Duration",
-      "description": "Duration of work sessions in minutes",
-      "type": "textfield",
-      "default": "25",
-      "required": false
-    },
-    {
-      "name": "shortBreakDuration",
-      "title": "Short Break Duration",
-      "description": "Duration of short breaks in minutes",
-      "type": "textfield",
-      "default": "5",
-      "required": false
-    },
-    {
-      "name": "longBreakDuration",
-      "title": "Long Break Duration",
-      "description": "Duration of long breaks in minutes",
-      "type": "textfield",
-      "default": "15",
-      "required": false
-    },
-    {
-      "name": "longBreakInterval",
-      "title": "Long Break Interval",
-      "description": "Number of work sessions before a long break",
-      "type": "textfield",
-      "default": "4",
-      "required": false
-    },
-    {
-      "name": "enableNotifications",
-      "title": "Enable Notifications",
-      "description": "Show system notifications for timer events",
-      "type": "checkbox",
-      "default": true,
-      "required": false
-    },
-    {
-      "name": "autoStartBreaks",
-      "title": "Auto-start Breaks",
-      "description": "Automatically start break sessions after work sessions",
-      "type": "checkbox",
-      "default": false,
-      "required": false
-    },
-    {
-      "name": "autoStartWork",
-      "title": "Auto-start Work Sessions",
-      "description": "Automatically start work sessions after breaks",
-      "type": "checkbox",
-      "default": false,
-      "required": false
-    },
-    {
-      "name": "enableApplicationTracking",
-      "title": "Enable Application Tracking",
-      "description": "Track active applications during focus sessions",
-      "type": "checkbox",
-      "default": true,
-      "required": false
-    },
-    {
-      "name": "trackingInterval",
-      "title": "Tracking Interval",
-      "description": "How often to check active application (in seconds)",
-      "type": "textfield",
-      "default": "5",
-      "required": false
-    }
   ],
   "preferences": [
     {
@@ -183,7 +114,7 @@
     {
       "name": "main-command",
       "title": "Focus Session",
-      "description": "Start, stop, and manage your focus rounds",
+      "description": "Start another round of focused work - knock out procrastination with boxing-themed productivity",
       "mode": "view",
       "keywords": [
         "pomodoro",
@@ -192,33 +123,56 @@
         "focus",
         "start",
         "work",
-        "session"
+        "session",
+        "round",
+        "boxing",
+        "knockout"
       ]
     },
     {
       "name": "timer-history",
-      "title": "Timer History",
-      "description": "View your focus round history",
+      "title": "Round History",
+      "description": "View your round history and track your victories against procrastination",
       "mode": "view",
       "keywords": [
         "history",
         "sessions",
         "past",
         "completed",
-        "log"
+        "log",
+        "rounds",
+        "boxing",
+        "victories"
       ]
     },
     {
       "name": "profile-command",
-      "title": "Statistics & Profile",
-      "description": "View your statistics, achievements, and mood tracking",
+      "title": "Profile & Achievements",
+      "description": "View your profile, championship achievements, and training statistics",
       "mode": "view",
       "keywords": [
         "profile",
         "stats",
         "statistics",
         "achievements",
-        "mood"
+        "mood",
+        "boxing",
+        "championship",
+        "training",
+        "belt"
+      ]
+    },
+    {
+      "name": "test-app-tracking-fix",
+      "title": "Test App Tracking Fix",
+      "description": "Test the application tracking fix for Windows compatibility",
+      "mode": "view",
+      "keywords": [
+        "test",
+        "debug",
+        "tracking",
+        "windows",
+        "fix"
       ]
     }
   ],
@@ -230,10 +184,16 @@
   },
   "devDependencies": {
     "@raycast/eslint-config": "^1.0.11",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.3.0",
+    "@types/jest": "^30.0.0",
     "@types/node": "18.18.4",
     "@types/react": "19.0.10",
     "eslint": "^8.57.1",
+    "jest": "^30.0.4",
+    "jest-environment-jsdom": "^30.0.4",
     "prettier": "^3.6.2",
+    "ts-jest": "^29.4.0",
     "typescript": "^5.8.3"
   },
   "scripts": {
@@ -241,6 +201,9 @@
     "dev": "ray develop",
     "fix-lint": "ray lint --fix",
     "lint": "ray lint",
-    "publish": "ray publish"
+    "publish": "ray publish",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage"
   }
 }

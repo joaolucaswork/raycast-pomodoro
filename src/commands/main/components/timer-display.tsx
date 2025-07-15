@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import {
   Action,
   ActionPanel,
+  Color,
   Icon,
   List,
   Form,
   showToast,
   Toast,
 } from "@raycast/api";
-import { createTaskIconSelectionActions } from "../../../components/inline-icon-selection";
+import { createTaskIconSelectionActions } from "../../../components/icons/inline-icon-selection";
 import { formatDistanceToNow } from "date-fns";
 import {
   formatTime,
@@ -39,7 +40,7 @@ interface TimerDisplayProps {
   targetRounds: string;
   searchText: string;
   moodEntries: MoodEntry[];
-  getTagConfig: (tag: string) => { icon?: Icon; color: any } | undefined;
+  getTagConfig: (tag: string) => { icon?: Icon; color: Color } | undefined;
   onPause: () => void;
   onResume: () => void;
   onComplete: () => void;
@@ -147,18 +148,38 @@ export function TimerDisplay({
     }
   };
 
-  // Mood options for quick logging
+  // Mood options for quick logging - using correct MoodType values and icons
   const moodOptions = [
-    { mood: "happy" as MoodType, icon: Icon.Heart, intensity: 4 as const },
-    { mood: "focused" as MoodType, icon: Icon.BullsEye, intensity: 4 as const },
-    { mood: "calm" as MoodType, icon: Icon.Cloud, intensity: 3 as const },
-    { mood: "energetic" as MoodType, icon: Icon.Bolt, intensity: 5 as const },
+    {
+      mood: "energized" as MoodType,
+      icon: getMoodIcon("energized"),
+      intensity: 4 as const,
+    },
+    {
+      mood: "focused" as MoodType,
+      icon: getMoodIcon("focused"),
+      intensity: 4 as const,
+    },
+    {
+      mood: "calm" as MoodType,
+      icon: getMoodIcon("calm"),
+      intensity: 3 as const,
+    },
+    {
+      mood: "motivated" as MoodType,
+      icon: getMoodIcon("motivated"),
+      intensity: 5 as const,
+    },
     {
       mood: "stressed" as MoodType,
-      icon: Icon.ExclamationMark,
+      icon: getMoodIcon("stressed"),
       intensity: 2 as const,
     },
-    { mood: "tired" as MoodType, icon: Icon.Moon, intensity: 2 as const },
+    {
+      mood: "tired" as MoodType,
+      icon: getMoodIcon("tired"),
+      intensity: 2 as const,
+    },
   ];
 
   const getTimerDisplay = () => {
@@ -187,6 +208,21 @@ export function TimerDisplay({
   const timerDisplay = getTimerDisplay();
   const recentMood = getMostRecentMoodEntry(moodEntries);
 
+  // Get mood entries for current session
+  const currentSessionMoods = moodEntries.filter(
+    (entry) => entry.sessionId === currentSession.id
+  );
+
+  // Get pre-session mood (mood logged before session started)
+  const preSessionMood = currentSessionMoods.find(
+    (entry) => entry.context === "pre-session"
+  );
+
+  // Get post-session mood (mood that will be/was logged after session)
+  const postSessionMood = currentSessionMoods.find(
+    (entry) => entry.context === "post-session"
+  );
+
   return (
     <>
       {/* Active Timer Display */}
@@ -203,7 +239,7 @@ export function TimerDisplay({
               ? `${currentSession.taskName} - ${currentFocusPeriodSessionCount + 1}/${targetRounds}`
               : searchText.trim().length > 0
                 ? `${currentFocusPeriodSessionCount + 1}/${targetRounds}`
-                : `define a task name • ${currentFocusPeriodSessionCount + 1}/${targetRounds}`
+                : `define your training goal • ${currentFocusPeriodSessionCount + 1}/${targetRounds}`
             : `${timerDisplay.title}${currentSession.taskName ? ` • ${currentSession.taskName}` : ""}`
         }
         accessories={[
@@ -260,7 +296,7 @@ export function TimerDisplay({
             {searchText.trim().length > 0 && (
               <ActionPanel.Section title="Quick Actions">
                 <Action
-                  title="Start New Session"
+                  title="Start New Round"
                   icon={Icon.ArrowRight}
                   onAction={onStartNewSession}
                   shortcut={{ modifiers: ["cmd"], key: "n" }}
@@ -275,23 +311,23 @@ export function TimerDisplay({
       <List.Section title="Session Info">
         {timerDisplay.nextBreakTime && (
           <List.Item
-            icon={Icon.Clock}
-            title="Next Break"
+            icon={Icon.Bell}
+            title="Bell Time"
             subtitle={timerDisplay.nextBreakTime.toLocaleTimeString([], {
               hour: "2-digit",
               minute: "2-digit",
             })}
-            accessories={[{ text: "Scheduled" }]}
+            accessories={[{ text: "Round ends" }]}
           />
         )}
 
         {currentSession.taskName && (
           <List.Item
             icon={currentSession.taskIcon || Icon.Document}
-            title="Task Configuration"
+            title="Training Focus"
             subtitle={
               isConfiguring
-                ? "Editing task details..."
+                ? "Editing training details..."
                 : currentSession.taskName
             }
             accessories={[
@@ -306,7 +342,9 @@ export function TimerDisplay({
               <ActionPanel>
                 <Action
                   title={
-                    isConfiguring ? "Finish Configuration" : "Configure Task"
+                    isConfiguring
+                      ? "Finish Configuration"
+                      : "Configure Training"
                   }
                   icon={isConfiguring ? Icon.Check : Icon.Pencil}
                   onAction={isConfiguring ? exitConfigMode : enterConfigMode}
@@ -348,10 +386,48 @@ export function TimerDisplay({
           <List.Item
             icon={Icon.Tag}
             title="Tags"
-            subtitle={currentSession.tags.map((tag) => `#${tag}`).join(" ")}
+            subtitle={currentSession.tags.join(" ")}
             accessories={currentSession.tags.map((tag) => ({
               tag: { value: tag, color: getTagColor(tag, getTagConfig) },
             }))}
+          />
+        )}
+
+        {/* Pre-round mood display */}
+        {preSessionMood && (
+          <List.Item
+            icon={{
+              source: getMoodIcon(preSessionMood.mood),
+              tintColor: getMoodColor(preSessionMood.mood),
+            }}
+            title="Pre-Round Mood"
+            subtitle={`${preSessionMood.mood.charAt(0).toUpperCase() + preSessionMood.mood.slice(1)} (${preSessionMood.intensity}/5)`}
+            accessories={[
+              {
+                text: formatDistanceToNow(new Date(preSessionMood.timestamp), {
+                  addSuffix: true,
+                }),
+              },
+            ]}
+          />
+        )}
+
+        {/* Post-round mood display */}
+        {postSessionMood && (
+          <List.Item
+            icon={{
+              source: getMoodIcon(postSessionMood.mood),
+              tintColor: getMoodColor(postSessionMood.mood),
+            }}
+            title="Post-Round Mood"
+            subtitle={`${postSessionMood.mood.charAt(0).toUpperCase() + postSessionMood.mood.slice(1)} (${postSessionMood.intensity}/5)`}
+            accessories={[
+              {
+                text: formatDistanceToNow(new Date(postSessionMood.timestamp), {
+                  addSuffix: true,
+                }),
+              },
+            ]}
           />
         )}
       </List.Section>

@@ -4,15 +4,21 @@ import { formatDistanceToNow } from "date-fns";
 import {
   STATUS_COLORS,
   ACTION_ICONS,
+  SESSION_ICONS,
   getMoodIcon,
   getMoodColor,
   getMoodIntensityColor,
 } from "../../../constants/design-tokens";
-import { MoodEntryDetail } from "../../../components/mood-entry-detail";
+import { MoodEntryDetail } from "../../../components/ui/mood-entry-detail";
 import { MoodLoggingForm } from "../../../components/mood-tracking";
 import { RewardSystem, MoodEntry, TimerSession } from "../../../types/timer";
 import { getAchievementStyling, getSessionStatus } from "../utils";
-import { formatDuration } from "../../../utils/helpers";
+import {
+  formatDuration,
+  getActualSessionDuration,
+  getSessionTypeIcon,
+} from "../../../utils/helpers";
+import { boxingAchievementService } from "../../../services/features/boxing-achievement-service";
 
 interface ProfileOverviewProps {
   rewardSystem: RewardSystem;
@@ -53,22 +59,33 @@ export function ProfileOverview({
   // Get most recent session
   const lastSession = history.length > 0 ? history[history.length - 1] : null;
 
+  // Get boxing level information
+  const currentBoxingLevel = boxingAchievementService.calculateBoxingLevel(
+    rewardSystem.points
+  );
+
   return (
     <>
-      {/* Level Information Section */}
-      <List.Section title="Level">
+      {/* Boxing Level Information Section */}
+      <List.Section title="Boxing Level">
         <List.Item
-          title={`Level ${rewardSystem.level} Focus Master`}
+          title={`${currentBoxingLevel.title} (Level ${rewardSystem.level})`}
           subtitle={`${rewardSystem.points} points • ${profileMetrics.pointsForNextLevel} to next level`}
-          icon={{ source: Icon.Person, tintColor: STATUS_COLORS.PRIMARY }}
+          icon={{
+            source: currentBoxingLevel.icon,
+            tintColor: currentBoxingLevel.color,
+          }}
           accessories={[
             {
               text: `${profileMetrics.progressToNextLevel}%`,
               tooltip: `${profileMetrics.progressToNextLevel}% progress to level ${rewardSystem.level + 1}`,
             },
             {
-              icon: { source: Icon.Circle, tintColor: STATUS_COLORS.SUCCESS },
-              tooltip: `Level ${rewardSystem.level}`,
+              icon: {
+                source: Icon.Circle,
+                tintColor: currentBoxingLevel.color,
+              },
+              tooltip: `${currentBoxingLevel.title} - ${currentBoxingLevel.description}`,
             },
           ]}
         />
@@ -150,27 +167,27 @@ export function ProfileOverview({
         </List.Section>
       )}
 
-      {/* Last Session Info Section */}
+      {/* Last Round Info Section */}
       {lastSession && (
-        <List.Section title="Last Session Info">
+        <List.Section title="Last Round Info">
           <List.Item
-            title={lastSession.taskName || "Focus Session"}
-            subtitle={`${formatDuration(lastSession.endTime ? new Date(lastSession.endTime).getTime() - new Date(lastSession.startTime).getTime() : lastSession.duration * 1000)} • ${formatDistanceToNow(new Date(lastSession.startTime), { addSuffix: true })}`}
+            title={lastSession.taskName || "Focus Round"}
+            subtitle={`${formatDuration(getActualSessionDuration(lastSession))} • ${formatDistanceToNow(new Date(lastSession.startTime), { addSuffix: true })}`}
             icon={{
-              source: getSessionStatus(lastSession).icon as any,
+              source: getSessionTypeIcon(lastSession.type),
               tintColor: getSessionStatus(lastSession).color as any,
             }}
             accessories={[
               {
                 text: getSessionStatus(lastSession).status,
-                tooltip: `Session ${getSessionStatus(lastSession).status.toLowerCase()}`,
+                tooltip: `Round ${getSessionStatus(lastSession).status.toLowerCase()}`,
               },
               {
                 icon: {
                   source: Icon.Circle,
                   tintColor: getSessionStatus(lastSession).color as any,
                 },
-                tooltip: `Session completion status`,
+                tooltip: `Round completion status`,
               },
             ]}
           />

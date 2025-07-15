@@ -12,7 +12,7 @@ import {
   shouldSaveSessionToHistory,
   getActualSessionDuration,
 } from "../../utils/helpers";
-import { applicationTrackingService } from "../../services/application-tracking";
+import { applicationTrackingService } from "../../services/tracking/application-tracking-service";
 import { calculateStats } from "./stats-slice";
 
 /**
@@ -30,6 +30,10 @@ export interface SessionSlice {
   currentFocusPeriodId: string | null;
   currentFocusPeriodSessionCount: number;
   targetRounds: number;
+
+  // Pause tracking state
+  pauseStartTime: Date | null;
+  totalPausedTime: number;
 
   // Session actions
   startTimer: (
@@ -61,6 +65,7 @@ export interface SessionSlice {
   updateSessionIcon: (sessionId: string, taskIcon?: Icon) => void;
   updateSessionNotes: (sessionId: string, notes?: string) => void;
   updateSessionName: (sessionId: string, taskName?: string) => void;
+  updateSessionTags: (sessionId: string, tags: string[]) => void;
   skipSession: () => void;
   clearAllHistory: () => void;
 
@@ -88,6 +93,9 @@ export const createSessionSlice: StateCreator<
   currentFocusPeriodId: null,
   currentFocusPeriodSessionCount: 0,
   targetRounds: 1,
+  // Pause tracking
+  pauseStartTime: null,
+  totalPausedTime: 0,
 
   // Session actions
   startTimer: (
@@ -134,25 +142,45 @@ export const createSessionSlice: StateCreator<
       currentSession: session,
       state: TimerState.RUNNING,
       timeRemaining: duration,
+      // Reset pause tracking for new session
+      pauseStartTime: null,
+      totalPausedTime: 0,
     });
   },
 
   pauseTimer: () => {
     const { state } = get();
     if (state === TimerState.RUNNING) {
-      set({ state: TimerState.PAUSED });
+      set({
+        state: TimerState.PAUSED,
+        pauseStartTime: new Date(),
+      });
     }
   },
 
   resumeTimer: () => {
-    const { state } = get();
-    if (state === TimerState.PAUSED) {
-      set({ state: TimerState.RUNNING });
+    const { state, pauseStartTime, totalPausedTime } = get();
+    if (state === TimerState.PAUSED && pauseStartTime) {
+      const pauseDuration = Math.floor(
+        (new Date().getTime() - pauseStartTime.getTime()) / 1000
+      );
+      set({
+        state: TimerState.RUNNING,
+        pauseStartTime: null,
+        totalPausedTime: totalPausedTime + pauseDuration,
+      });
     }
   },
 
   stopTimer: () => {
-    const { currentSession, history } = get();
+    const {
+      currentSession,
+      history,
+      totalPausedTime,
+      pauseStartTime,
+      state,
+      timeRemaining,
+    } = get();
 
     if (currentSession) {
       // Stop application tracking and capture usage data if it was a work session
@@ -164,6 +192,18 @@ export const createSessionSlice: StateCreator<
         applicationUsage = applicationTrackingService.stopTracking();
       }
 
+      // Calculate final paused time if currently paused
+      let finalPausedTime = totalPausedTime;
+      if (state === TimerState.PAUSED && pauseStartTime) {
+        const currentPauseDuration = Math.floor(
+          (new Date().getTime() - pauseStartTime.getTime()) / 1000
+        );
+        finalPausedTime += currentPauseDuration;
+      }
+
+      // Calculate active duration (configured duration minus remaining time)
+      const activeDuration = currentSession.duration - timeRemaining;
+
       // Save the stopped session to history
       const stoppedSession: TimerSession = {
         ...currentSession,
@@ -171,6 +211,8 @@ export const createSessionSlice: StateCreator<
         completed: false, // marked as stopped/incomplete
         endReason: SessionEndReason.STOPPED,
         applicationUsage,
+        pausedTime: finalPausedTime,
+        activeDuration: activeDuration,
       };
 
       // Check if session should be saved to history based on duration
@@ -186,6 +228,9 @@ export const createSessionSlice: StateCreator<
         timeRemaining: 0,
         history: newHistory,
         stats: calculateStats(newHistory),
+        // Reset pause tracking
+        pauseStartTime: null,
+        totalPausedTime: 0,
       });
 
       // Show notification if session was too short to be saved
@@ -222,9 +267,19 @@ export const createSessionSlice: StateCreator<
       history,
       sessionCount,
       currentFocusPeriodSessionCount,
+      totalPausedTime,
+      pauseStartTime,
+      state,
     } = get();
 
     if (currentSession) {
+      console.log("[SessionSlice] Completing session:", {
+        sessionId: currentSession.id,
+        type: currentSession.type,
+        taskName: currentSession.taskName,
+        startTime: currentSession.startTime,
+      });
+
       // Stop application tracking and capture usage data if it was a work session
       let applicationUsage = undefined;
       if (
@@ -234,17 +289,38 @@ export const createSessionSlice: StateCreator<
         applicationUsage = applicationTrackingService.stopTracking();
       }
 
+      // Calculate final paused time if currently paused
+      let finalPausedTime = totalPausedTime;
+      if (state === TimerState.PAUSED && pauseStartTime) {
+        const currentPauseDuration = Math.floor(
+          (new Date().getTime() - pauseStartTime.getTime()) / 1000
+        );
+        finalPausedTime += currentPauseDuration;
+      }
+
+      // For completed sessions, active duration equals configured duration
+      const activeDuration = currentSession.duration;
+
       const completedSession: TimerSession = {
         ...currentSession,
         endTime: new Date(),
         completed: true,
         endReason: SessionEndReason.COMPLETED,
         applicationUsage,
+        pausedTime: finalPausedTime,
+        activeDuration: activeDuration,
       };
 
       // Check if session should be saved to history based on duration
       const shouldSave = shouldSaveSessionToHistory(completedSession);
       const actualDuration = getActualSessionDuration(completedSession);
+
+      console.log("[SessionSlice] Session completion details:", {
+        actualDuration,
+        shouldSave,
+        minimumRequired: 40,
+        currentHistoryLength: history.length,
+      });
 
       // Only add to history if session meets minimum duration requirement
       const newHistory = shouldSave ? [...history, completedSession] : history;
@@ -269,10 +345,30 @@ export const createSessionSlice: StateCreator<
         sessionCount: newSessionCount,
         currentFocusPeriodSessionCount: newFocusPeriodSessionCount,
         stats: calculateStats(newHistory),
+        // Reset pause tracking
+        pauseStartTime: null,
+        totalPausedTime: 0,
         // Remove mood prompt to fix timer stop bug
         isPostSessionMoodPromptVisible: false,
         lastCompletedSession: shouldSave ? completedSession : null,
       });
+
+      console.log("[SessionSlice] Session completion result:", {
+        savedToHistory: shouldSave,
+        newHistoryLength: newHistory.length,
+        lastCompletedSessionId: shouldSave ? completedSession.id : null,
+      });
+
+      // Update boxing progress and check for achievements if session was saved
+      if (shouldSave && currentSession.type === SessionType.WORK) {
+        // Use setTimeout to ensure state is updated first
+        setTimeout(() => {
+          const store = get() as any; // Type assertion to access achievement methods
+          if (store.updateBoxingProgress) {
+            store.updateBoxingProgress();
+          }
+        }, 100);
+      }
 
       // Show notification if session was too short to be saved
       if (!shouldSave) {
@@ -412,6 +508,18 @@ export const createSessionSlice: StateCreator<
     const { history } = get();
     const newHistory = history.map((session) =>
       session.id === sessionId ? { ...session, taskName } : session
+    );
+
+    set({
+      history: newHistory,
+      stats: calculateStats(newHistory),
+    });
+  },
+
+  updateSessionTags: (sessionId: string, tags: string[]) => {
+    const { history } = get();
+    const newHistory = history.map((session) =>
+      session.id === sessionId ? { ...session, tags } : session
     );
 
     set({

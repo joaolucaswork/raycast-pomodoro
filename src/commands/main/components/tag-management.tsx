@@ -17,14 +17,17 @@ import {
   PREDEFINED_TAGS,
 } from "../utils/search-parsing";
 import { shouldShowTagSuggestions } from "../utils/timer-display-helpers";
-import { createTagIconSelectionActions } from "../../../components/inline-icon-selection";
+import { createTagIconSelectionActions } from "../../../components/icons/inline-icon-selection";
 
 interface TagManagementProps {
   searchText: string;
   currentTags: string[];
   customTags: string[];
-  getTagConfig: (tag: string) => { icon?: Icon; color: any } | undefined;
-  updateTagConfig: (tag: string, config: { icon?: Icon; color?: any }) => void;
+  getTagConfig: (tag: string) => { icon?: Icon; color: Color } | undefined;
+  updateTagConfig: (
+    tag: string,
+    config: { icon?: Icon; color?: Color }
+  ) => void;
   deleteCustomTag: (tag: string) => void;
   clearAllTags: () => void;
   setSearchText: (text: string | ((prev: string) => string)) => void;
@@ -325,7 +328,7 @@ export function TagManagement({
                       addCustomTag(newTagName.toLowerCase());
 
                       // Apply selected icon and/or color if any
-                      const config: { icon?: Icon; color?: any } = {};
+                      const config: { icon?: Icon; color?: Color } = {};
                       if (selectedNewTagIcon) {
                         config.icon = selectedNewTagIcon;
                       }

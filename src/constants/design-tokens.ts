@@ -1,7 +1,7 @@
 import { Icon, Color } from "@raycast/api";
 
 /**
- * Design tokens for consistent styling across the Raycast Pomodoro extension.
+ * Design tokens for consistent styling across the Another Round extension.
  *
  * This module provides a centralized system of design tokens that ensure visual
  * consistency and adherence to Raycast's native design patterns and guidelines.
@@ -83,6 +83,9 @@ export const ACTION_ICONS = {
   COPY: Icon.Clipboard,
   SETTINGS: Icon.Gear,
   SAVE: Icon.SaveDocument,
+  VIEW: Icon.Eye,
+  EDIT: Icon.Pencil,
+  DELETE: Icon.Trash,
 } as const;
 
 // Status Colors - Semantic color usage
@@ -161,7 +164,7 @@ export const ACHIEVEMENT_ICONS = {
 // Mood Tracking Colors - Semantic colors for different mood states
 export const MOOD_COLORS = {
   // Positive moods
-  ENERGIZED: Color.Yellow,
+  ENERGIZED: Color.Orange,
   FOCUSED: Color.Green,
   CALM: Color.Blue,
   MOTIVATED: Color.Purple,
@@ -169,8 +172,8 @@ export const MOOD_COLORS = {
   NEUTRAL: Color.SecondaryText,
   // Challenging moods
   TIRED: Color.Orange,
-  STRESSED: Color.Red,
-  OVERWHELMED: Color.Red,
+  STRESSED: Color.Orange,
+  OVERWHELMED: Color.Purple,
   DISTRACTED: Color.Orange,
   // Intensity levels
   INTENSITY_1: Color.SecondaryText,

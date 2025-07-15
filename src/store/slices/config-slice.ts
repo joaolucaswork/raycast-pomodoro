@@ -1,6 +1,6 @@
 import { StateCreator } from "zustand";
 import { TimerConfig, PomodoroStore } from "../../types/timer";
-import { preferencesService } from "../../services/preferences-service";
+import { preferencesService } from "../../services/system/preferences-service";
 
 /**
  * Default timer configuration with ADHD-friendly defaults
@@ -11,8 +11,8 @@ export const DEFAULT_CONFIG: TimerConfig = {
   longBreakDuration: 15,
   longBreakInterval: 4,
   enableNotifications: true,
-  autoStartBreaks: false,
-  autoStartWork: false,
+  autoStartBreaks: true, // Enable auto-start breaks for proper pomodoro flow
+  autoStartWork: false, // Keep work auto-start disabled to give users control
   enableApplicationTracking: true,
   trackingInterval: 5,
   // ADHD-friendly defaults

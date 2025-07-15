@@ -85,7 +85,7 @@ export interface MoodAnalytics {
 export interface TimerSession {
   id: string;
   type: SessionType;
-  duration: number; // in seconds
+  duration: number; // in seconds (configured duration)
   startTime: Date;
   endTime?: Date;
   completed: boolean;
@@ -96,6 +96,9 @@ export interface TimerSession {
   taskIcon?: import("@raycast/api").Icon; // Custom icon for the task
   notes?: string; // User notes/reflections about the session
   applicationUsage?: ApplicationUsage[]; // Track app usage during session
+  // Timing fields
+  pausedTime?: number; // Total time spent paused in seconds
+  activeDuration?: number; // Actual active work time in seconds
   // ADHD-specific fields
   energyLevel?: 1 | 2 | 3 | 4 | 5; // User-reported energy at start
   focusQuality?: 1 | 2 | 3 | 4 | 5; // Auto-calculated or user-reported
@@ -135,12 +138,16 @@ export interface TimerConfig {
 export interface TimerStats {
   totalSessions: number;
   completedSessions: number;
-  totalWorkTime: number; // in seconds
-  totalBreakTime: number; // in seconds
+  totalWorkTime: number; // in seconds (active time)
+  totalBreakTime: number; // in seconds (active time)
   streakCount: number;
   todaysSessions: number;
   weekSessions: number;
   monthSessions: number;
+  // Pause time statistics
+  totalPauseTime: number; // in seconds
+  sessionsWithPauses: number;
+  averagePauseTime: number; // in seconds
 }
 
 export interface CustomTagConfig {
@@ -168,7 +175,52 @@ export interface Achievement {
   unlockedAt?: Date;
   rarity: "common" | "rare" | "epic" | "legendary";
   points: number;
+  category: AchievementCategory;
+  requirements: AchievementRequirement[];
+  progress?: number;
+  maxProgress?: number;
+  isBoxingThemed?: boolean; // Flag for boxing-themed achievements
 }
+
+export type AchievementCategory =
+  | "training_milestones" // Basic completion achievements
+  | "knockout_streaks" // Consistency streaks
+  | "championship_belts" // Major time-based milestones
+  | "daily_training" // Daily goal achievements
+  | "endurance_challenges" // Long session achievements
+  | "consistency_championships" // Weekly/monthly consistency
+  | "special_achievements" // Unique/special accomplishments
+  | "mood_mastery" // Mood tracking related
+  | "legacy"; // Old achievements (for backward compatibility)
+
+export interface AchievementRequirement {
+  type: AchievementRequirementType;
+  value: number;
+  timeframe?: "daily" | "weekly" | "monthly" | "all_time";
+  metadata?: Record<string, any>; // Additional requirement data
+}
+
+export type AchievementRequirementType =
+  | "sessions_completed" // Total sessions completed
+  | "streak_length" // Consecutive sessions
+  | "total_time" // Total focus time in minutes
+  | "daily_goal" // Sessions in a single day
+  | "session_duration" // Single session duration
+  | "mood_tracking" // Legacy mood tracking (deprecated)
+  | "time_of_day" // Sessions at specific times
+  | "weekend_sessions" // Sessions on weekends
+  | "consecutive_days" // Days with at least one session
+  | "tag_usage" // Using custom tags
+  | "session_notes" // Adding notes to sessions
+  // New mood-related achievement types
+  | "mood_entries_total" // Total mood entries logged
+  | "mood_tracking_streak" // Consecutive sessions with mood tracking
+  | "mood_entries_with_notes" // Mood entries that include notes
+  | "mood_intensity_range" // Different intensity levels used
+  | "mood_context_entries" // Mood entries in specific contexts
+  | "mood_specific_sessions" // Sessions completed in specific mood states
+  | "mood_improvement_pattern" // Positive mood progression patterns
+  | "mood_awareness_diversity"; // Different mood types logged
 
 export interface Challenge {
   id: string;
@@ -181,7 +233,85 @@ export interface Challenge {
   type: "daily" | "weekly" | "monthly";
 }
 
+// Boxing-themed achievement progress tracking
+export interface BoxingProgress {
+  totalRounds: number; // Total completed focus sessions
+  currentStreak: number; // Current consecutive sessions
+  longestStreak: number; // Best streak ever
+  totalTrainingTime: number; // Total focus time in minutes
+  championshipLevel: number; // Current championship level (1-5)
+  dailyRoundsToday: number; // Rounds completed today
+  weeklyRoundsThisWeek: number; // Rounds completed this week
+  monthlyRoundsThisMonth: number; // Rounds completed this month
+  lastRoundDate?: Date; // When the last round was completed
+  bestRoundDuration: number; // Longest single session in minutes
+  averageRoundDuration: number; // Average session duration
+  moodTrackingStreak: number; // Consecutive sessions with mood tracking
+  earlyBirdRounds: number; // Rounds completed before 8 AM
+  nightOwlRounds: number; // Rounds completed after 10 PM
+  weekendWarriorRounds: number; // Rounds completed on weekends
+  // New mood-related tracking fields
+  totalMoodEntries: number; // Total mood entries logged
+  moodEntriesWithNotes: number; // Mood entries that include notes
+  uniqueIntensityLevelsUsed: number; // Different intensity levels (1-5) used
+  uniqueMoodTypesLogged: number; // Different mood types logged
+  preSessionMoodEntries: number; // Pre-session mood entries
+  duringSessionMoodEntries: number; // During-session mood entries
+  postSessionMoodEntries: number; // Post-session mood entries
+  standaloneMoodEntries: number; // Standalone mood entries
+  // Mood-specific session counts
+  energizedSessions: number; // Sessions completed while energized
+  focusedSessions: number; // Sessions completed while focused
+  calmSessions: number; // Sessions completed while calm
+  motivatedSessions: number; // Sessions completed while motivated
+  neutralSessions: number; // Sessions completed while neutral
+  tiredSessions: number; // Sessions completed while tired (resilience)
+  stressedSessions: number; // Sessions completed while stressed (perseverance)
+  overwhelmedSessions: number; // Sessions completed while overwhelmed
+  distractedSessions: number; // Sessions completed while distracted
+  moodImprovementPatterns: number; // Positive mood progression instances
+}
+
+// Achievement notification data
+export interface AchievementNotification {
+  achievement: Achievement;
+  isNewUnlock: boolean;
+  progressUpdate?: {
+    current: number;
+    max: number;
+    percentage: number;
+  };
+  celebrationLevel: "minimal" | "standard" | "enthusiastic";
+}
+
+// Boxing-themed level system
+export interface BoxingLevel {
+  level: number;
+  title: string;
+  description: string;
+  minPoints: number;
+  maxPoints: number;
+  icon: import("@raycast/api").Icon;
+  color: import("@raycast/api").Color;
+}
+
+// Achievement statistics for analytics
+export interface AchievementStats {
+  totalAchievements: number;
+  unlockedAchievements: number;
+  commonAchievements: number;
+  rareAchievements: number;
+  epicAchievements: number;
+  legendaryAchievements: number;
+  totalPoints: number;
+  currentLevel: BoxingLevel;
+  nextLevel?: BoxingLevel;
+  pointsToNextLevel: number;
+  completionPercentage: number;
+}
+
 export interface HyperfocusDetection {
+  isActive: boolean;
   isHyperfocusDetected: boolean;
   consecutiveSessions: number;
   totalFocusTime: number;
@@ -216,8 +346,13 @@ export interface PomodoroState {
   currentFocusPeriodId: string | null; // Unique ID for the current focus period
   currentFocusPeriodSessionCount: number; // Sessions completed in current focus period
   targetRounds: number; // Target sessions for current focus period
+  // Pause tracking
+  pauseStartTime: Date | null; // When current pause started
+  totalPausedTime: number; // Total paused time for current session in seconds
   // ADHD-specific state
   rewardSystem: RewardSystem;
+  // Boxing-themed progress tracking
+  boxingProgress: BoxingProgress;
   hyperfocusDetection: HyperfocusDetection;
   breakActivities: BreakActivity[];
   currentBreakActivity?: BreakActivity;

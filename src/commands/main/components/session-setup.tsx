@@ -8,7 +8,7 @@ import {
 } from "../../../constants/design-tokens";
 import { getTagColor, getTagIcon } from "../utils/search-parsing";
 import { MOOD_OPTIONS } from "../utils/timer-display-helpers";
-import { createTaskIconSelectionActions } from "../../../components/inline-icon-selection";
+import { createTaskIconSelectionActions } from "../../../components/icons/inline-icon-selection";
 
 interface SessionSetupProps {
   currentTaskName: string;
@@ -16,11 +16,11 @@ interface SessionSetupProps {
   selectedTaskIcon?: Icon;
   setSelectedTaskIcon: (icon: Icon | undefined) => void;
   targetRounds: string;
-  preSessionMood: MoodType | null;
+  preRoundMood: MoodType | null;
   config: TimerConfig;
-  getTagConfig: (tag: string) => { icon?: Icon; color: any } | undefined;
+  getTagConfig: (tag: string) => { icon?: Icon; color: Color } | undefined;
   onStartWork: () => void;
-  onSetPreSessionMood: (mood: MoodType | null) => void;
+  onSetpreRoundMood: (mood: MoodType | null) => void;
 }
 
 export function SessionSetup({
@@ -29,31 +29,31 @@ export function SessionSetup({
   selectedTaskIcon,
   setSelectedTaskIcon,
   targetRounds,
-  preSessionMood,
+  preRoundMood,
   config,
   getTagConfig,
   onStartWork,
-  onSetPreSessionMood,
+  onSetpreRoundMood,
 }: SessionSetupProps) {
   return (
     <List.Item
       icon={selectedTaskIcon || Icon.Play}
-      title={currentTaskName || "Focus Session"}
-      subtitle={`${config.workDuration} min`}
+      title={currentTaskName || "Start Round"}
+      subtitle={`${config.workDuration} min round`}
       accessories={[
         ...(currentTags.length > 0
           ? currentTags.map((tag) => ({
               tag: { value: tag, color: getTagColor(tag, getTagConfig) },
             }))
           : []),
-        ...(preSessionMood
+        ...(preRoundMood
           ? [
               {
                 icon: {
-                  source: getMoodIcon(preSessionMood),
-                  tintColor: getMoodColor(preSessionMood),
+                  source: getMoodIcon(preRoundMood),
+                  tintColor: getMoodColor(preRoundMood),
                 },
-                tooltip: `Pre-session mood: ${preSessionMood}`,
+                tooltip: `Pre-round mood: ${preRoundMood}`,
               },
             ]
           : []),
@@ -66,7 +66,7 @@ export function SessionSetup({
         <ActionPanel>
           <ActionPanel.Section>
             <Action
-              title="Start Focus Round"
+              title="Start Round"
               icon={selectedTaskIcon || ACTION_ICONS.PLAY}
               onAction={onStartWork}
               shortcut={SHORTCUTS.PRIMARY_ACTION}
@@ -80,7 +80,7 @@ export function SessionSetup({
               selectedTaskIcon
             )}
 
-            <ActionPanel.Submenu title="Set Pre-session Mood" icon={Icon.Heart}>
+            <ActionPanel.Submenu title="Set Pre-round Mood" icon={Icon.Heart}>
               {MOOD_OPTIONS.map((mood) => (
                 <Action
                   key={mood.value}
@@ -89,14 +89,14 @@ export function SessionSetup({
                     source: getMoodIcon(mood.value),
                     tintColor: getMoodColor(mood.value),
                   }}
-                  onAction={() => onSetPreSessionMood(mood.value)}
+                  onAction={() => onSetpreRoundMood(mood.value)}
                 />
               ))}
-              {preSessionMood && (
+              {preRoundMood && (
                 <Action
                   title="Clear Mood Selection"
                   icon={Icon.XMarkCircle}
-                  onAction={() => onSetPreSessionMood(null)}
+                  onAction={() => onSetpreRoundMood(null)}
                 />
               )}
             </ActionPanel.Submenu>
