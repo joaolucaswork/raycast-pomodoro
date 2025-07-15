@@ -82,7 +82,7 @@
       "title": "Auto-start Breaks",
       "description": "Automatically start break sessions after work sessions",
       "type": "checkbox",
-      "default": false,
+      "default": true,
       "required": false
     },
     {

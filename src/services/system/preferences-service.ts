@@ -167,7 +167,7 @@ export class PreferencesService {
           4
         ),
         enableNotifications: preferences.enableNotifications ?? true,
-        autoStartBreaks: preferences.autoStartBreaks ?? false,
+        autoStartBreaks: preferences.autoStartBreaks ?? true,
         autoStartWork: preferences.autoStartWork ?? false,
         enableApplicationTracking:
           preferences.enableApplicationTracking ?? true,
