@@ -84,30 +84,55 @@ export async function runWindowsCompatibilityTest(): Promise<WindowsCompatibilit
     // Test 2: Raycast API Compatibility
     console.log("\n🔌 Test 2: Raycast API Compatibility");
 
+    // Use the new support testing functionality
+    const supportResult =
+      await applicationTrackingService.testApplicationTrackingSupport();
+    report.apiCompatibility.getFrontmostApplicationWorks =
+      supportResult.isSupported;
+
+    if (!supportResult.isSupported && supportResult.message) {
+      report.apiCompatibility.errors.push(supportResult.message);
+    }
+
     try {
       const frontmostApp = await getFrontmostApplication();
-      report.apiCompatibility.getFrontmostApplicationWorks = true;
 
-      // Check available properties
-      const availableProps = [];
-      if (frontmostApp.name) availableProps.push("name");
-      if (frontmostApp.bundleId) availableProps.push("bundleId");
-      if (frontmostApp.path) availableProps.push("path");
-      if ((frontmostApp as any).processId) availableProps.push("processId");
-      if ((frontmostApp as any).windowTitle) availableProps.push("windowTitle");
+      if (frontmostApp) {
+        // Check available properties
+        const availableProps = [];
+        if (frontmostApp.name) availableProps.push("name");
+        if (frontmostApp.bundleId) availableProps.push("bundleId");
+        if (frontmostApp.path) availableProps.push("path");
+        if ((frontmostApp as any).processId) availableProps.push("processId");
+        if ((frontmostApp as any).windowTitle)
+          availableProps.push("windowTitle");
 
-      report.apiCompatibility.applicationPropertiesAvailable = availableProps;
+        report.apiCompatibility.applicationPropertiesAvailable = availableProps;
 
-      console.log(`✅ getFrontmostApplication() works`);
-      console.log(`Current app: ${frontmostApp.name}`);
-      console.log(`Bundle ID: ${frontmostApp.bundleId || "Not available"}`);
-      console.log(`Path: ${frontmostApp.path || "Not available"}`);
-      console.log(`Available properties: ${availableProps.join(", ")}`);
+        console.log(`✅ getFrontmostApplication() works`);
+        console.log(`Current app: ${frontmostApp.name}`);
+        console.log(`Bundle ID: ${frontmostApp.bundleId || "Not available"}`);
+        console.log(`Path: ${frontmostApp.path || "Not available"}`);
+        console.log(`Available properties: ${availableProps.join(", ")}`);
+      } else {
+        console.log(
+          `⚠️ getFrontmostApplication() returned undefined - Windows platform limitation`
+        );
+        report.apiCompatibility.errors.push(
+          "getFrontmostApplication returns undefined on Windows"
+        );
+      }
     } catch (error) {
-      report.apiCompatibility.getFrontmostApplicationWorks = false;
       const errorMsg = error instanceof Error ? error.message : "Unknown error";
       report.apiCompatibility.errors.push(errorMsg);
       console.log(`❌ getFrontmostApplication() failed: ${errorMsg}`);
+    }
+
+    console.log(
+      `Support test result: ${supportResult.isSupported ? "✅ Supported" : "❌ Not supported"}`
+    );
+    if (supportResult.message) {
+      console.log(`Support message: ${supportResult.message}`);
     }
 
     // Test 3: Application Tracking Test

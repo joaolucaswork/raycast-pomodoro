@@ -56,6 +56,9 @@ export class BackgroundTimerService {
 
     const config = timerCoreService.getTimerConfig();
 
+    // Clear completed session IDs when starting a new session
+    timerCompletionService.clearCompletedSessionIds();
+
     // Create session using core service
     const { session, duration, endTime } = timerCoreService.createSession(
       type,

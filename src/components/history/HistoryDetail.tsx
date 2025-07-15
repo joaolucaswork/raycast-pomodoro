@@ -68,10 +68,28 @@ export function HistoryDetail({ session }: HistoryDetailProps) {
           />
 
           <List.Item.Detail.Metadata.Label
-            title="Duration"
-            text={formatTime(duration)}
+            title="Active Time"
+            text={formatTime(session.activeDuration || duration)}
             icon={{ source: Icon.Clock, tintColor: STATUS_COLORS.INFO }}
           />
+
+          {session.pausedTime && session.pausedTime > 0 && (
+            <List.Item.Detail.Metadata.Label
+              title="Paused Time"
+              text={formatTime(session.pausedTime)}
+              icon={{ source: Icon.Pause, tintColor: STATUS_COLORS.WARNING }}
+            />
+          )}
+
+          {session.pausedTime && session.pausedTime > 0 && (
+            <List.Item.Detail.Metadata.Label
+              title="Total Duration"
+              text={formatTime(
+                (session.activeDuration || duration) + session.pausedTime
+              )}
+              icon={{ source: Icon.Clock, tintColor: STATUS_COLORS.NEUTRAL }}
+            />
+          )}
 
           <List.Item.Detail.Metadata.Label
             title="Status"

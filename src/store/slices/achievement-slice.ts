@@ -27,6 +27,7 @@ export const DEFAULT_REWARD_SYSTEM: RewardSystem = {
  * Default hyperfocus detection state
  */
 export const DEFAULT_HYPERFOCUS_DETECTION: HyperfocusDetection = {
+  isActive: false,
   isHyperfocusDetected: false,
   consecutiveSessions: 0,
   totalFocusTime: 0,
@@ -99,6 +100,8 @@ export interface AchievementSlice {
 
   // Break activity actions
   selectBreakActivity: (activityId: string) => void;
+  setCurrentBreakActivity: (activity: BreakActivity) => void;
+  clearCurrentBreakActivity: () => void;
   completeBreakActivity: (rating?: 1 | 2 | 3 | 4 | 5) => void;
   suggestBreakActivity: (
     energyLevel?: number,
@@ -262,6 +265,18 @@ export const createAchievementSlice: StateCreator<
     }
   },
 
+  setCurrentBreakActivity: (activity: BreakActivity) => {
+    set({
+      currentBreakActivity: activity,
+    });
+  },
+
+  clearCurrentBreakActivity: () => {
+    set({
+      currentBreakActivity: undefined,
+    });
+  },
+
   completeBreakActivity: (rating?: 1 | 2 | 3 | 4 | 5) => {
     const { currentBreakActivity, awardPoints } = get();
     if (currentBreakActivity) {
@@ -395,8 +410,12 @@ export const createAchievementSlice: StateCreator<
         },
       });
 
-      // Show achievement notifications
-      boxingNotificationService.showMultipleAchievements(newAchievements);
+      // Show achievement notifications (with error handling)
+      try {
+        boxingNotificationService.showMultipleAchievements(newAchievements);
+      } catch (error) {
+        console.error("Failed to show achievement notifications:", error);
+      }
     }
   },
 

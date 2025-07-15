@@ -27,11 +27,14 @@ export function AchievementBrowser({ onBack }: AchievementBrowserProps) {
     useTimerStore();
 
   // Get all achievements and unlocked achievement IDs
-  const allAchievements = getBoxingAchievements();
+  const allAchievements = getBoxingAchievements() || [];
   const unlockedIds = rewardSystem.achievements.map((a) => a.id);
 
   // Enhanced achievements with unlock status
   const enhancedAchievements = useMemo(() => {
+    if (!Array.isArray(allAchievements)) {
+      return [];
+    }
     return allAchievements.map((achievement) => ({
       ...achievement,
       isUnlocked: unlockedIds.includes(achievement.id),

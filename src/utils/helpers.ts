@@ -198,6 +198,7 @@ export function shouldSaveSessionToHistory(
 
 /**
  * Gets the actual duration of a session in seconds
+ * Uses activeDuration if available (active work time), otherwise falls back to wall-clock time
  */
 export function getActualSessionDuration(
   session: import("../types/timer").TimerSession
@@ -206,8 +207,17 @@ export function getActualSessionDuration(
     id: session.id,
     startTime: session.startTime,
     endTime: session.endTime,
+    activeDuration: session.activeDuration,
+    pausedTime: session.pausedTime,
   });
 
+  // Use activeDuration if available (preferred method)
+  if (session.activeDuration !== undefined) {
+    console.log("[DEBUG] Using activeDuration:", session.activeDuration);
+    return session.activeDuration;
+  }
+
+  // Fallback to wall-clock time calculation for backward compatibility
   if (!session.startTime) {
     console.log("[DEBUG] Session has no startTime, returning 0");
     return 0;
@@ -216,17 +226,23 @@ export function getActualSessionDuration(
   try {
     const startTime = ensureDate(session.startTime);
     const endTime = session.endTime ? ensureDate(session.endTime) : new Date();
-    const duration = Math.floor(
+    const wallClockDuration = Math.floor(
       (endTime.getTime() - startTime.getTime()) / 1000
     );
 
-    console.log("[DEBUG] Calculated session duration:", {
+    // If we have pause time, subtract it from wall-clock time
+    const pausedTime = session.pausedTime || 0;
+    const duration = wallClockDuration - pausedTime;
+
+    console.log("[DEBUG] Calculated session duration (fallback):", {
       startTime: startTime.toISOString(),
       endTime: endTime.toISOString(),
-      durationSeconds: duration,
+      wallClockDuration,
+      pausedTime,
+      finalDuration: duration,
     });
 
-    return duration;
+    return Math.max(0, duration); // Ensure non-negative
   } catch (error) {
     console.warn("[DEBUG] Error calculating session duration:", error);
     return 0;

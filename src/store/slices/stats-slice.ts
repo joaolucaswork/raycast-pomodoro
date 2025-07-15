@@ -1,6 +1,11 @@
 import { StateCreator } from "zustand";
 import { isToday, isThisWeek, isThisMonth } from "date-fns";
-import { TimerStats, TimerSession, SessionType, PomodoroStore } from "../../types/timer";
+import {
+  TimerStats,
+  TimerSession,
+  SessionType,
+  PomodoroStore,
+} from "../../types/timer";
 
 /**
  * Default timer statistics
@@ -14,6 +19,10 @@ export const DEFAULT_STATS: TimerStats = {
   todaysSessions: 0,
   weekSessions: 0,
   monthSessions: 0,
+  // Pause time statistics
+  totalPauseTime: 0,
+  sessionsWithPauses: 0,
+  averagePauseTime: 0,
 };
 
 /**
@@ -26,7 +35,7 @@ export interface StatsSlice {
   // Statistics actions
   recalculateStats: () => void;
   resetStats: () => void;
-  
+
   // Statistics utilities
   getTotalSessions: () => number;
   getCompletedSessions: () => number;
@@ -53,13 +62,24 @@ export function calculateStats(history: TimerSession[]): TimerStats {
   );
 
   const totalWorkTime = workSessions.reduce(
-    (acc, session) => acc + session.duration,
+    (acc, session) => acc + (session.activeDuration || session.duration),
     0
   );
   const totalBreakTime = breakSessions.reduce(
-    (acc, session) => acc + session.duration,
+    (acc, session) => acc + (session.activeDuration || session.duration),
     0
   );
+
+  // Calculate pause time statistics
+  const totalPauseTime = completedSessions.reduce(
+    (acc, session) => acc + (session.pausedTime || 0),
+    0
+  );
+  const sessionsWithPauses = completedSessions.filter(
+    (session) => session.pausedTime && session.pausedTime > 0
+  ).length;
+  const averagePauseTime =
+    sessionsWithPauses > 0 ? totalPauseTime / sessionsWithPauses : 0;
 
   const todaysSessions = completedSessions.filter((s) =>
     isToday(new Date(s.startTime))
@@ -83,6 +103,10 @@ export function calculateStats(history: TimerSession[]): TimerStats {
     todaysSessions,
     weekSessions,
     monthSessions,
+    // Pause time statistics
+    totalPauseTime,
+    sessionsWithPauses,
+    averagePauseTime,
   };
 }
 
@@ -191,14 +215,14 @@ export const createStatsSlice: StateCreator<
     const workSessions = history.filter(
       (s) => s.completed && s.type === SessionType.WORK
     );
-    
+
     if (workSessions.length === 0) return 0;
-    
+
     const totalDuration = workSessions.reduce(
-      (acc, session) => acc + session.duration,
+      (acc, session) => acc + (session.activeDuration || session.duration),
       0
     );
-    
+
     return totalDuration / workSessions.length / 60; // Return in minutes
   },
 });

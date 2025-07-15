@@ -31,6 +31,10 @@ export interface SessionSlice {
   currentFocusPeriodSessionCount: number;
   targetRounds: number;
 
+  // Pause tracking state
+  pauseStartTime: Date | null;
+  totalPausedTime: number;
+
   // Session actions
   startTimer: (
     type: SessionType,
@@ -89,6 +93,9 @@ export const createSessionSlice: StateCreator<
   currentFocusPeriodId: null,
   currentFocusPeriodSessionCount: 0,
   targetRounds: 1,
+  // Pause tracking
+  pauseStartTime: null,
+  totalPausedTime: 0,
 
   // Session actions
   startTimer: (
@@ -135,25 +142,45 @@ export const createSessionSlice: StateCreator<
       currentSession: session,
       state: TimerState.RUNNING,
       timeRemaining: duration,
+      // Reset pause tracking for new session
+      pauseStartTime: null,
+      totalPausedTime: 0,
     });
   },
 
   pauseTimer: () => {
     const { state } = get();
     if (state === TimerState.RUNNING) {
-      set({ state: TimerState.PAUSED });
+      set({
+        state: TimerState.PAUSED,
+        pauseStartTime: new Date(),
+      });
     }
   },
 
   resumeTimer: () => {
-    const { state } = get();
-    if (state === TimerState.PAUSED) {
-      set({ state: TimerState.RUNNING });
+    const { state, pauseStartTime, totalPausedTime } = get();
+    if (state === TimerState.PAUSED && pauseStartTime) {
+      const pauseDuration = Math.floor(
+        (new Date().getTime() - pauseStartTime.getTime()) / 1000
+      );
+      set({
+        state: TimerState.RUNNING,
+        pauseStartTime: null,
+        totalPausedTime: totalPausedTime + pauseDuration,
+      });
     }
   },
 
   stopTimer: () => {
-    const { currentSession, history } = get();
+    const {
+      currentSession,
+      history,
+      totalPausedTime,
+      pauseStartTime,
+      state,
+      timeRemaining,
+    } = get();
 
     if (currentSession) {
       // Stop application tracking and capture usage data if it was a work session
@@ -165,6 +192,18 @@ export const createSessionSlice: StateCreator<
         applicationUsage = applicationTrackingService.stopTracking();
       }
 
+      // Calculate final paused time if currently paused
+      let finalPausedTime = totalPausedTime;
+      if (state === TimerState.PAUSED && pauseStartTime) {
+        const currentPauseDuration = Math.floor(
+          (new Date().getTime() - pauseStartTime.getTime()) / 1000
+        );
+        finalPausedTime += currentPauseDuration;
+      }
+
+      // Calculate active duration (configured duration minus remaining time)
+      const activeDuration = currentSession.duration - timeRemaining;
+
       // Save the stopped session to history
       const stoppedSession: TimerSession = {
         ...currentSession,
@@ -172,6 +211,8 @@ export const createSessionSlice: StateCreator<
         completed: false, // marked as stopped/incomplete
         endReason: SessionEndReason.STOPPED,
         applicationUsage,
+        pausedTime: finalPausedTime,
+        activeDuration: activeDuration,
       };
 
       // Check if session should be saved to history based on duration
@@ -187,6 +228,9 @@ export const createSessionSlice: StateCreator<
         timeRemaining: 0,
         history: newHistory,
         stats: calculateStats(newHistory),
+        // Reset pause tracking
+        pauseStartTime: null,
+        totalPausedTime: 0,
       });
 
       // Show notification if session was too short to be saved
@@ -223,6 +267,9 @@ export const createSessionSlice: StateCreator<
       history,
       sessionCount,
       currentFocusPeriodSessionCount,
+      totalPausedTime,
+      pauseStartTime,
+      state,
     } = get();
 
     if (currentSession) {
@@ -242,12 +289,26 @@ export const createSessionSlice: StateCreator<
         applicationUsage = applicationTrackingService.stopTracking();
       }
 
+      // Calculate final paused time if currently paused
+      let finalPausedTime = totalPausedTime;
+      if (state === TimerState.PAUSED && pauseStartTime) {
+        const currentPauseDuration = Math.floor(
+          (new Date().getTime() - pauseStartTime.getTime()) / 1000
+        );
+        finalPausedTime += currentPauseDuration;
+      }
+
+      // For completed sessions, active duration equals configured duration
+      const activeDuration = currentSession.duration;
+
       const completedSession: TimerSession = {
         ...currentSession,
         endTime: new Date(),
         completed: true,
         endReason: SessionEndReason.COMPLETED,
         applicationUsage,
+        pausedTime: finalPausedTime,
+        activeDuration: activeDuration,
       };
 
       // Check if session should be saved to history based on duration
@@ -284,6 +345,9 @@ export const createSessionSlice: StateCreator<
         sessionCount: newSessionCount,
         currentFocusPeriodSessionCount: newFocusPeriodSessionCount,
         stats: calculateStats(newHistory),
+        // Reset pause tracking
+        pauseStartTime: null,
+        totalPausedTime: 0,
         // Remove mood prompt to fix timer stop bug
         isPostSessionMoodPromptVisible: false,
         lastCompletedSession: shouldSave ? completedSession : null,

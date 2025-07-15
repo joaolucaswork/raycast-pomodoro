@@ -12,6 +12,31 @@ export async function testApplicationTracking() {
   console.log("🧪 Starting Application Tracking Test...");
 
   try {
+    // Test 0: Platform support check
+    console.log("\n📋 Test 0: Platform Support Check");
+
+    const supportResult =
+      await applicationTrackingService.testApplicationTrackingSupport();
+    console.log(
+      `Platform support: ${supportResult.isSupported ? "✅ Supported" : "❌ Not supported"}`
+    );
+
+    if (!supportResult.isSupported) {
+      console.log(`Support message: ${supportResult.message}`);
+
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Application Tracking Not Supported",
+        message: supportResult.message || "Platform limitation detected",
+      });
+
+      return {
+        success: false,
+        error: "Application tracking not supported on this platform",
+        supportResult,
+      };
+    }
+
     // Test 1: Basic start/stop functionality
     console.log("\n📋 Test 1: Basic Start/Stop Functionality");
 

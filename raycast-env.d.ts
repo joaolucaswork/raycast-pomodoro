@@ -38,6 +38,8 @@ declare namespace Preferences {
   export type TimerHistory = ExtensionPreferences & {}
   /** Preferences accessible in the `profile-command` command */
   export type ProfileCommand = ExtensionPreferences & {}
+  /** Preferences accessible in the `test-app-tracking-fix` command */
+  export type TestAppTrackingFix = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
@@ -47,5 +49,7 @@ declare namespace Arguments {
   export type TimerHistory = {}
   /** Arguments passed to the `profile-command` command */
   export type ProfileCommand = {}
+  /** Arguments passed to the `test-app-tracking-fix` command */
+  export type TestAppTrackingFix = {}
 }
 

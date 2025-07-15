@@ -130,6 +130,18 @@ export class DataService {
     const weekSessions = this.getSessionsForWeek(completedSessions).length;
     const monthSessions = this.getSessionsForMonth(completedSessions).length;
 
+    // Calculate pause time statistics
+    const totalPauseTime = sessions.reduce((total, session) => {
+      return total + (session.pausedTime || 0);
+    }, 0);
+
+    const sessionsWithPauses = sessions.filter(
+      (session) => session.pausedTime && session.pausedTime > 0
+    ).length;
+
+    const averagePauseTime =
+      sessionsWithPauses > 0 ? totalPauseTime / sessionsWithPauses : 0;
+
     return {
       totalSessions: sessions.length,
       completedSessions: completedSessions.length,
@@ -139,6 +151,10 @@ export class DataService {
       todaysSessions,
       weekSessions,
       monthSessions,
+      // Pause time statistics
+      totalPauseTime,
+      sessionsWithPauses,
+      averagePauseTime,
       averageSessionLength,
       completionRate,
       mostProductiveHour,
@@ -319,6 +335,10 @@ export class DataService {
         todaysSessions: 0,
         weekSessions: 0,
         monthSessions: 0,
+        // Pause time statistics
+        totalPauseTime: 0,
+        sessionsWithPauses: 0,
+        averagePauseTime: 0,
       },
     });
   }

@@ -31,6 +31,18 @@ export function BoxingAchievementDisplay({
   const { push } = useNavigation();
   const { boxingProgress, rewardSystem } = useTimerStore();
 
+  // Handle undefined or null achievements data
+  if (!achievements || !Array.isArray(achievements)) {
+    return (
+      <List.Item
+        icon={Icon.ExclamationMark}
+        title="No Achievement Data"
+        subtitle="Unable to load achievement information"
+        accessories={[{ text: "Error" }]}
+      />
+    );
+  }
+
   // Get unlocked achievement IDs for proper unlock status checking
   const unlockedIds = rewardSystem.achievements.map((a) => a.id);
 

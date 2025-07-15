@@ -3,16 +3,13 @@ import {
   SessionEndReason,
   SessionType,
   TimerState,
-  TimerConfig,
 } from "../../types/timer";
 import { useTimerStore } from "../../store/timer-store";
 import {
-  getSessionTypeLabel,
   shouldSaveSessionToHistory,
   getActualSessionDuration,
 } from "../../utils/helpers";
 import { calculateStats } from "../../store/slices/stats-slice";
-import { adhdSupportService } from "../features/adhd-support-service";
 import { pointsSystemService } from "../features/points-system-service";
 import { timerCoreService } from "./timer-core-service";
 import { timerNotificationService } from "./timer-notification-service";
@@ -29,6 +26,7 @@ import { timerNotificationService } from "./timer-notification-service";
  */
 export class TimerCompletionService {
   private static instance: TimerCompletionService;
+  private completedSessionIds = new Set<string>(); // Track completed sessions to prevent duplicates
 
   private constructor() {}
 
@@ -40,19 +38,38 @@ export class TimerCompletionService {
   }
 
   /**
+   * Clears the completed session IDs to prevent memory leaks
+   * Should be called when starting new sessions
+   */
+  public clearCompletedSessionIds(): void {
+    this.completedSessionIds.clear();
+  }
+
+  /**
    * Handles timer completion during state restoration (no auto-start)
    */
   public async handleCompletionDuringRestore(
     session: TimerSession
   ): Promise<void> {
+    // Check if this session has already been completed to prevent duplicates
+    if (this.completedSessionIds.has(session.id)) {
+      console.log(
+        `[TimerCompletionService] Session ${session.id} already completed, skipping duplicate completion`
+      );
+      return;
+    }
+
+    // Mark session as completed
+    this.completedSessionIds.add(session.id);
+
     const completedSession = await this.processSessionCompletion(
       session,
-      false,
+      true, // shouldSave: true - sessions should be saved regardless of restoration context
       false
     );
 
     // Update store - go directly to IDLE state (no auto-start during restore)
-    this.updateStoreAfterCompletion(completedSession, TimerState.IDLE, false);
+    this.updateStoreAfterCompletion(completedSession, TimerState.IDLE, true); // shouldSave: true
 
     // Process ADHD features but no auto-start (assume natural completion during restore)
     await this.processAdhdFeatures(completedSession, false, false);
@@ -69,6 +86,17 @@ export class TimerCompletionService {
     session: TimerSession,
     isManualCompletion: boolean = false
   ): Promise<void> {
+    // Check if this session has already been completed to prevent duplicates
+    if (this.completedSessionIds.has(session.id)) {
+      console.log(
+        `[TimerCompletionService] Session ${session.id} already completed, skipping duplicate completion`
+      );
+      return;
+    }
+
+    // Mark session as completed
+    this.completedSessionIds.add(session.id);
+
     const completedSession = await this.processSessionCompletion(
       session,
       true,
@@ -104,7 +132,8 @@ export class TimerCompletionService {
 
     const completedSession: TimerSession = {
       ...session,
-      endTime: new Date(),
+      // Preserve existing endTime if present, otherwise set to current time
+      endTime: session.endTime || new Date(),
       completed: true,
       endReason: isManualCompletion
         ? SessionEndReason.STOPPED
@@ -114,7 +143,14 @@ export class TimerCompletionService {
 
     // Notify about completion if requested
     if (shouldNotify) {
-      await timerNotificationService.notifySessionCompletion(completedSession);
+      try {
+        await timerNotificationService.notifySessionCompletion(
+          completedSession
+        );
+      } catch (error) {
+        console.error("Failed to send session completion notification:", error);
+        // Continue processing despite notification failure
+      }
     }
 
     return completedSession;
@@ -196,17 +232,23 @@ export class TimerCompletionService {
         : null,
     });
 
-    useTimerStore.setState({
-      currentSession: null,
-      state: newState,
-      timeRemaining: 0,
-      history: newHistory,
-      sessionCount: newSessionCount,
-      currentFocusPeriodSessionCount: newFocusPeriodSessionCount,
-      stats: calculateStats(newHistory),
-      isPostSessionMoodPromptVisible: false,
-      lastCompletedSession: shouldSaveToHistory ? completedSession : null,
-    });
+    try {
+      useTimerStore.setState({
+        currentSession: null,
+        state: newState,
+        timeRemaining: 0,
+        history: newHistory,
+        sessionCount: newSessionCount,
+        currentFocusPeriodSessionCount: newFocusPeriodSessionCount,
+        stats: calculateStats(newHistory),
+        isPostSessionMoodPromptVisible: false,
+        lastCompletedSession: shouldSaveToHistory ? completedSession : null,
+      });
+    } catch (error) {
+      console.error("Failed to update store after session completion:", error);
+      // Continue processing despite store update failure
+      // The session completion should still be considered successful
+    }
 
     console.log("[DEBUG] Store updated after completion:", {
       newHistoryLength: newHistory.length,
@@ -243,19 +285,34 @@ export class TimerCompletionService {
 
       // Only award points if the system determines they should be awarded
       if (pointsResult.shouldAward && pointsResult.points > 0) {
-        updatedState.awardPoints(pointsResult.points, pointsResult.reason);
+        try {
+          updatedState.awardPoints(pointsResult.points, pointsResult.reason);
+        } catch (error) {
+          console.error("Failed to award points:", error);
+        }
 
         if (enableNotifications) {
-          await timerNotificationService.notifyPointsAwarded(
-            pointsResult.points,
-            pointsResult.reason
-          );
+          try {
+            await timerNotificationService.notifyPointsAwarded(
+              pointsResult.points,
+              pointsResult.reason
+            );
+          } catch (error) {
+            console.error("Failed to send points notification:", error);
+          }
         }
       } else if (enableNotifications && !pointsResult.shouldAward) {
         // Notify user why points weren't awarded
-        await timerNotificationService.notifyPointsRestricted(
-          pointsResult.reason
-        );
+        try {
+          await timerNotificationService.notifyPointsRestricted(
+            pointsResult.reason
+          );
+        } catch (error) {
+          console.error(
+            "Failed to send points restriction notification:",
+            error
+          );
+        }
       }
     }
 
@@ -266,10 +323,14 @@ export class TimerCompletionService {
       // Check if hyperfocus was detected after the check
       const { hyperfocusDetection } = updatedState;
       if (hyperfocusDetection.isHyperfocusDetected && enableNotifications) {
-        await timerNotificationService.notifyHyperfocusDetected(
-          completedSession.duration,
-          15 // Recommended break duration
-        );
+        try {
+          await timerNotificationService.notifyHyperfocusDetected(
+            completedSession.duration,
+            15 // Recommended break duration
+          );
+        } catch (error) {
+          console.error("Failed to send hyperfocus notification:", error);
+        }
       }
     }
   }
@@ -330,9 +391,13 @@ export class TimerCompletionService {
         if (!shouldAutoStartRegular) {
           // End the focus period and go to idle
           setTimeout(() => {
-            useTimerStore.setState({
-              state: TimerState.IDLE,
-            });
+            try {
+              useTimerStore.setState({
+                state: TimerState.IDLE,
+              });
+            } catch (error) {
+              console.error("Failed to update store to idle state:", error);
+            }
           }, 5000);
           return;
         }
@@ -356,9 +421,13 @@ export class TimerCompletionService {
     } else {
       // Auto-transition to idle after a short delay if not auto-starting
       setTimeout(() => {
-        useTimerStore.setState({
-          state: TimerState.IDLE,
-        });
+        try {
+          useTimerStore.setState({
+            state: TimerState.IDLE,
+          });
+        } catch (error) {
+          console.error("Failed to update store to idle state:", error);
+        }
       }, 5000); // 5 seconds to show completion state
     }
   }
@@ -394,7 +463,12 @@ export class TimerCompletionService {
    * Processes session completion for manual completion
    */
   public async handleManualCompletion(session: TimerSession): Promise<void> {
-    await timerNotificationService.notifyManualCompletion(session);
+    try {
+      await timerNotificationService.notifyManualCompletion(session);
+    } catch (error) {
+      console.error("Failed to send manual completion notification:", error);
+      // Continue with completion process despite notification failure
+    }
     await this.handleCompletion(session, true);
   }
 

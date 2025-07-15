@@ -78,11 +78,24 @@ export function SessionListItem({
           : []),
         // Show mood information using the dedicated component
         ...SessionMoodIndicators({ moodEntries: sessionMoodEntries }),
-        // Show session duration
+        // Show session duration (active time)
         {
-          text: formatTime(session.duration),
-          tooltip: `Session duration: ${formatTime(session.duration)}`,
+          text: formatTime(session.activeDuration || session.duration),
+          tooltip: `Active time: ${formatTime(session.activeDuration || session.duration)}`,
         },
+        // Show pause time if available
+        ...(session.pausedTime && session.pausedTime > 0
+          ? [
+              {
+                text: `⏸ ${formatTime(session.pausedTime)}`,
+                tooltip: `Paused time: ${formatTime(session.pausedTime)}`,
+                icon: {
+                  source: Icon.Pause,
+                  tintColor: STATUS_COLORS.WARNING,
+                },
+              },
+            ]
+          : []),
         // Show application usage indicator
         ...(hasAppData
           ? [

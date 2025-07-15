@@ -85,7 +85,7 @@ export interface MoodAnalytics {
 export interface TimerSession {
   id: string;
   type: SessionType;
-  duration: number; // in seconds
+  duration: number; // in seconds (configured duration)
   startTime: Date;
   endTime?: Date;
   completed: boolean;
@@ -96,6 +96,9 @@ export interface TimerSession {
   taskIcon?: import("@raycast/api").Icon; // Custom icon for the task
   notes?: string; // User notes/reflections about the session
   applicationUsage?: ApplicationUsage[]; // Track app usage during session
+  // Timing fields
+  pausedTime?: number; // Total time spent paused in seconds
+  activeDuration?: number; // Actual active work time in seconds
   // ADHD-specific fields
   energyLevel?: 1 | 2 | 3 | 4 | 5; // User-reported energy at start
   focusQuality?: 1 | 2 | 3 | 4 | 5; // Auto-calculated or user-reported
@@ -135,12 +138,16 @@ export interface TimerConfig {
 export interface TimerStats {
   totalSessions: number;
   completedSessions: number;
-  totalWorkTime: number; // in seconds
-  totalBreakTime: number; // in seconds
+  totalWorkTime: number; // in seconds (active time)
+  totalBreakTime: number; // in seconds (active time)
   streakCount: number;
   todaysSessions: number;
   weekSessions: number;
   monthSessions: number;
+  // Pause time statistics
+  totalPauseTime: number; // in seconds
+  sessionsWithPauses: number;
+  averagePauseTime: number; // in seconds
 }
 
 export interface CustomTagConfig {
@@ -304,6 +311,7 @@ export interface AchievementStats {
 }
 
 export interface HyperfocusDetection {
+  isActive: boolean;
   isHyperfocusDetected: boolean;
   consecutiveSessions: number;
   totalFocusTime: number;
@@ -338,6 +346,9 @@ export interface PomodoroState {
   currentFocusPeriodId: string | null; // Unique ID for the current focus period
   currentFocusPeriodSessionCount: number; // Sessions completed in current focus period
   targetRounds: number; // Target sessions for current focus period
+  // Pause tracking
+  pauseStartTime: Date | null; // When current pause started
+  totalPausedTime: number; // Total paused time for current session in seconds
   // ADHD-specific state
   rewardSystem: RewardSystem;
   // Boxing-themed progress tracking

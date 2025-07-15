@@ -75,7 +75,51 @@ export class ApplicationTrackingCore {
         `[ApplicationTrackingCore] Attempting to capture frontmost application...`
       );
 
-      const frontmostApp = await getFrontmostApplication();
+      let frontmostApp;
+
+      try {
+        frontmostApp = await getFrontmostApplication();
+      } catch (apiError) {
+        // Handle the case where Raycast API throws validation error for undefined return
+        const errorMessage =
+          apiError instanceof Error ? apiError.message : String(apiError);
+
+        if (
+          errorMessage.includes("Invalid return value") &&
+          errorMessage.includes("undefined")
+        ) {
+          console.warn(
+            `[ApplicationTrackingCore] getFrontmostApplication API validation failed - Windows platform limitation detected`
+          );
+
+          // Update time for previous application if it exists, but don't change current app
+          if (trackingData.currentApplication) {
+            this.updateCurrentApplicationTime(trackingData);
+          }
+
+          // Don't treat this as a tracking error since it's a platform limitation
+          return;
+        }
+
+        // Re-throw other API errors to be handled by the outer catch block
+        throw apiError;
+      }
+
+      // Handle Windows compatibility issue where getFrontmostApplication returns undefined
+      if (!frontmostApp) {
+        console.warn(
+          `[ApplicationTrackingCore] getFrontmostApplication returned undefined - this may be a Windows platform limitation`
+        );
+
+        // Update time for previous application if it exists, but don't change current app
+        if (trackingData.currentApplication) {
+          this.updateCurrentApplicationTime(trackingData);
+        }
+
+        // Don't treat this as an error since it's a platform limitation
+        return;
+      }
+
       const currentTime = Date.now();
       const captureEndTime = performance.now();
 
@@ -286,6 +330,70 @@ export class ApplicationTrackingCore {
    */
   isIntervalActive(): boolean {
     return this.trackingInterval !== null;
+  }
+
+  /**
+   * Test if application tracking is supported on the current platform
+   */
+  async testApplicationTrackingSupport(): Promise<{
+    isSupported: boolean;
+    message?: string;
+  }> {
+    try {
+      console.log(
+        `[ApplicationTrackingCore] Testing application tracking support...`
+      );
+
+      let frontmostApp;
+
+      try {
+        frontmostApp = await getFrontmostApplication();
+      } catch (apiError) {
+        // Handle the case where Raycast API throws validation error for undefined return
+        const errorMessage =
+          apiError instanceof Error ? apiError.message : String(apiError);
+
+        if (
+          errorMessage.includes("Invalid return value") &&
+          errorMessage.includes("undefined")
+        ) {
+          return {
+            isSupported: false,
+            message:
+              "Application tracking is not supported on this platform. The getFrontmostApplication API validation fails due to undefined return values.",
+          };
+        }
+
+        // Re-throw other API errors
+        throw apiError;
+      }
+
+      if (!frontmostApp) {
+        return {
+          isSupported: false,
+          message:
+            "Application tracking is not fully supported on this platform. The getFrontmostApplication API returns undefined.",
+        };
+      }
+
+      console.log(
+        `[ApplicationTrackingCore] Application tracking is supported. Current app: ${frontmostApp.name}`
+      );
+
+      return {
+        isSupported: true,
+      };
+    } catch (error) {
+      console.error(
+        `[ApplicationTrackingCore] Application tracking test failed:`,
+        error
+      );
+
+      return {
+        isSupported: false,
+        message: `Application tracking test failed: ${error instanceof Error ? error.message : String(error)}`,
+      };
+    }
   }
 
   /**

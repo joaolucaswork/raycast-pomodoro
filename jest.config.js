@@ -1,10 +1,16 @@
 module.exports = {
   preset: "ts-jest",
-  testEnvironment: "node",
+  testEnvironment: "jsdom",
   roots: ["<rootDir>/src"],
-  testMatch: ["**/__tests__/**/*.ts", "**/?(*.)+(spec|test).ts"],
+  testMatch: [
+    "**/__tests__/**/*.ts",
+    "**/__tests__/**/*.tsx",
+    "**/?(*.)+(spec|test).ts",
+    "**/?(*.)+(spec|test).tsx",
+  ],
   transform: {
     "^.+\\.ts$": "ts-jest",
+    "^.+\\.tsx$": "ts-jest",
   },
   collectCoverageFrom: [
     "src/**/*.ts",
@@ -12,12 +18,23 @@ module.exports = {
     "!src/tests/**",
     "!src/**/*.test.ts",
   ],
-  moduleFileExtensions: ["ts", "js", "json"],
+  moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json"],
   setupFilesAfterEnv: ["<rootDir>/src/tests/setup.ts"],
-  testTimeout: 10000,
+  testTimeout: 15000,
   verbose: true,
+
+  // Performance optimizations
+  maxWorkers: 2, // Limit workers to reduce memory usage
+  workerIdleMemoryLimit: "512MB", // Limit worker memory
+  detectOpenHandles: true, // Help detect memory leaks
+  forceExit: true, // Force exit after tests complete
+
+  // Cache configuration
+  cache: true,
+  cacheDirectory: "<rootDir>/node_modules/.cache/jest",
+
   moduleNameMapper: {
-    "^@raycast/api$": "<rootDir>/src/tests/__mocks__/@raycast/api.ts",
+    "^@raycast/api$": "<rootDir>/src/tests/__mocks__/@raycast/api.js",
     "^@raycast/utils$": "<rootDir>/src/tests/__mocks__/@raycast/utils.ts",
   },
 

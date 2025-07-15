@@ -5,6 +5,9 @@
  * It sets up global mocks and test utilities needed across all test files.
  */
 
+// Import jest-dom matchers
+import "@testing-library/jest-dom";
+
 // Mock date-fns to ensure consistent test results
 jest.mock("date-fns", () => ({
   format: jest.fn((date, formatStr) => date.toISOString()),

@@ -263,6 +263,16 @@ class ApplicationTrackingService {
   }
 
   /**
+   * Test if application tracking is supported on the current platform
+   */
+  async testApplicationTrackingSupport(): Promise<{
+    isSupported: boolean;
+    message?: string;
+  }> {
+    return applicationTrackingCore.testApplicationTrackingSupport();
+  }
+
+  /**
    * Get comprehensive tracking statistics
    */
   getTrackingStats(): ApplicationTrackingStats {

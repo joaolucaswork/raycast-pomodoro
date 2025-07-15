@@ -14,6 +14,48 @@ export function useAppTracking(
     null
   );
   const [isAppTrackingActive, setIsAppTrackingActive] = useState(false);
+  const [trackingSupported, setTrackingSupported] = useState<boolean | null>(
+    null
+  );
+  const [supportMessage, setSupportMessage] = useState<string | null>(null);
+
+  // Test application tracking support on first load
+  useEffect(() => {
+    let isMounted = true;
+
+    const testSupport = async () => {
+      try {
+        const result =
+          await applicationTrackingService.testApplicationTrackingSupport();
+
+        if (isMounted) {
+          setTrackingSupported(result.isSupported);
+          setSupportMessage(result.message || null);
+
+          if (!result.isSupported) {
+            console.warn(
+              `[useAppTracking] Application tracking not supported: ${result.message}`
+            );
+          }
+        }
+      } catch (error) {
+        console.error(
+          "[useAppTracking] Error testing tracking support:",
+          error
+        );
+        if (isMounted) {
+          setTrackingSupported(false);
+          setSupportMessage("Failed to test application tracking support");
+        }
+      }
+    };
+
+    testSupport();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   // Update current application display when tracking is active
   useEffect(() => {
@@ -67,5 +109,7 @@ export function useAppTracking(
     currentAppName,
     currentAppBundleId,
     isAppTrackingActive,
+    trackingSupported,
+    supportMessage,
   };
 }

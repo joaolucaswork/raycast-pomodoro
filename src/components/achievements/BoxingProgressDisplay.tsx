@@ -24,6 +24,19 @@ export function BoxingProgressDisplay({
   showDetailed = false,
 }: BoxingProgressDisplayProps) {
   const { push } = useNavigation();
+
+  // Handle undefined or null progress data
+  if (!progress) {
+    return (
+      <List.Item
+        icon={Icon.ExclamationMark}
+        title="No Progress Data"
+        subtitle="Unable to load boxing progress information"
+        accessories={[{ text: "Error" }]}
+      />
+    );
+  }
+
   // Calculate training time in hours
   const trainingHours = Math.floor(progress.totalTrainingTime / 60);
   const trainingMinutes = progress.totalTrainingTime % 60;
