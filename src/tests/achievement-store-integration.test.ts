@@ -6,7 +6,7 @@
  */
 
 import { create } from "zustand";
-import { PomodoroStore } from "../types/timer";
+import { CombinedPomodoroStore } from "../store/timer-store";
 import {
   createAchievementSlice,
   DEFAULT_BOXING_PROGRESS,
@@ -77,13 +77,13 @@ jest.mock("../services/features/adhd-support-service", () => ({
 
 // Create a test store
 const createTestStore = () => {
-  return create<PomodoroStore>((set, get) => ({
-    ...createSessionSlice(set, get),
-    ...createAchievementSlice(set, get),
-    ...createMoodSlice(set, get),
-    ...createConfigSlice(set, get),
-    ...createStatsSlice(set, get),
-    ...createTagSlice(set, get),
+  return create<CombinedPomodoroStore>((set, get, store) => ({
+    ...createSessionSlice(set, get, store),
+    ...createAchievementSlice(set, get, store),
+    ...createMoodSlice(set, get, store),
+    ...createConfigSlice(set, get, store),
+    ...createStatsSlice(set, get, store),
+    ...createTagSlice(set, get, store),
   }));
 };
 
@@ -353,10 +353,12 @@ describe("Achievement Store Integration", () => {
       const activity = {
         id: "test-activity",
         name: "Test Activity",
-        description: "A test break activity",
         duration: 300,
-        category: "physical" as const,
+        type: "movement" as const,
+        instructions: ["Test instruction 1", "Test instruction 2"],
         icon: "test-icon" as any,
+        adhdBenefit: "Test ADHD benefit",
+        difficulty: "easy" as const,
       };
 
       store.getState().setCurrentBreakActivity(activity);
@@ -369,10 +371,12 @@ describe("Achievement Store Integration", () => {
       const activity = {
         id: "test-activity",
         name: "Test Activity",
-        description: "A test break activity",
         duration: 300,
-        category: "physical" as const,
+        type: "movement" as const,
+        instructions: ["Test instruction 1", "Test instruction 2"],
         icon: "test-icon" as any,
+        adhdBenefit: "Test ADHD benefit",
+        difficulty: "easy" as const,
       };
 
       store.getState().setCurrentBreakActivity(activity);

@@ -631,16 +631,18 @@ describe("BoxingAchievementService", () => {
         {
           id: "1",
           sessionId: "session-1",
-          type: "energized" as any,
-          intensity: 4,
+          mood: "energized" as any,
+          intensity: 4 as 1 | 2 | 3 | 4 | 5,
           timestamp: new Date(),
+          context: "post-session" as const,
         },
         {
           id: "2",
           sessionId: "session-2",
-          type: "focused" as any,
-          intensity: 5,
+          mood: "focused" as any,
+          intensity: 5 as 1 | 2 | 3 | 4 | 5,
           timestamp: new Date(),
+          context: "post-session" as const,
         },
       ];
 

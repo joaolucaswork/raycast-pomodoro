@@ -6,12 +6,8 @@
  */
 
 import { create } from "zustand";
-import {
-  PomodoroStore,
-  TimerState,
-  SessionType,
-  SessionEndReason,
-} from "../types/timer";
+import { TimerState, SessionType, SessionEndReason } from "../types/timer";
+import { CombinedPomodoroStore } from "../store/timer-store";
 import { createSessionSlice } from "../store/slices/session-slice";
 import {
   createAchievementSlice,
@@ -148,13 +144,13 @@ jest.mock("@raycast/api", () => ({
 
 // Create test store
 const createTestStore = () => {
-  return create<PomodoroStore>((set, get) => ({
-    ...createSessionSlice(set, get),
-    ...createAchievementSlice(set, get),
-    ...createMoodSlice(set, get),
-    ...createConfigSlice(set, get),
-    ...createStatsSlice(set, get),
-    ...createTagSlice(set, get),
+  return create<CombinedPomodoroStore>((set, get, store) => ({
+    ...createSessionSlice(set, get, store),
+    ...createAchievementSlice(set, get, store),
+    ...createMoodSlice(set, get, store),
+    ...createConfigSlice(set, get, store),
+    ...createStatsSlice(set, get, store),
+    ...createTagSlice(set, get, store),
   }));
 };
 
@@ -383,7 +379,7 @@ describe("Achievement Integration with Session System", () => {
     it("should include mood data in achievement progress calculation", () => {
       const moodEntry = createTestMoodEntry({
         sessionId: "test-session",
-        type: "energized",
+        mood: "energized",
         intensity: 4,
       });
 
@@ -421,7 +417,7 @@ describe("Achievement Integration with Session System", () => {
 
       const moodEntry = createTestMoodEntry({
         sessionId: "test-session",
-        type: "energized",
+        mood: "energized",
         intensity: 4,
       });
 
