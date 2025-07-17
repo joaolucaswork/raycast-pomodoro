@@ -9,7 +9,7 @@ import { timerCoreService } from "./services/timer/timer-core-service";
  */
 async function testAutoStartBreaks() {
   console.log("🧪 Testing Auto-Start Breaks Configuration");
-  console.log("=" .repeat(50));
+  console.log("=".repeat(50));
 
   // Initialize store
   storeInitialization.initializeStore();
@@ -34,40 +34,46 @@ async function testAutoStartBreaks() {
 
   // Test 2: Simulate a work session completion
   console.log("\n🔄 Simulating work session completion...");
-  
+
   try {
     // Start a work session
     await backgroundTimerService.startTimer(SessionType.WORK, "Test Task");
-    
+
     // Check if timer is running
     const stateAfterStart = useTimerStore.getState();
     console.log(`   Timer state after start: ${stateAfterStart.state}`);
     console.log(`   Current session: ${stateAfterStart.currentSession?.type}`);
-    
+
     // Stop the timer to simulate completion
     await backgroundTimerService.stopTimer();
-    
+
     console.log("✅ Work session simulation completed");
-    
   } catch (error) {
     console.error("❌ Error during simulation:", error);
   }
 
   // Test 3: Test auto-start logic directly
   console.log("\n🧪 Testing auto-start logic directly...");
-  
-  const shouldAutoStart = timerCoreService.shouldAutoStartNext(SessionType.WORK, config);
-  
+
+  const shouldAutoStart = timerCoreService.shouldAutoStartNext(
+    SessionType.WORK,
+    config
+  );
+
   console.log(`   Should auto-start after work session: ${shouldAutoStart}`);
-  
+
   if (shouldAutoStart) {
-    const nextSessionType = timerCoreService.getNextSessionType(SessionType.WORK, 1, config);
+    const nextSessionType = timerCoreService.getNextSessionType(
+      SessionType.WORK,
+      1,
+      config
+    );
     console.log(`   Next session type would be: ${nextSessionType}`);
   }
 
-  console.log("\n" + "=" .repeat(50));
+  console.log("\n" + "=".repeat(50));
   console.log("🎯 Test completed!");
-  
+
   if (config.autoStartBreaks) {
     console.log("✅ Configuration looks correct. Auto-start should work!");
   } else {

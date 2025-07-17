@@ -359,16 +359,7 @@ export const createSessionSlice: StateCreator<
         lastCompletedSessionId: shouldSave ? completedSession.id : null,
       });
 
-      // Update boxing progress and check for achievements if session was saved
-      if (shouldSave && currentSession.type === SessionType.WORK) {
-        // Use setTimeout to ensure state is updated first
-        setTimeout(() => {
-          const store = get() as any; // Type assertion to access achievement methods
-          if (store.updateBoxingProgress) {
-            store.updateBoxingProgress();
-          }
-        }, 100);
-      }
+      // Boxing progress will be updated via store subscription when history changes
 
       // Show notification if session was too short to be saved
       if (!shouldSave) {

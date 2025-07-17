@@ -375,11 +375,18 @@ export const createAchievementSlice: StateCreator<
 
   // Boxing-themed achievement methods
   updateBoxingProgress: () => {
+    console.log("[AchievementSlice] Updating boxing progress...");
     const { history, moodEntries } = get();
     const newBoxingProgress = boxingAchievementService.calculateBoxingProgress(
       history,
       moodEntries
     );
+
+    console.log("[AchievementSlice] Boxing progress calculated:", {
+      totalRounds: newBoxingProgress.totalRounds,
+      currentStreak: newBoxingProgress.currentStreak,
+      championshipLevel: newBoxingProgress.championshipLevel,
+    });
 
     set({
       boxingProgress: newBoxingProgress,
@@ -393,20 +400,37 @@ export const createAchievementSlice: StateCreator<
       newBoxingProgress
     );
 
+    console.log("[AchievementSlice] Boxing achievements check result:", {
+      newAchievementsCount: newAchievements.length,
+      newAchievements: newAchievements.map((a) => ({
+        id: a.id,
+        name: a.name,
+        points: a.points,
+      })),
+    });
+
     if (newAchievements.length > 0) {
       const totalNewPoints = newAchievements.reduce(
         (sum, achievement) => sum + achievement.points,
         0
       );
 
+      const newLevel = boxingAchievementService.calculateBoxingLevel(
+        rewardSystem.points + totalNewPoints
+      ).level;
+
+      console.log("[AchievementSlice] Awarding boxing achievements:", {
+        totalNewPoints,
+        newLevel,
+        previousLevel: rewardSystem.level,
+      });
+
       set({
         rewardSystem: {
           ...rewardSystem,
           achievements: [...rewardSystem.achievements, ...newAchievements],
           points: rewardSystem.points + totalNewPoints,
-          level: boxingAchievementService.calculateBoxingLevel(
-            rewardSystem.points + totalNewPoints
-          ).level,
+          level: newLevel,
         },
       });
 
