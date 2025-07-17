@@ -113,8 +113,10 @@ export class TimerCompletionService {
     // Process ADHD features
     await this.processAdhdFeatures(completedSession, true, isManualCompletion);
 
-    // Handle auto-start logic
-    await this.handleAutoStartLogic(session.type, isManualCompletion);
+    // Handle auto-start logic - delay slightly to ensure store updates are processed
+    setTimeout(async () => {
+      await this.handleAutoStartLogic(session.type, isManualCompletion);
+    }, 100);
   }
 
   /**
@@ -349,6 +351,16 @@ export class TimerCompletionService {
       currentFocusPeriodId,
     } = useTimerStore.getState();
 
+    console.log("[DEBUG] handleAutoStartLogic state:", {
+      completedSessionType,
+      isManualCompletion,
+      currentFocusPeriodId,
+      currentFocusPeriodSessionCount,
+      targetRounds,
+      autoStartBreaks: config.autoStartBreaks,
+      autoStartWork: config.autoStartWork,
+    });
+
     // Check if we're in a multi-round focus period and have remaining rounds
     const hasRemainingRounds =
       currentFocusPeriodId && currentFocusPeriodSessionCount < targetRounds;
@@ -359,7 +371,6 @@ export class TimerCompletionService {
       !isManualCompletion && hasRemainingRounds;
 
     // Regular auto-start logic (respects user preferences)
-    // Always evaluate shouldAutoStartNext for testing purposes, then apply manual completion restriction
     const shouldAutoStartBasedOnConfig = timerCoreService.shouldAutoStartNext(
       completedSessionType,
       config
@@ -370,38 +381,19 @@ export class TimerCompletionService {
     const shouldAutoStart =
       shouldAutoStartForMultiRound || shouldAutoStartRegular;
 
+    console.log("[DEBUG] Auto-start decision:", {
+      hasRemainingRounds,
+      shouldAutoStartForMultiRound,
+      shouldAutoStartRegular,
+      shouldAutoStart,
+    });
+
     if (shouldAutoStart) {
       const nextSessionType = timerCoreService.getNextSessionType(
         completedSessionType,
         currentFocusPeriodSessionCount,
         config
       );
-
-      // For multi-round sessions after breaks, check if we should end the focus period
-      if (completedSessionType !== SessionType.WORK && hasRemainingRounds) {
-        // After a break in a multi-round session, continue with work if we have remaining rounds
-        console.log(
-          `[TimerCompletionService] Continuing multi-round session: ${currentFocusPeriodSessionCount}/${targetRounds} rounds completed`
-        );
-      } else if (
-        completedSessionType === SessionType.WORK &&
-        !hasRemainingRounds
-      ) {
-        // Work session completed and no more rounds - only auto-start break if configured
-        if (!shouldAutoStartRegular) {
-          // End the focus period and go to idle
-          setTimeout(() => {
-            try {
-              useTimerStore.setState({
-                state: TimerState.IDLE,
-              });
-            } catch (error) {
-              console.error("Failed to update store to idle state:", error);
-            }
-          }, 5000);
-          return;
-        }
-      }
 
       console.log(
         `[TimerCompletionService] Auto-starting ${nextSessionType} session after completion (multi-round: ${shouldAutoStartForMultiRound}, regular: ${shouldAutoStartRegular})`
@@ -410,15 +402,34 @@ export class TimerCompletionService {
       // Schedule auto-start with delay
       setTimeout(async () => {
         // Import the background timer service to start the next session
-        const {
-          backgroundTimerService,
-        } = require("./background-timer-service");
+        const { backgroundTimerService } = await import(
+          "./background-timer-service"
+        );
         await backgroundTimerService.startTimer(nextSessionType);
 
         // Notify about auto-start
         await timerNotificationService.notifyAutoStart(nextSessionType);
       }, 2000); // 2 second delay before auto-start
     } else {
+      // Check if we just completed a focus period (work session with no remaining rounds)
+      if (
+        completedSessionType === SessionType.WORK &&
+        currentFocusPeriodId &&
+        currentFocusPeriodSessionCount >= targetRounds
+      ) {
+        // Focus period completed - reset focus period state
+        console.log(
+          `[TimerCompletionService] Focus period completed (${currentFocusPeriodSessionCount}/${targetRounds} rounds)`
+        );
+        setTimeout(() => {
+          try {
+            useTimerStore.getState().resetFocusPeriod();
+          } catch (error) {
+            console.error("Failed to reset focus period:", error);
+          }
+        }, 1000);
+      }
+
       // Auto-transition to idle after a short delay if not auto-starting
       setTimeout(() => {
         try {

@@ -35,6 +35,7 @@ export class StoreSubscriptions {
 
     this.setupStatsSubscription();
     this.setupAchievementSubscription();
+    this.setupBoxingAchievementSubscription();
     this.setupTagConfigSubscription();
     this.setupMoodTrackingSubscription();
     this.setupSessionStateSubscription();
@@ -79,6 +80,30 @@ export class StoreSubscriptions {
         if (stats !== prevStats) {
           console.log("Stats updated, checking achievements...");
           this.checkForNewAchievements(stats, prevStats);
+        }
+      }
+    );
+    this.unsubscribeFunctions.push(unsubscribe);
+  }
+
+  /**
+   * Update boxing progress when history changes (specifically for boxing achievements)
+   */
+  private setupBoxingAchievementSubscription(): void {
+    const unsubscribe = useTimerStore.subscribe(
+      (state) => state.history,
+      (history, prevHistory) => {
+        if (history !== prevHistory && history.length > prevHistory.length) {
+          const state = useTimerStore.getState();
+          if (state.config.enableRewardSystem) {
+            console.log("History changed, updating boxing progress...");
+            if (state.updateBoxingProgress) {
+              // Use setTimeout to ensure the history update is fully processed
+              setTimeout(() => {
+                state.updateBoxingProgress();
+              }, 100);
+            }
+          }
         }
       }
     );

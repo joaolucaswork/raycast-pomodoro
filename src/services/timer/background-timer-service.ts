@@ -1,4 +1,4 @@
-import { TimerState, SessionType, TimerSession } from "../../types/timer";
+import { TimerState, SessionType } from "../../types/timer";
 import { useTimerStore } from "../../store/timer-store";
 import { timerCoreService } from "./timer-core-service";
 import { timerPersistenceService } from "./timer-persistence-service";
@@ -173,18 +173,27 @@ export class BackgroundTimerService {
   }
 
   /**
-   * Manually completes the current timer session
+   * Completes the current timer session
+   * @param isManualCompletion - Whether this is a manual completion (user action) or automatic (timer reached zero)
    */
-  public async completeTimer(): Promise<void> {
+  public async completeTimer(
+    isManualCompletion: boolean = false
+  ): Promise<void> {
     const backgroundState = await timerPersistenceService.loadBackgroundState();
     if (!backgroundState || backgroundState.state !== TimerState.RUNNING) {
       return;
     }
 
     // Complete the session using the completion service
-    await timerCompletionService.handleManualCompletion(
-      backgroundState.session
-    );
+    if (isManualCompletion) {
+      await timerCompletionService.handleManualCompletion(
+        backgroundState.session
+      );
+    } else {
+      await timerCompletionService.handleAutomaticCompletion(
+        backgroundState.session
+      );
+    }
 
     // Clear background state
     await timerPersistenceService.clearBackgroundState();

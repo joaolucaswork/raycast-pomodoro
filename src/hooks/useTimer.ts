@@ -45,11 +45,11 @@ export function useTimer() {
           if (newTimeRemaining <= 0) {
             // Timer completed - trigger background service to handle completion
             console.log(
-              "[useTimer] Timer reached zero, triggering background service completion"
+              "[useTimer] Timer reached zero, triggering automatic completion"
             );
 
-            // Trigger background service to check and handle completion
-            backgroundTimerService.updateTimerState();
+            // Use automatic completion for timer reaching zero (not manual)
+            backgroundTimerService.completeTimer(false);
 
             return {
               ...prevState,
@@ -121,7 +121,7 @@ export function useTimer() {
   };
 
   const handleComplete = async () => {
-    await backgroundTimerService.completeTimer();
+    await backgroundTimerService.completeTimer(true); // This is manual completion
   };
 
   const handleReset = async () => {
